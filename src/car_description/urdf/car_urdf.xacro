@@ -1,0 +1,267 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="car">
+
+    <xacro:arg name="is_ignition" default="true"/>
+    <!--include Gazebo parameters -->
+    <xacro:include filename="$(find car_description)/urdf/car_gazebo.xacro"/>
+
+     <!--include ros control parameters -->
+    <xacro:include filename="$(find car_description)/urdf/car_ros2_control.xacro"/>
+    
+    <link name="base_footprint"/>
+
+    <link name="base_link">
+    <inertial>
+        <origin
+            xyz="0.0 0 0"
+            rpy="1.5708 0.0 -1.5708" />
+        <mass
+            value="1000" />
+        <inertia
+            ixx="240.64229"
+            ixy="4.1988E-07"
+            ixz="0.000000122981"
+            iyy="269.7121064"
+            iyz="-5.2226398"
+            izz="77.018987" />
+        </inertial>      
+        <visual>
+            <origin rpy="1.57 0 -1.57" xyz= "1.5 0.75 -0.5"/>
+            <geometry>
+                <mesh filename="package://car_description/meshes/polygon_car.STL"/>
+            </geometry>
+            <material name="red">
+                <color rgba="1.0 0.0 0.0 0.7"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="1.57 0 -1.57" xyz= "1.5 0.75 -0.5"/>
+            <geometry>
+                <mesh filename="package://car_description/meshes/polygon_car.STL"/>
+            </geometry>
+        </collision>
+
+    </link>
+ 
+    <joint name="base_joint" type="fixed">
+     <parent link="base_footprint"/>
+     <child link="base_link"/>
+     <origin xyz="0.0 0.0 0.75" rpy="0.0 0.0 0.0"/>
+    
+    </joint>
+
+    <link name="steering_link_fr">
+        <inertial>
+            <origin
+                xyz="0 0 0"
+                rpy="0 0 0" />
+            <mass
+                value="0.001" />
+            <inertia
+                ixx="0.1"
+                ixy="0.0"
+                ixz="0.0"
+                iyy="0.1"
+                iyz="0.0"
+                izz="0.1" />
+        </inertial>
+    </link>
+    <joint name="steering_joint_fr" type="continuous">
+        <parent link="base_link"/>
+        <child link="steering_link_fr"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <origin xyz="0.5 -0.6 -0.5" rpy="0.0 0.0 0.0"/>
+        
+    </joint>
+
+    <link name="FR_wheel">
+        <inertial>
+        <origin
+            xyz="0 0 0"
+            rpy="1.5708 0.0 -1.5708" />
+        <mass
+            value="20" />
+        <inertia
+            ixx="1.3014"
+            ixy="-2.1717E-12"
+            ixz="-1.7928E-12"
+            iyy="0.84577"
+            iyz="-6.4305E-12"
+            izz="0.84577" />
+        </inertial>
+        <visual>
+            <origin xyz="-0.25 -0.15 -0.25" rpy="0.0  0.0 0"/>
+            <geometry>
+                <mesh filename="package://car_description/meshes/wheel.STL"/>
+            </geometry>
+            <material name="black">
+                <color rgba="0.012 0.012 0.008 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0.0  0.0 0"/>
+            <geometry>
+                <sphere radius="0.25"/>
+            </geometry>
+        </collision>
+
+    </link>
+               
+    <joint name="FR_wheel_joint" type="continuous">
+        <parent link="steering_link_fr"/>
+        <child link="FR_wheel"/>
+        <axis xyz="0.0 1.0 0.0"/>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>              
+
+    </joint>
+
+    <link name="steering_link_fl">
+        <inertial>
+            <origin
+                xyz="0 0 0"
+                rpy="0 0 0" />
+            <mass
+                value="0.001" />
+            <inertia
+                ixx="0.1"
+                ixy="0.0"
+                ixz="0.0"
+                iyy="0.1"
+                iyz="0.0"
+                izz="0.1" />
+        </inertial>
+    </link>
+    <joint name="steering_joint_fl" type="continuous">
+        <parent link="base_link"/>
+        <child link="steering_link_fl"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <origin xyz="0.5 0.6 -0.5" rpy="0.0 0.0 0.0"/>
+        
+    </joint>
+
+    <link name="FL_wheel">
+        <inertial>
+            <origin
+                xyz="0 0 0"
+                rpy="1.5708 0.0 -1.5708" />
+            <mass
+                value="20" />
+            <inertia
+                ixx="1.3014"
+                ixy="-2.1717E-12"
+                ixz="-1.7928E-12"
+                iyy="0.84577"
+                iyz="-6.4305E-12"
+                izz="0.84577" />
+        </inertial>
+        <visual>
+            <origin xyz="-0.25 -0.15 -0.25" rpy="0.0  0.0 0"/>
+            <geometry>
+                <mesh filename="package://car_description/meshes/wheel.STL"/>
+            </geometry>
+            <material name="black">
+                <color rgba="0.012 0.012 0.008 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0.0  0.0 0"/>
+            <geometry>
+                <sphere radius="0.25"/>
+            </geometry>
+        </collision>
+
+    </link>
+               
+    <joint name="FL_wheel_joint" type="continuous">
+        <parent link="steering_link_fl"/>
+        <child link="FL_wheel"/>
+        <axis xyz="0.0 1.0 0.0"/>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>              
+
+    </joint>
+
+    <link name="RR_wheel">
+        <inertial>
+            <origin
+                xyz="0 0 0"
+                rpy="1.5708 0.0 -1.5708" />
+            <mass
+                value="20" />
+            <inertia
+                ixx="1.3014"
+                ixy="-2.1717E-12"
+                ixz="-1.7928E-12"
+                iyy="0.84577"
+                iyz="-6.4305E-12"
+                izz="0.84577" />
+        </inertial>
+        <visual>
+            <origin xyz="-0.25 -0.15 -0.25" rpy="0.0  0.0 0"/>
+            <geometry>
+                <mesh filename="package://car_description/meshes/wheel.STL"/>
+            </geometry>
+            <material name="black">
+                <color rgba="0.012 0.012 0.008 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0.0  0.0 0"/>
+            <geometry>
+                <sphere radius="0.25"/>
+            </geometry>
+        </collision>
+
+    </link>
+               
+    <joint name="RR_wheel_joint" type="continuous">
+        <parent link="base_link"/>
+        <child link="RR_wheel"/>
+        <axis xyz="0.0 1.0 0.0"/>
+        <origin xyz="-1.05 -0.6 -0.5" rpy="0.0 0.0 0.0"/>              
+
+    </joint>
+
+    <link name="RL_wheel">
+        <inertial>
+            <origin
+                xyz="0 0 0"
+                rpy="1.5708 0.0 -1.5708" />
+            <mass
+                value="20" />
+            <inertia
+                ixx="1.3014"
+                ixy="-2.1717E-12"
+                ixz="-1.7928E-12"
+                iyy="0.84577"
+                iyz="-6.4305E-12"
+                izz="0.84577" />
+        </inertial>
+        <visual>
+            <origin xyz="-0.25 -0.15 -0.25" rpy="0.0  0.0 0"/>
+            <geometry>
+                <mesh filename="package://car_description/meshes/wheel.STL"/>
+            </geometry>
+            <material name="black">
+                <color rgba="0.012 0.012 0.008 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0.0  0.0 0"/>
+            <geometry>
+                <sphere radius="0.25"/>
+            </geometry>
+        </collision>
+
+    </link>
+               
+    <joint name="RL_wheel_joint" type="continuous">
+        <parent link="base_link"/>
+        <child link="RL_wheel"/>
+        <axis xyz="0.0 1.0 0.0"/>
+        <origin xyz="-1.05 0.6 -0.5" rpy="0.0 0.0 0.0"/>              
+
+    </joint>
+
+    
+</robot>

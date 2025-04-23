@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+
+<robot name="car" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <gazebo reference="FR_wheel">
+        <mu1>1.0E14</mu1>
+        <mu2>1.0E14</mu2>
+        <kp>1.0E12</kp>
+        <kd>10.0</kd>
+        <minDepth>0.01</minDepth>
+        <maxVel>10</maxVel>
+        <fDir1>1 0 0</fDir1>
+    </gazebo>
+
+    <gazebo reference="FL_wheel">
+        <mu1>1.0E14</mu1>
+        <mu2>1.0E14</mu2>
+        <kp>1.0E12</kp>
+        <kd>10.0</kd>
+        <minDepth>0.01</minDepth>
+        <maxVel>10</maxVel>
+        <fDir1>1 0 0</fDir1>
+    </gazebo>
+
+    <gazebo reference="RR_wheel">
+        <mu1>1.0E14</mu1>
+        <mu2>1.0E14</mu2>
+        <kp>1.0E12</kp>
+        <kd>10.0</kd>
+        <minDepth>0.01</minDepth>
+        <maxVel>10</maxVel>
+        <fDir1>1 0 0</fDir1>
+    </gazebo>
+
+    <gazebo reference="RL_wheel">
+        <mu1>1.0E14</mu1>
+        <mu2>1.0E14</mu2>
+        <kp>1.0E12</kp>
+        <kd>10.0</kd>
+        <minDepth>0.01</minDepth>
+        <maxVel>10</maxVel>
+        <fDir1>1 0 0</fDir1>
+    </gazebo>
+
+    <gazebo>
+        <xacro:if value="$(arg is_ignition)">
+            <plugin filename="ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">
+                <parameters>$(find car_controller)/config/car_controllers.yaml</parameters>
+            </plugin>
+        </xacro:if>
+
+        <xacro:unless value="$(arg is_ignition)">
+            <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+                <parameters>$(find car_controller)/config/car_controllers.yaml</parameters>
+            </plugin>
+        </xacro:unless>
+    </gazebo>
+
+</robot>
