@@ -1,0 +1,15 @@
+#pragma once
+
+#include "car.hpp"
+#include "Road.hpp"
+
+class DroneController {
+public:
+    //Constructor
+    DroneController(const Road& road);
+    //Keeps car in the specified lane
+    void control(Car& car, int lane_index);
+
+private:
+    const Road& road_;
+};

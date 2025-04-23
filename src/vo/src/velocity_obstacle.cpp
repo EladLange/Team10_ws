@@ -63,31 +63,31 @@ bool VelocityObstacle::checkCollision(const pose& ego_pose, const pose& obstacle
     std::cout<<"d: "<<d<<std::endl;
 
     if (d <= r_total) {
-        std::cout << "Warning: Overlapping radii. Immediate collision." << std::endl;
+        //std::cout << "Warning: Overlapping radii. Immediate collision." << std::endl;
         return;
     }
 
     // finding theta
     float theta = VelocityObstacle::getTheta(d);
-    std::cout<<"theta: "<<theta<<std::endl;
+    //std::cout<<"theta: "<<theta<<std::endl;
 
     // finding alpha angle
     float alpha =  VelocityObstacle::getAngle(ego_pose, obstacle_pose);
-    std::cout<<"alpha: "<<alpha<<std::endl;
+    //std::cout<<"alpha: "<<alpha<<std::endl;
 
     // finding v_relative
     velocity v_relative = VelocityObstacle::getVrelative(v_ego, v_obstacle);
 
     // finding beta angle 
     float beta = VelocityObstacle::getBeta(v_relative);
-    std::cout<<"beta: "<<beta<<std::endl;
+    //std::cout<<"beta: "<<beta<<std::endl;
 
     float angle_diff = VelocityObstacle::normalizeAngle(beta - alpha);
 
     // check if relative velocity is inside the cone
     float condition = std::abs(angle_diff);
 
-    std::cout<<"condition: "<<condition<<std::endl;
+    //std::cout<<"condition: "<<condition<<std::endl;
 
     float relative_speed = sqrt(pow(v_relative.linear.x, 2) + pow(v_relative.linear.y, 2)); // calculate the magnitude of the relative velocity
     float time_to_collision = d / relative_speed; //  calculate the current time to collision
@@ -132,7 +132,7 @@ std::vector<velocity> VelocityObstacle::generateCandidateVelocities(const veloci
 
 }
 
-pose findNextGoalPoint(const std::vector<pose>& raceline, const pose& ego_pose)
+pose  VelocityObstacle::findNextGoalPoint(const std::vector<pose>& raceline, const pose& ego_pose)
 {
     int lookahead = 5;
     
@@ -190,12 +190,8 @@ float VelocityObstacle::calculateCollisionCost(const pose& ego_pose, const veloc
 
 velocity VelocityObstacle::selectBestVelocity(const pose& ego_pose, const velocity& ego_vel, const std::vector<pose>& obstacle_poses, const std::vector<velocity>& obstacle_vels, const std::vector<pose>& raceline) 
 {
-    // Generate candidate velocities
-    std::vector<velocity> candidates = generateCandidateVelocities(ego_vel);
-
-    // Get goal point from raceline
-    pose goal_point = findNextGoalPoint(raceline, ego_pose);
-
+    std::vector<velocity> candidates = generateCandidateVelocities(ego_vel); // Generate candidate velocities
+    pose goal_point = findNextGoalPoint(raceline, ego_pose); // Get goal point from raceline
     float best_cost = std::numeric_limits<float>::max(); // Initialize with a large number
     velocity best_velocity = ego_vel; // Default to current velocity
 
@@ -213,7 +209,8 @@ velocity VelocityObstacle::selectBestVelocity(const pose& ego_pose, const veloci
             }
         }
         
-        if (!collision) {
+        if (!collision) 
+        {
             std::cout << "Current velocity is safe. Continuing.\n";
             return ego_vel;
         }
@@ -221,7 +218,7 @@ velocity VelocityObstacle::selectBestVelocity(const pose& ego_pose, const veloci
         // Find the best alternative velocity
         else
         {
-            for(const auto& candidate : generateCandidateVelocities(ego_vel))
+            for(const auto& candidate : candidates)
             {
                 bool candidate_collision = false;
 

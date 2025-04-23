@@ -21,7 +21,7 @@ public:
     void update(double dt);
     //Get car ID
     std::string getId() const;
-    //Optional- true if car is ego veihcle
+    //Optional- true if car is ego vehicle
     bool isControlled() const;
 
 private:
