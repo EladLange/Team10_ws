@@ -159,28 +159,36 @@ pose findNextGoalPoint(const std::vector<pose>& raceline, const pose& ego_pose)
     return raceline[goal_index];
 }
 
-
-float VelocityObstacle::calculateCollisionCost(const velocity& ego_velocity, const velocity& obstacle_velocity, const velocity& candidate_velocity, const pose& obstacle_pose, const pose& ego_pose, const velocity& v_obstacle, const pose& goal_point)
+float VelocityObstacle::calculateCollisionCost(const pose& ego_pose, const velocity& ego_velocity, const std::vector<pose>obstacle_poses,const std::vector<velocity>obstacle_vels, const velocity& candidate_velocity, const pose& goal_point)
 {
     float cost = 0.0f;
     // cost function constant
     float obstacle_avoidance_cost = 5.0f;
     float goal_seeling_cost = 0.1f;
+    float relative_speed = 0.0f;
     
     // Smoothness cost: minimize velocity changes
     cost += std::sqrt(std::pow(candidate_velocity.linear.x - ego_velocity.linear.x, 2) + std::pow(candidate_velocity.linear.y - ego_velocity.linear.y, 2));
 
     // Obstacle avoidance 
-    velocity relative_velocity = getVrelative(ego_velocity, obstacle_velocity);
-    cost += obstacle_avoidance_cost * sqrt(pow(relative_velocity.linear.x, 2) + pow(relative_velocity.linear.y, 2));
-     
+    for (size_t i = 0; i < obstacle_poses.size(); i++)
+    {
+        velocity relative_velocity = getVrelative(candidate_velocity, obstacle_vels[i]);
+        relative_speed = std::sqrt(std::pow(relative_velocity.linear.x, 2) + std::pow(relative_velocity.linear.y, 2));
+        cost += obstacle_avoidance_cost * relative_speed;
+    }
+    
     // goal seeking cost
-    cost += goal_seeling_cost * std::sqrt(std::pow(goal_point.position.x - ego_pose.position.x, 2) + std::pow(goal_point.position.y - ego_pose.position.y, 2));
+    float dx = goal_point.position.x - ego_pose.position.x;
+    float dy = goal_point.position.y - ego_pose.position.y;
 
+    float dist_to_goal = std::sqrt(std::pow(dx,2) + std::pow(dy, 2));
+    cost += goal_seeling_cost * dist_to_goal; 
+    
     return cost;
 }
 
-velocity VelocityObstacle::selectBestVelocity(const pose& ego_pose, const velocity& ego_vel, const std::vector<pose>& obstacles, const std::vector<velocity>& obstacle_vels, const std::vector<pose>& raceline) 
+velocity VelocityObstacle::selectBestVelocity(const pose& ego_pose, const velocity& ego_vel, const std::vector<pose>& obstacle_poses, const std::vector<velocity>& obstacle_vels, const std::vector<pose>& raceline) 
 {
     // Generate candidate velocities
     std::vector<velocity> candidates = generateCandidateVelocities(ego_vel);
@@ -196,9 +204,9 @@ velocity VelocityObstacle::selectBestVelocity(const pose& ego_pose, const veloci
         bool collision = false;
 
         // Check collision with each obstacle
-        for (size_t i = 0; i < obstacles.size(); ++i)
+        for (size_t i = 0; i < obstacle_poses.size(); ++i)
         {
-            if (checkCollision(ego_pose, obstacles[i], ego_vel, obstacle_vels[i]))
+            if (checkCollision(ego_pose, obstacle_poses[i], ego_vel, obstacle_vels[i]))
             {
                 collision = true;
                 break;
@@ -210,9 +218,31 @@ velocity VelocityObstacle::selectBestVelocity(const pose& ego_pose, const veloci
             return ego_vel;
         }
 
+        // Find the best alternative velocity
         else
         {
-            
+            for(const auto& candidate : generateCandidateVelocities(ego_vel))
+            {
+                bool candidate_collision = false;
+
+                for(size_t i = 0; i < obstacle_poses.size(); i++)
+                {
+                    if (checkCollision(ego_pose, obstacle_poses[i], candidate, obstacle_vels[i]))
+                    candidate_collision = true;
+                    break;
+                }
+
+                if (!candidate_collision) // the current candidate is not collide
+                {
+                    float cost = calculateCollisionCost(ego_pose, ego_vel, obstacle_poses, obstacle_vels, candidate, goal_point);
+
+                    if (cost < best_cost)
+                    {
+                        best_cost = cost;
+                        best_velocity = candidate;
+                    }
+                }
+            }
         }
     } 
 
