@@ -122,7 +122,7 @@ std::vector<velocity> VelocityObstacle::generateCandidateVelocities(const veloci
             delta_v.linear.x = i * max_acceleration * time_step;
             delta_v.linear.y = j * max_acceleration * time_step;
 
-            // Calculate the candidate velocity: candiate_velocity = ego_velocity + delta_v
+            // Calculate the candidate velocity: candidate_velocity = ego_velocity + delta_v
             candidate_velocity.linear.x = ego_vel.linear.x + delta_v.linear.x;
             candidate_velocity.linear.y = ego_vel.linear.y + delta_v.linear.y;
 
@@ -136,7 +136,7 @@ pose findNextGoalPoint(const std::vector<pose>& raceline, const pose& ego_pose)
 {
     int lookahead = 5;
     
-    if (raceline.empty()) return ego_pose; // falback if raceline is empty
+    if (raceline.empty()) return ego_pose; // fallback if raceline is empty
 
     // find the index of the closest point
     int closest_index = 0;
@@ -180,32 +180,42 @@ float VelocityObstacle::calculateCollisionCost(const velocity& ego_velocity, con
     return cost;
 }
 
-velocity VelocityObstacle::selectBestVelocity(const pose& ego_pose, const velocity& ego_vel, const std::vector<pose>& obstacles, const std::vector<velocity>& obstacle_vels) 
+velocity VelocityObstacle::selectBestVelocity(const pose& ego_pose, const velocity& ego_vel, const std::vector<pose>& obstacles, const std::vector<velocity>& obstacle_vels, const std::vector<pose>& raceline) 
 {
-    std::vector<velocity> candidate_velocities = generateCandidateVelocities(ego_vel);
-    std::vector<float> costs(candidate_velocities.size(), 0.0f);
+    // Generate candidate velocities
+    std::vector<velocity> candidates = generateCandidateVelocities(ego_vel);
 
-    for (size_t j = 0; j < candidate_velocities.size(); ++j) 
+    // Get goal point from raceline
+    pose goal_point = findNextGoalPoint(raceline, ego_pose);
+
+    float best_cost = std::numeric_limits<float>::max(); // Initialize with a large number
+    velocity best_velocity = ego_vel; // Default to current velocity
+
+    for (const auto& candidate : candidates)
     {
-        for (size_t i = 0; i < obstacles.size(); ++i) 
+        bool collision = false;
+
+        // Check collision with each obstacle
+        for (size_t i = 0; i < obstacles.size(); ++i)
+        {
+            if (checkCollision(ego_pose, obstacles[i], ego_vel, obstacle_vels[i]))
+            {
+                collision = true;
+                break;
+            }
+        }
+        
+        if (!collision) {
+            std::cout << "Current velocity is safe. Continuing.\n";
+            return ego_vel;
+        }
+
+        else
         {
             
         }
-    }
+    } 
 
-    int best_index = 0;
-    float min_cost = std::numeric_limits<float>::max();
-    for (size_t j = 0; j < candidate_velocities.size(); ++j) 
-    {
-        if (costs[j] < min_cost) 
-        {
-            min_cost = costs[j];
-            best_index = j;
-        }
-    }
-
-    std::cout << "Selected best velocity: (" << candidate_velocities[best_index].linear.x << ", " << candidate_velocities[best_index].linear.y << ")\n";
-    return candidate_velocities[best_index];
 }
 
 

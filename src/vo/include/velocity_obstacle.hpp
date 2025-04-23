@@ -41,7 +41,7 @@ class VelocityObstacle
     // Compute the VO-based cost for a velocity sample
     float VelocityObstacle::calculateCollisionCost(const velocity& ego_velocity, const velocity& obstacle_velocity, const velocity& candidate_velocity, const pose& obstacle_pose, const pose& ego_pose, const velocity& v_obstacle, const pose& goal_point);
     // Select best velocity sample by evaluating all samples over all obstacles
-    velocity selectBestVelocity(const pose& ego_pose, const velocity& ego_vel, const std::vector<pose>& obstacles, const std::vector<velocity>& obstacle_vels);
+    velocity selectBestVelocity(const pose& ego_pose, const velocity& ego_vel, const std::vector<pose>& obstacles, const std::vector<velocity>& obstacle_vels, const std::vector<pose>& raceline);
 
     // find the next point ont the trajectory
     pose findNextGoalPoint(const std::vector<pose>& raceline, const pose& ego_pose);
