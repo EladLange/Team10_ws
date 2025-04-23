@@ -5,6 +5,11 @@
 #include <limits>
 
 
+float r_r = 0.5;
+float r_o = 0.5;
+float r_total = r_r + r_o;
+float time_horizon = 3.0;
+
 VelocityObstacle::VelocityObstacle() 
 {
     // Empty constructor
@@ -64,7 +69,7 @@ bool VelocityObstacle::checkCollision(const pose& ego_pose, const pose& obstacle
 
     if (d <= r_total) {
         //std::cout << "Warning: Overlapping radii. Immediate collision." << std::endl;
-        return;
+        return true;
     }
 
     // finding theta
@@ -129,6 +134,7 @@ std::vector<velocity> VelocityObstacle::generateCandidateVelocities(const veloci
             possible_velocities.push_back(candidate_velocity);
         }
     }
+    return(possible_velocities);
 
 }
 
@@ -242,6 +248,7 @@ velocity VelocityObstacle::selectBestVelocity(const pose& ego_pose, const veloci
             }
         }
     } 
+    return ego_vel;
 
 }
 

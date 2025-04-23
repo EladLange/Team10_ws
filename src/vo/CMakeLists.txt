@@ -16,13 +16,13 @@ find_package(visualization_msgs REQUIRED)
 
 
 # Include directories for headers
-include_directories(include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Add executable and link libraries
 add_executable(car_simulation_node
   src/car_simulation_node.cpp
   src/car.cpp
-  src/Road.cpp
+  src/road.cpp
   src/drone_controller.cpp
 )
 

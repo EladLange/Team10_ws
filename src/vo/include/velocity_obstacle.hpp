@@ -9,10 +9,10 @@ using velocity = geometry_msgs::msg::Twist;
 constexpr float max_acceleration = 1.5f;
 constexpr float time_step = 0.1f;
 
-float r_r = 1.0;
-float r_o = 0.5;
-float r_total = r_r + r_o;
-float time_horizon = 5.0f;
+extern float r_r;
+extern float r_o;
+extern float r_total;
+extern float time_horizon;
 
 class VelocityObstacle
 {
