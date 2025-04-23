@@ -1,0 +1,16 @@
+Fixed Frame=map
+
+Displays:
+  - Name: Path
+    Type: nav_msgs/Path
+    Topic: /path
+    Color: 0.0; 1.0; 1.0
+
+  - Name: Pose
+    Type: geometry_msgs/PoseStamped
+    Topic: /current_pose
+    Color: 1.0; 1.0; 0.0
+
+  - Name: Marker
+    Type: visualization_msgs/Marker
+    Topic: /steering_marker
