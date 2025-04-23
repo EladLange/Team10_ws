@@ -14,9 +14,6 @@ float r_o = 0.5;
 float r_total = r_r + r_o;
 float time_horizon = 5.0f;
 
-
-
-
 class VelocityObstacle
 {
     private:
