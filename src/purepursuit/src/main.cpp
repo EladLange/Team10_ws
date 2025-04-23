@@ -77,11 +77,11 @@ std::pair<double, int> purePursuitControl(const State& state,
 
 // Update the vehicle's state based on current steering angle
 State update(State state, double delta) {
-    // Update x and y positions using bicycle model
+    // Update x and y positions using bicycle model <=============
     state.x += velocity * std::cos(state.yaw) * dt;
     state.y += velocity * std::sin(state.yaw) * dt;
 
-    // Update yaw using the kinematic bicycle model
+    // Update yaw using the kinematic bicycle model <=============
     state.yaw += velocity / L * std::tan(delta) * dt;
     return state;
 }
