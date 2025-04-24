@@ -6,13 +6,12 @@
 using pose = geometry_msgs::msg::Pose;
 using velocity = geometry_msgs::msg::Twist;
 
-constexpr float max_acceleration = 1.5f;
-constexpr float time_step = 0.1f;
-
 extern float r_r;
 extern float r_o;
 extern float r_total;
 extern float time_horizon;
+extern float max_acceleration;
+extern float time_step;
 
 class VelocityObstacle
 {

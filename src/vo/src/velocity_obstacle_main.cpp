@@ -1,4 +1,5 @@
 #include "velocity_obstacle.hpp"
+#include <iostream>
 
 //temp debugger
 int main() {
@@ -8,17 +9,39 @@ int main() {
     ego_pose.position.y = 0;
 
     pose obstacle_pose;
-    obstacle_pose.position.x = 3;
+    obstacle_pose.position.x = 0;
     obstacle_pose.position.y = 3;
 
-    
     velocity ego_velocity;
-    ego_velocity.linear.x = 3;
-    ego_velocity.linear.y = 2;
+    ego_velocity.linear.x = 1;
+    ego_velocity.linear.y = 1;
     
     velocity obstacle_velocity;
-    obstacle_velocity.linear.x = 0;
-    obstacle_velocity.linear.y = 0;
+    obstacle_velocity.linear.x = 1;
+    obstacle_velocity.linear.y = -1;
+
+    std::vector<pose> raceline(5);
+    // Initialize raceline points raceline = (0,0), (1,1), (2,2), (3,3), (4,4)
+    for (int i = 0; i < 5; ++i) {
+        raceline[i].position.x = i;
+        raceline[i].position.y = i;
+    }
+
+    // Test the checkCollision function
+    bool collision = vo.checkCollision(ego_pose, obstacle_pose, ego_velocity, obstacle_velocity);
+    if (collision) {
+        std::cout << "Collision detected!" << std::endl;
+    } else {
+        std::cout << "No collision." << std::endl;
+    }
+
+    // Test the selectBestVelocity function
+    std::vector<pose> obstacle_poses = {obstacle_pose};
+    std::vector<velocity> obstacle_velocities = {obstacle_velocity};
+
+    // Select the best velocity
+    velocity best_velocity = vo.selectBestVelocity(ego_pose, ego_velocity, obstacle_poses, obstacle_velocities, raceline);
+    std::cout << "Best velocity: (" << best_velocity.linear.x << ", " << best_velocity.linear.y << ")" << std::endl;
 
     return 0;
 }
