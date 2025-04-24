@@ -12,11 +12,10 @@
 
 using namespace std::chrono_literals;
 
-// Vehicle parameters
-const double L = 2.5;
-const double dt = 0.1;
-const double lookahead_distance = 5.0;
-const double velocity = 10.0;
+const double L = 3.0;
+const double dt = 0.01;
+const double lookahead_distance = 12.0;
+const double velocity = 15.0;
 
 struct State {
     double x;
@@ -27,32 +26,43 @@ struct State {
 class PurePursuitNode : public rclcpp::Node {
 public:
     PurePursuitNode() : Node("pure_pursuit_node") {
-        // Load path from file
-        loadPathFromCSV("/home/yonatan/Motion-Planning-Team10/src/purepursuit/src/path.csv", path_x_, path_y_);
+        loadPathFromCSV("/home/yonatan/Desktop/Team10_ws/src/purepursuit/src/Oval_Path_CSV.csv", path_x_, path_y_);
         if (path_x_.empty()) {
             RCLCPP_ERROR(this->get_logger(), "Path is empty or failed to load.");
             rclcpp::shutdown();
             return;
         }
 
-        // Initialize vehicle state
-        state_ = {path_x_[0], path_y_[0] - 3.0, 0.0};
-
-        // Publisher for the trajectory
+        desired_path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("desired_path", 10);
         path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("trajectory", 10);
+        vehicle_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("vehicle_pose", 10);
 
-        // Timer for simulation
-        timer_ = this->create_wall_timer(std::chrono::duration<double>(dt), std::bind(&PurePursuitNode::timerCallback, this));
+        nav_msgs::msg::Path desired_path;
+        desired_path.header.stamp = this->now();
+        desired_path.header.frame_id = "map";
+        for (size_t i = 0; i < path_x_.size(); ++i) {
+            geometry_msgs::msg::PoseStamped pose;
+            pose.header = desired_path.header;
+            pose.pose.position.x = path_x_[i];
+            pose.pose.position.y = path_y_[i];
+            pose.pose.orientation.w = 1.0;
+            desired_path.poses.push_back(pose);
+        }
+        desired_path_publisher_->publish(desired_path);
 
-        // Setup TF broadcaster
+        state_ = {path_x_[0], path_y_[0] -1.0, 0.0};
+
         tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
         broadcastStaticTF();
 
+        timer_ = this->create_wall_timer(std::chrono::duration<double>(dt), std::bind(&PurePursuitNode::timerCallback, this));
         RCLCPP_INFO(this->get_logger(), "Pure Pursuit node started.");
     }
 
 private:
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
+    rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr desired_path_publisher_;
+    rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr vehicle_pose_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
     std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
 
@@ -69,7 +79,6 @@ private:
         pose.header.frame_id = "map";
         pose.pose.position.x = state_.x;
         pose.pose.position.y = state_.y;
-        pose.pose.position.z = 0.0;
         pose.pose.orientation.w = 1.0;
 
         trajectory_.push_back(pose);
@@ -80,11 +89,9 @@ private:
         path_msg.poses = trajectory_;
 
         path_publisher_->publish(path_msg);
+        vehicle_pose_pub_->publish(pose);
 
-        if (state_.x > path_x_.back()) {
-            RCLCPP_INFO(this->get_logger(), "Trajectory finished.");
-            timer_->cancel();
-        }
+        RCLCPP_INFO(this->get_logger(), "Trajectory size: %lu | Pose (%.2f, %.2f)", trajectory_.size(), state_.x, state_.y);
     }
 
     void broadcastStaticTF() {
@@ -95,13 +102,9 @@ private:
         tf_msg.transform.translation.x = 0.0;
         tf_msg.transform.translation.y = 0.0;
         tf_msg.transform.translation.z = 0.0;
-        tf_msg.transform.rotation.x = 0.0;
-        tf_msg.transform.rotation.y = 0.0;
-        tf_msg.transform.rotation.z = 0.0;
         tf_msg.transform.rotation.w = 1.0;
 
         tf_broadcaster_->sendTransform(tf_msg);
-        RCLCPP_INFO(this->get_logger(), "Static TF map -> base_link published");
     }
 
     void loadPathFromCSV(const std::string& filename, std::vector<double>& path_x, std::vector<double>& path_y) {
@@ -112,7 +115,7 @@ private:
         }
 
         std::string line;
-        std::getline(file, line); // skip header
+        std::getline(file, line);
         while (std::getline(file, line)) {
             std::stringstream ss(line);
             std::string x_str, y_str;
@@ -125,12 +128,9 @@ private:
         }
     }
 
-    std::pair<double, int> purePursuitControl(const State& state,
-                                              const std::vector<double>& path_x,
-                                              const std::vector<double>& path_y) {
+    std::pair<double, int> purePursuitControl(const State& state, const std::vector<double>& path_x, const std::vector<double>& path_y) {
         double min_diff = std::numeric_limits<double>::max();
         size_t target_idx = 0;
-
         for (size_t i = 0; i < path_x.size(); ++i) {
             double dx = path_x[i] - state.x;
             double dy = path_y[i] - state.y;
@@ -141,7 +141,6 @@ private:
                 target_idx = i;
             }
         }
-
         double alpha = std::atan2(path_y[target_idx] - state.y, path_x[target_idx] - state.x) - state.yaw;
         double delta = std::atan2(2.0 * L * std::sin(alpha), lookahead_distance);
         return {delta, static_cast<int>(target_idx)};
