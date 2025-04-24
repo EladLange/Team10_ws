@@ -56,4 +56,17 @@
         </xacro:unless>
     </gazebo>
 
+    <gazebo>
+        <plugin filename="ignition-gazebo-joint-state-publisher-system" name="ignition::gazebo::systems::JointStatePublisher">
+            <topic>joint_states</topic>
+            <joint>steering_joint_fr</joint>
+            <joint>steering_joint_fl</joint>
+            <joint>FR_wheel_joint</joint>
+            <joint>FL_wheel_joint</joint>
+            <joint>RR_wheel_joint</joint>
+            <joint>RL_wheel_joint</joint>
+        </plugin>
+    </gazebo>
+
+
 </robot>

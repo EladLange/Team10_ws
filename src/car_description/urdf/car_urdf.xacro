@@ -32,7 +32,7 @@
                 <mesh filename="package://car_description/meshes/polygon_car.STL"/>
             </geometry>
             <material name="red">
-                <color rgba="1.0 0.0 0.0 0.7"/>
+                <color rgba="1.0 0.0 0.0 0.8"/>
             </material>
         </visual>
         <collision>
