@@ -19,11 +19,9 @@ find_package(visualization_msgs REQUIRED)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Add executable and link libraries
-add_executable(car_simulation_node
-  src/car_simulation_node.cpp
-  src/car.cpp
+add_executable(vo_simulation_node
+  src/vo_simulation_node.cpp
   src/road.cpp
-  src/drone_controller.cpp
 )
 
 add_executable(velocity_obstacle
@@ -34,7 +32,7 @@ add_executable(velocity_obstacle
 
 # Link required libraries
 ament_target_dependencies(
-  car_simulation_node
+  vo_simulation_node
   rclcpp
   geometry_msgs
   visualization_msgs
@@ -50,7 +48,7 @@ ament_target_dependencies(
 )
 
 # Install executable and other files
-install(TARGETS car_simulation_node
+install(TARGETS vo_simulation_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

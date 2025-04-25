@@ -231,68 +231,66 @@ velocity VelocityObstacle::selectBestVelocity(const pose& ego_pose, const veloci
     
     float best_cost = std::numeric_limits<float>::max(); // Initialize with a large number
     std::cout << "Best cost: " << best_cost << std::endl;
-    velocity best_velocity = ego_vel; // Default to current velocity
+    velocity best_velocity = 0; // Default to current velocity
 
-    for (const auto& candidate : candidates)
+    bool collision = false;
+
+    // Check collision with each obstacle
+    for (size_t i = 0; i < obstacle_poses.size(); ++i)
     {
-        bool collision = false;
-
-        // Check collision with each obstacle
-        for (size_t i = 0; i < obstacle_poses.size(); ++i)
+        if (checkCollision(ego_pose, obstacle_poses[i], ego_vel, obstacle_vels[i]))
         {
-            if (checkCollision(ego_pose, obstacle_poses[i], ego_vel, obstacle_vels[i]))
-            {
-                collision = true;
-                break;
-            }
+            collision = true;
+            break;
         }
-        
-        if (!collision) 
-        {
-            std::cout << "Current velocity is safe. Continuing.\n";
-            return ego_vel;
-        }
+    }
+    
+    if (!collision) 
+    {
+        std::cout << "Current velocity is safe. Continuing.\n";
+        return ego_vel;
+    }
 
-        // Find the best alternative velocity
-        else
+    // Find the best alternative velocity
+    else
+    {
+        pose obstacle_future_position;
+        velocity obstacle_future_velocity;
+        for(const auto& candidate : candidates)
         {
-            pose obstacle_future_position;
-            velocity obstacle_future_velocity;
-            for(const auto& candidate : candidates)
+            std::cout << std::endl;
+            bool candidate_collision = false;
+
+            for(size_t i = 0; i < obstacle_poses.size(); i++)
             {
-                std::cout << std::endl;
-                bool candidate_collision = false;
-
-                for(size_t i = 0; i < obstacle_poses.size(); i++)
+                // Check collision with the candidate velocity
+                obstacle_future_velocity.linear.x = obstacle_vels[i].linear.x + max_acceleration * time_step;
+                obstacle_future_velocity.linear.y = obstacle_vels[i].linear.y + max_acceleration * time_step;
+                if (checkCollision(ego_pose, obstacle_poses[i], candidate, obstacle_future_velocity)) 
                 {
-                    // Check collision with the candidate velocity
-                    obstacle_future_velocity.linear.x = obstacle_vels[i].linear.x + max_acceleration * time_step;
-                    obstacle_future_velocity.linear.y = obstacle_vels[i].linear.y + max_acceleration * time_step;
-                    if (checkCollision(ego_pose, obstacle_poses[i], candidate, obstacle_future_velocity)) 
-                    {
-                        candidate_collision = true;
-                        std::cout << "Candidate velocity collides with obstacle: " << i << std::endl;
-                        std::cout << "Candidate velocity collides with candidate: " << candidate.linear.x << ", " << candidate.linear.y << std::endl;
-                        break;
-                    }
+                    candidate_collision = true;
+                    std::cout << "Candidate velocity collides with obstacle: " << i << std::endl;
+                    std::cout << "Candidate velocity collides with candidate: " << candidate.linear.x << ", " << candidate.linear.y << std::endl;
+                    break;
                 }
+            }
 
-                if (!candidate_collision) // the current candidate is not collide
+            if (!candidate_collision) // the current candidate is not collide
+            {
+                std::cout << "Candidate velocity is safe. Continuing.\n";
+                float cost = calculateCollisionCost(ego_pose, ego_vel, obstacle_poses, obstacle_vels, candidate, goal_point);
+                std::cout << "Candidate velocity cost: " << cost << std::endl;
+                // Check if the cost is lower than the best cost
+                if (cost < best_cost)
                 {
-                    std::cout << "Candidate velocity is safe. Continuing.\n";
-                    float cost = calculateCollisionCost(ego_pose, ego_vel, obstacle_poses, obstacle_vels, candidate, goal_point);
-                    std::cout << "Candidate velocity cost: " << cost << std::endl;
-                    // Check if the cost is lower than the best cost
-                    if (cost < best_cost)
-                    {
-                        std::cout << "Found a better candidate velocity: " << candidate.linear.x << ", " << candidate.linear.y << std::endl;
-                        best_cost = cost;
-                        best_velocity = candidate;
-                    }
+                    std::cout << "Found a better candidate velocity: " << candidate.linear.x << ", " << candidate.linear.y << std::endl;
+                    best_cost = cost;
+                    best_velocity = candidate;
                 }
             }
         }
-    } 
+    }
+
     std::cout << "\nBest velocity found: (" << best_velocity.linear.x << ", " << best_velocity.linear.y << ") with cost: " << best_cost << std::endl;
     return best_velocity; // Return the best velocity found among the candidates
 }
