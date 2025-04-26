@@ -117,11 +117,11 @@ std::vector<velocity> VelocityObstacle::generateCandidateVelocities(const veloci
 {
     
     std::vector<velocity> possible_velocities;
-    float delta = max_acceleration * time_step;
     velocity delta_v;
     velocity candidate_velocity;
-    float angle_step = M_PI / 4.0f;  // 45 degrees = pi/4 radians 
-
+    
+    // float delta = max_acceleration * time_step;
+    // float angle_step = M_PI / 4.0f;  // 45 degrees = pi/4 radians 
     // Generate 9 sample velocities around the ego velocity
     // for (int i = 0; i < 8; i++)
     // {
@@ -170,7 +170,7 @@ pose  VelocityObstacle::findNextGoalPoint(const std::vector<pose>& raceline, con
     int closest_index = 0;
     float min_dist = std::numeric_limits<float>::max(); // large number
 
-    for (int i = 0; i < raceline.size(); i++)
+    for (size_t i = 0; i < raceline.size(); i++)
     {
         float dx = raceline[i].position.x - ego_pose.position.x;
         float dy = raceline[i].position.y - ego_pose.position.y;
@@ -215,8 +215,8 @@ float VelocityObstacle::calculateCollisionCost(const pose& ego_pose, const veloc
     float dy = goal_point.position.y - ego_pose.position.y;
 
     float dist_to_goal = std::sqrt(std::pow(dx,2) + std::pow(dy, 2));
-    float goal_seeking_cost =goal_seeling_wight * dist_to_goal; 
-    std::cout << "goal seeking cost cost: " << goal_seeking_cost << std::endl;
+    float goal_seeking_cost = goal_seeling_wight * dist_to_goal; 
+    std::cout << "goal seeking cost: " << goal_seeking_cost << std::endl;
     
     cost = obstacle_avoidance_cost + goal_seeking_cost + smoothness_cost;
 
@@ -231,7 +231,9 @@ velocity VelocityObstacle::selectBestVelocity(const pose& ego_pose, const veloci
     
     float best_cost = std::numeric_limits<float>::max(); // Initialize with a large number
     std::cout << "Best cost: " << best_cost << std::endl;
-    velocity best_velocity = 0; // Default to current velocity
+    velocity best_velocity; // Default to current velocity
+    best_velocity.linear.x = 0.0f;
+    best_velocity.linear.y = 0.0f;
 
     bool collision = false;
 
@@ -248,7 +250,7 @@ velocity VelocityObstacle::selectBestVelocity(const pose& ego_pose, const veloci
     if (!collision) 
     {
         std::cout << "Current velocity is safe. Continuing.\n";
-        return ego_vel;
+        best_velocity = ego_vel;
     }
 
     // Find the best alternative velocity

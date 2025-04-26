@@ -16,12 +16,14 @@ find_package(visualization_msgs REQUIRED)
 
 
 # Include directories for headers
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/vo)
 
 # Add executable and link libraries
 add_executable(vo_simulation_node
   src/vo_simulation_node.cpp
   src/road.cpp
+  src/drone_controller.cpp
+  src/car.cpp  
 )
 
 add_executable(velocity_obstacle
