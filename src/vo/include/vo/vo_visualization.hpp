@@ -3,4 +3,4 @@
 #include "settings.hpp"
 #include "car.hpp"
 
-void setVOConeMarker(vis_marker_arr& marker_array, const Car& car, const Car& obstacle, rclcpp::Time now, int car_index = 0, float r_total);
+void setVOConeMarker(geometry_msgs::msg::Point& ego_pos, geometry_msgs::msg::Point& obstacle_pos, double r_total);
