@@ -3,7 +3,7 @@
 DroneController::DroneController(const Road& road)
     : road_(road) {}
 
-void DroneController::control(Car& car, int lane_index) {
+void DroneController::control(Car& car) {
     geometry_msgs::msg::Twist vel;
     vel.linear.x = 10.0;  // Constant forward speed
     vel.linear.y = 0.0;

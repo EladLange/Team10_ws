@@ -21,9 +21,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/vo)
 # Add executable and link libraries
 add_executable(vo_simulation_node
   src/vo_simulation_node.cpp
+  src/road_visualization.cpp
   src/road.cpp
   src/drone_controller.cpp
   src/car.cpp  
+  src/velocity_visualization.cpp
+  src/vo_visualization.cpp
 )
 
 add_executable(velocity_obstacle

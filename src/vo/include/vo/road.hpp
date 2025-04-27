@@ -2,9 +2,7 @@
 
 #include <vector>
 #include <string>
-#include <geometry_msgs/msg/point.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <visualization_msgs/msg/marker.hpp>
+#include "settings.hpp"
 
 class Road {
 public:
@@ -16,7 +14,7 @@ public:
     int getNumLanes() const;
     //Get lane width
     double getLaneWidth() const;
-    //Get road lenght
+    //Get road length
     double getLength() const;
 
 private:
@@ -24,6 +22,6 @@ private:
     int num_lanes_;
     //Width of the lanes in meters
     double lane_width_;
-    //Road lenght in meters
+    //Road length in meters
     double length_;
 };

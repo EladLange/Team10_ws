@@ -1,8 +1,8 @@
 #pragma once
 
 #include <string>
-#include <geometry_msgs/msg/pose.hpp>
-#include <geometry_msgs/msg/twist.hpp>
+#include "settings.hpp"
+
 
 class Car {
 public:
@@ -21,7 +21,7 @@ public:
     void update(double dt);
     //Get car ID
     std::string getId() const;
-    //Optional- true if car is ego veihcle
+    //Optional- true if car is ego vehicle
     bool isControlled() const;
 
 private:
@@ -29,7 +29,7 @@ private:
     std::string id_;
     bool controlled_;
     //Car position & orientation
-    geometry_msgs::msg::Pose pose_;
+    pose_msg pose_;
     //Car linear & angular velocity
-    geometry_msgs::msg::Twist velocity_;
+    twist_msg velocity_;
 };

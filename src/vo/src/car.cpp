@@ -17,19 +17,19 @@ Car::Car(const std::string& id, bool is_controlled)
     velocity_.angular.z = 0.0;
 }
 
-void Car::setPose(const geometry_msgs::msg::Pose& pose) {
+void Car::setPose(const pose_msg& pose) {
     pose_ = pose;
 }
 
-void Car::setVelocity(const geometry_msgs::msg::Twist& vel) {
+void Car::setVelocity(const twist_msg& vel) {
     velocity_ = vel;
 }
 
-const geometry_msgs::msg::Pose& Car::getPose() const {
+const pose_msg& Car::getPose() const {
     return pose_;
 }
 
-const geometry_msgs::msg::Twist& Car::getVelocity() const {
+const twist_msg& Car::getVelocity() const {
     return velocity_;
 }
 

@@ -8,7 +8,7 @@ public:
     //Constructor
     DroneController(const Road& road);
     //Keeps car in the specified lane
-    void control(Car& car, int lane_index);
+    void control(Car& car);
 
 private:
     const Road& road_;
