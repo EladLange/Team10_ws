@@ -2,44 +2,67 @@
 
 <robot name="car" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+    <gazebo reference="base_link">
+        <pose>0 0 0 0 0 0</pose>
+    </gazebo>
+
+
     <gazebo reference="FR_wheel">
-        <mu1>1.0E14</mu1>
-        <mu2>1.0E14</mu2>
-        <kp>1.0E12</kp>
+        <mu1>1.0</mu1>
+        <mu2>1.0</mu2>
+        <kp>100000.0</kp>
         <kd>10.0</kd>
-        <minDepth>0.01</minDepth>
+        <minDepth>0.001</minDepth>
         <maxVel>10</maxVel>
         <fDir1>1 0 0</fDir1>
     </gazebo>
 
     <gazebo reference="FL_wheel">
-        <mu1>1.0E14</mu1>
-        <mu2>1.0E14</mu2>
-        <kp>1.0E12</kp>
+        <mu1>1.0</mu1>
+        <mu2>1.0</mu2>
+        <kp>100000.0</kp>
         <kd>10.0</kd>
-        <minDepth>0.01</minDepth>
+        <minDepth>0.001</minDepth>
         <maxVel>10</maxVel>
         <fDir1>1 0 0</fDir1>
     </gazebo>
 
     <gazebo reference="RR_wheel">
-        <mu1>1.0E14</mu1>
-        <mu2>1.0E14</mu2>
-        <kp>1.0E12</kp>
+        <mu1>1.0</mu1>
+        <mu2>1.0</mu2>
+        <kp>100000.0</kp>
         <kd>10.0</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>10</maxVel>
+        <fDir1>1 0 0</fDir1>
+    </gazebo>
+    
+    <gazebo reference="RR_wheel_joint">
+        <velocity>0.0</velocity> <!-- initial velocity -->
+        <damping>0.5</damping> <!-- helps stability -->
+        <maxVel>10.0</maxVel> <!-- limit -->
         <minDepth>0.01</minDepth>
+        <mu1>1.0</mu1>
+        <mu2>1.0</mu2>
+    </gazebo>
+
+    <gazebo reference="RL_wheel">
+        <mu1>1.0</mu1>
+        <mu2>1.0</mu2>
+        <kp>100000.0</kp>
+        <kd>10.0</kd>
+        <minDepth>0.001</minDepth>
         <maxVel>10</maxVel>
         <fDir1>1 0 0</fDir1>
     </gazebo>
 
-    <gazebo reference="RL_wheel">
-        <mu1>1.0E14</mu1>
-        <mu2>1.0E14</mu2>
-        <kp>1.0E12</kp>
-        <kd>10.0</kd>
+    <gazebo reference="RL_wheel_joint">
+        <velocity>0.0</velocity> <!-- initial velocity -->
+        <damping>0.5</damping> <!-- helps stability -->
+        <maxVel>10.0</maxVel> <!-- limit -->
         <minDepth>0.01</minDepth>
-        <maxVel>10</maxVel>
-        <fDir1>1 0 0</fDir1>
+        <mu1>1.0</mu1>
+        <mu2>1.0</mu2>
     </gazebo>
 
     <gazebo>

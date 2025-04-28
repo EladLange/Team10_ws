@@ -83,12 +83,12 @@
         <mass
             value="20" />
         <inertia
-            ixx="1.3014"
-            ixy="-2.1717E-12"
-            ixz="-1.7928E-12"
-            iyy="0.84577"
-            iyz="-6.4305E-12"
-            izz="0.84577" />
+            ixx="0.2"
+            ixy="0.0"
+            ixz="0.0"
+            iyy="0.4"
+            iyz="0.0"
+            izz="0.4" />
         </inertial>
         <visual>
             <origin xyz="-0.25 -0.15 -0.25" rpy="0.0  0.0 0"/>
@@ -148,12 +148,12 @@
             <mass
                 value="20" />
             <inertia
-                ixx="1.3014"
-                ixy="-2.1717E-12"
-                ixz="-1.7928E-12"
-                iyy="0.84577"
-                iyz="-6.4305E-12"
-                izz="0.84577" />
+            ixx="0.2"
+            ixy="0.0"
+            ixz="0.0"
+            iyy="0.4"
+            iyz="0.0"
+            izz="0.4" />
         </inertial>
         <visual>
             <origin xyz="-0.25 -0.15 -0.25" rpy="0.0  0.0 0"/>
@@ -188,13 +188,13 @@
                 rpy="1.5708 0.0 -1.5708" />
             <mass
                 value="20" />
-            <inertia
-                ixx="1.3014"
-                ixy="-2.1717E-12"
-                ixz="-1.7928E-12"
-                iyy="0.84577"
-                iyz="-6.4305E-12"
-                izz="0.84577" />
+             <inertia
+            ixx="0.2"
+            ixy="0.0"
+            ixz="0.0"
+            iyy="0.4"
+            iyz="0.0"
+            izz="0.4" />
         </inertial>
         <visual>
             <origin xyz="-0.25 -0.15 -0.25" rpy="0.0  0.0 0"/>
@@ -222,6 +222,17 @@
 
     </joint>
 
+    <transmission name="RR_wheel_trans">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="RR_wheel_joint">
+            <hardwareInterface>velocity</hardwareInterface>
+        </joint>
+        <actuator name="RR_wheel_motor">
+            <hardwareInterface>velocity</hardwareInterface>
+            <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+    </transmission>
+
     <link name="RL_wheel">
         <inertial>
             <origin
@@ -229,13 +240,13 @@
                 rpy="1.5708 0.0 -1.5708" />
             <mass
                 value="20" />
-            <inertia
-                ixx="1.3014"
-                ixy="-2.1717E-12"
-                ixz="-1.7928E-12"
-                iyy="0.84577"
-                iyz="-6.4305E-12"
-                izz="0.84577" />
+             <inertia
+            ixx="0.2"
+            ixy="0.0"
+            ixz="0.0"
+            iyy="0.4"
+            iyz="0.0"
+            izz="0.4" />
         </inertial>
         <visual>
             <origin xyz="-0.25 -0.15 -0.25" rpy="0.0  0.0 0"/>
@@ -262,6 +273,17 @@
         <origin xyz="-1.05 0.6 -0.5" rpy="0.0 0.0 0.0"/>              
 
     </joint>
+
+    <transmission name="RL_wheel_trans">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="RL_wheel_joint">
+            <hardwareInterface>velocity</hardwareInterface>
+        </joint>
+        <actuator name="RL_wheel_motor">
+            <hardwareInterface>velocity</hardwareInterface>
+            <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+    </transmission>
 
     
 </robot>

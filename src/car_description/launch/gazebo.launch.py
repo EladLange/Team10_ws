@@ -48,18 +48,28 @@ def generate_launch_description():
         ]      
     )
 
+    spawn_pose = DeclareLaunchArgument(
+        name="spawn_pose",
+        default_value="0.0 0.0 0.1",
+        description="Spawn pose as 'x y z' separated by spaces"
+    )
+
+    spawn_pose_value = LaunchConfiguration('spawn_pose')
+
     gz_spawn_entity = Node(
         package="ros_gz_sim",
         executable="create",
         output= "screen",
         arguments=["-entity","car",
                    "-topic", "robot_description",
-                   "-name", "Ego"]
+                   "-name", "Ego",
+                   "-pose", spawn_pose_value]
     )
 
 
     return LaunchDescription([
     model_arg,
+    spawn_pose,
     robot_state_publisher,
     gazebo_resource_path,
     gazebo,
