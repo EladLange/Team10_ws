@@ -9,17 +9,21 @@ controller_manager:
     ackermann_steering_controller:
       type: ackermann_steering_controller/AckermannSteeringController 
 
-      reference_timeout: 2.0
-      front_steering: true
-      open_loop: true
-      velocity_rolling_window_size: 10
-      position_feedback: false
-      use_stamped_vel: true
-      rear_wheels_names: ['RR_wheel_joint','RL_wheel_joint']
-      front_wheels_names: ['steering_joint_fr','steering_joint_fl']
-      wheelbase: 1.5
-      front_wheel_track: 1.2
-      rear_wheel_track: 1.2
-      front_wheels_radius: 0.25
-      rear_wheels_radius: 0.25
-      #traction_wheels_radius: 0.25
+ackermann_steering_controller:
+  ros__parameters:
+    reference_timeout: 2.0
+    in_chained_mode: false
+    front_steering: true
+    open_loop: true
+    velocity_rolling_window_size: 10
+    position_feedback: false
+    use_stamped_vel: true
+    rear_wheels_names: ['RR_wheel_joint','RL_wheel_joint']
+    front_wheels_names: ['steering_joint_fr','steering_joint_fl']
+    wheelbase: 1.5
+    front_wheel_track: 1.2
+    rear_wheel_track: 1.2
+    front_wheels_radius: 0.25
+    rear_wheels_radius: 0.25
+    #traction_wheels_radius: 0.25
+
