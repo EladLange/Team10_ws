@@ -17,8 +17,8 @@ using namespace std::chrono_literals;
 
 const double L = 2.5;
 const double dt = 0.01;
-const double lookahead_distance = 10.0;
-const double velocity = 40.0;
+const double lookahead_distance = 12.0;
+const double velocity = 10.0;
 
 struct State {
     double x, y, yaw;
@@ -27,7 +27,7 @@ struct State {
 class PurePursuitNode : public rclcpp::Node {
 public:
     PurePursuitNode() : Node("pure_pursuit_node") {
-        loadPathFromCSV("/home/yonatan/Desktop/Team10_ws/src/purepursuit/src/Oval_Path_CSV.csv", path_x_, path_y_);
+        loadPathFromCSV("/home/yonatan/Desktop/Team10_ws/src/purepursuit/src/yasMarina_path.csv", path_x_, path_y_);
         if (path_x_.empty()) {
             RCLCPP_ERROR(this->get_logger(), "Path failed to load.");
             rclcpp::shutdown();

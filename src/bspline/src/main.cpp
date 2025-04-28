@@ -114,7 +114,7 @@ PointList loadControlPointsFromCSV(const string& filename) {
  * and exports the results to a CSV file.
  */
 int main() {
-    PointList originalCP = loadControlPointsFromCSV("controlPoints.csv");
+    PointList originalCP = loadControlPointsFromCSV("YM_controlPoints.csv");
 
     // Add clamping (repeat endpoints 3 times)
     PointList controlPoints;
