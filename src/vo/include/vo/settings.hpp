@@ -14,3 +14,5 @@ using twist_msg = geometry_msgs::msg::Twist;
 
 using vis_marker = visualization_msgs::msg::Marker;
 using vis_marker_arr = visualization_msgs::msg::MarkerArray;
+
+using point_msg = geometry_msgs::msg::Point;

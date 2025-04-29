@@ -6,12 +6,9 @@
 
 
 // Global variables
-float r_r = 0.5;
-float r_o = 0.5;
-float r_total = r_r + r_o;
-float time_horizon = 3.0;
+float time_horizon = 10.0f;
 float max_acceleration = 1.0f;
-float time_step = 0.5f;
+float time_step = 0.1f;
 
 VelocityObstacle::VelocityObstacle() 
 {
@@ -30,7 +27,7 @@ float VelocityObstacle::getAngle(const pose_msg& s1, const pose_msg& s2)
     return angle;
 }
 
-float VelocityObstacle::getTheta(float d)
+float VelocityObstacle::getTheta(float d, float r_total)
 {
     float theta = asin(r_total/d);
     return theta;
@@ -64,7 +61,7 @@ float VelocityObstacle::normalizeAngle(float angle)
     return angle;
 }
 
-bool VelocityObstacle::checkCollision(const pose_msg& ego_pose, const pose_msg& obstacle_pose, const twist_msg& v_ego, const twist_msg& v_obstacle)
+bool VelocityObstacle::checkCollision(const pose_msg& ego_pose, const pose_msg& obstacle_pose, const twist_msg& v_ego, const twist_msg& v_obstacle, float r_total)
 {
     // finding distance between ego pose and obstacle pose 
     float d = VelocityObstacle::distance(ego_pose, obstacle_pose);
@@ -76,7 +73,7 @@ bool VelocityObstacle::checkCollision(const pose_msg& ego_pose, const pose_msg& 
     }
 
     // finding theta
-    float theta = VelocityObstacle::getTheta(d);
+    float theta = VelocityObstacle::getTheta(d, r_total);
     //std::cout<<"theta: "<<theta<<std::endl;
 
     // finding alpha angle
@@ -223,7 +220,7 @@ float VelocityObstacle::calculateCollisionCost(const pose_msg& ego_pose, const t
     return cost;
 }
 
-twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<pose_msg>& obstacle_poses, const std::vector<twist_msg>& obstacle_vels, const std::vector<pose_msg>& raceline) 
+twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<pose_msg>& obstacle_poses, const std::vector<twist_msg>& obstacle_vels, const std::vector<pose_msg>& raceline, float r_total) 
 {
     std::vector<twist_msg> candidates = generateCandidateVelocities(ego_vel); // Generate candidate velocities
     pose_msg goal_point = findNextGoalPoint(raceline, ego_pose); // Get goal point from raceline
@@ -240,7 +237,7 @@ twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const t
     // Check collision with each obstacle
     for (size_t i = 0; i < obstacle_poses.size(); ++i)
     {
-        if (checkCollision(ego_pose, obstacle_poses[i], ego_vel, obstacle_vels[i]))
+        if (checkCollision(ego_pose, obstacle_poses[i], ego_vel, obstacle_vels[i], r_total))
         {
             collision = true;
             break;
@@ -268,7 +265,7 @@ twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const t
                 // Check collision with the candidate velocity
                 obstacle_future_velocity.linear.x = obstacle_vels[i].linear.x + max_acceleration * time_step;
                 obstacle_future_velocity.linear.y = obstacle_vels[i].linear.y + max_acceleration * time_step;
-                if (checkCollision(ego_pose, obstacle_poses[i], candidate, obstacle_future_velocity)) 
+                if (checkCollision(ego_pose, obstacle_poses[i], candidate, obstacle_future_velocity, r_total)) 
                 {
                     candidate_collision = true;
                     std::cout << "Candidate velocity collides with obstacle: " << i << std::endl;

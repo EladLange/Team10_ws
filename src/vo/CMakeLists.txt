@@ -27,6 +27,7 @@ add_executable(vo_simulation_node
   src/car.cpp  
   src/velocity_visualization.cpp
   src/vo_visualization.cpp
+  src/velocity_obstacle.cpp
 )
 
 add_executable(velocity_obstacle

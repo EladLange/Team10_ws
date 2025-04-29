@@ -14,15 +14,6 @@ extern float time_step;
 class VelocityObstacle
 {
     private:
-    // calculate the angle between two points    
-    float distance(const pose_msg& s1, const pose_msg& s2);
-
-    // calculation theta: half angle of the cone 
-    float getTheta(float d);
-
-    // calculating angle between 2 points and x axis
-    float getAngle(const pose_msg& s1, const pose_msg& s2);
-
     // calculating beta: angle of v_relative
     float getBeta(const twist_msg& v_relative);
 
@@ -45,10 +36,19 @@ class VelocityObstacle
     // Constructor
     VelocityObstacle();
 
+    // calculate the angle between two points    
+    float distance(const pose_msg& s1, const pose_msg& s2);
+
+    // calculating angle between 2 points and x axis
+    float getAngle(const pose_msg& s1, const pose_msg& s2);
+
+    // calculation theta: half angle of the cone 
+    float getTheta(float d, float r_total);
+
     //implementation of the velocity obstacle
-    bool checkCollision(const pose_msg& ego_pose, const pose_msg& obstacle_pose, const twist_msg& v_ego, const twist_msg& v_obstacle);
+    bool checkCollision(const pose_msg& ego_pose, const pose_msg& obstacle_pose, const twist_msg& v_ego, const twist_msg& v_obstacle, float r_total);
 
     // Select best velocity sample by evaluating all samples over all obstacles
-    twist_msg selectBestVelocity(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<pose_msg>& obstacles_poses, const std::vector<twist_msg>& obstacle_vels, const std::vector<pose_msg>& raceline);
+    twist_msg selectBestVelocity(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<pose_msg>& obstacles_poses, const std::vector<twist_msg>& obstacle_vels, const std::vector<pose_msg>& raceline, float r_total);
 
 };
