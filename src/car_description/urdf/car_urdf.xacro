@@ -225,10 +225,10 @@
     <transmission name="RR_wheel_trans">
         <type>transmission_interface/SimpleTransmission</type>
         <joint name="RR_wheel_joint">
-            <hardwareInterface>velocity</hardwareInterface>
+            <hardwareInterface>VelocityJointInterface</hardwareInterface>
         </joint>
         <actuator name="RR_wheel_motor">
-            <hardwareInterface>velocity</hardwareInterface>
+            <hardwareInterface>VelocityJointInterface</hardwareInterface>
             <mechanicalReduction>1</mechanicalReduction>
         </actuator>
     </transmission>
@@ -277,10 +277,10 @@
     <transmission name="RL_wheel_trans">
         <type>transmission_interface/SimpleTransmission</type>
         <joint name="RL_wheel_joint">
-            <hardwareInterface>velocity</hardwareInterface>
+            <hardwareInterface>VelocityJointInterface</hardwareInterface>
         </joint>
         <actuator name="RL_wheel_motor">
-            <hardwareInterface>velocity</hardwareInterface>
+            <hardwareInterface>VelocityJointInterface</hardwareInterface>
             <mechanicalReduction>1</mechanicalReduction>
         </actuator>
     </transmission>
