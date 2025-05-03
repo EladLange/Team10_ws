@@ -44,9 +44,16 @@ bool Car::isControlled() const {
 void Car::update(double dt) {
     pose_.position.x += velocity_.linear.x * dt;
     pose_.position.y += velocity_.linear.y * dt;
-    if (pose_.position.x>100.0){
-    std::cout<<id_<<" Is out of bounds"<<"\n";//debug
-    pose_.position.x=0;
+    if (pose_.position.x < 0.0 || pose_.position.x > 200.0 || pose_.position.y < -4.5 || pose_.position.y > 4.5)
+    {
+        std::cout<<id_<<" is out of bounds"<<"\n";//debug
+        velocity_.linear.x = 0.0;
+        velocity_.linear.y = 0.0;
+
+        if (pose_.position.x < 0.0) pose_.position.x = 0.0;
+        if (pose_.position.x > 200.0) pose_.position.x = 200.0;
+        if (pose_.position.y < -4.5) pose_.position.y = -4.5;
+        if (pose_.position.y > 4.5) pose_.position.y = 4.5;
     }
     pose_.orientation.z+=velocity_.angular.z * dt;
 }

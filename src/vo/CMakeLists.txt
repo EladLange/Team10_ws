@@ -28,6 +28,7 @@ add_executable(vo_simulation_node
   src/velocity_visualization.cpp
   src/vo_visualization.cpp
   src/velocity_obstacle.cpp
+  src/raceline_visualization.cpp
 )
 
 add_executable(velocity_obstacle

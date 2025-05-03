@@ -17,17 +17,13 @@ class VelocityObstacle
     // calculating beta: angle of v_relative
     float getBeta(const twist_msg& v_relative);
 
-    // calculating v_relative
-    twist_msg getVrelative(const twist_msg& v_ego, const twist_msg& v_obstacle);
+    
 
     //normalize angle difference
     float normalizeAngle(float angle);
 
-    //Builds the 9 possible velocities the ego car could apply
-    std::vector<twist_msg> generateCandidateVelocities(const twist_msg& ego_vel);
-
     // Compute the VO-based cost for a velocity sample
-    float calculateCollisionCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<pose_msg>obstacle_poses,const std::vector<twist_msg>obstacle_vels, const twist_msg& candidate_velocity, const pose_msg& goal_point);    
+    float calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<pose_msg>obstacle_poses,const std::vector<twist_msg>obstacle_vels, const twist_msg& candidate_velocity, const pose_msg& goal_point);    
     
     // find the next point ont the trajectory
     pose_msg findNextGoalPoint(const std::vector<pose_msg>& raceline, const pose_msg& ego_pose);
@@ -44,6 +40,12 @@ class VelocityObstacle
 
     // calculation theta: half angle of the cone 
     float getTheta(float d, float r_total);
+
+    // calculating v_relative
+    twist_msg getVrelative(const twist_msg& v_ego, const twist_msg& v_obstacle);
+
+    //Builds the 9 possible velocities the ego car could apply
+    std::vector<twist_msg> generateCandidateVelocities(const twist_msg& ego_vel);
 
     //implementation of the velocity obstacle
     bool checkCollision(const pose_msg& ego_pose, const pose_msg& obstacle_pose, const twist_msg& v_ego, const twist_msg& v_obstacle, float r_total);

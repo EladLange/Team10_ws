@@ -42,9 +42,9 @@ void setLaneMarker(vis_marker& lane_marker, const Road& road, int lane_index, rc
     lane_marker.scale.y = 0.1;
 
     // Set line's color
-    lane_marker.color.r = 1.0;
-    lane_marker.color.g = 1.0;
-    lane_marker.color.b = 1.0;
+    lane_marker.color.r = 0.96;
+    lane_marker.color.g = 0.96;
+    lane_marker.color.b = 0.96;
     lane_marker.color.a = 1.0;
 
     // Set line's start and end points

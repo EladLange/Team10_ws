@@ -6,6 +6,7 @@
 #include "velocity_visualization.hpp"
 #include "vo_visualization.hpp"
 #include "velocity_obstacle.hpp"
+#include "raceline_visualization.hpp"
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -18,7 +19,7 @@ class CarSimulationNode : public rclcpp::Node {
 public:
     CarSimulationNode()
     : Node("car_simulation_node"),
-      road_(3, 3.0, 100.0), // 3 lanes, 3 meters wide, 100 meters long
+      road_(3, 3.0, 200.0), // 3 lanes, 3 meters wide, 100 meters long
       controller_(road_)
     {
         RCLCPP_INFO(this->get_logger(), "Starting car simulation...");
@@ -104,20 +105,7 @@ private:
         RCLCPP_INFO(this->get_logger(), "Ego car position: (%f, %f)", ego_pose.position.x, ego_pose.position.y);
         RCLCPP_INFO(this->get_logger(), "Ego car velocity: (%f, %f)", ego_vel.linear.x, ego_vel.linear.y);
 
-        // Define the raceline
-        // Straight line for now
-        std::vector<pose_msg> raceline;
-        // TODO!!!!!!!!!!! change it so it is equal t the first position of the car
-        // TODO!!!!!!!!!!!!! add a function that creates the raceline
-        // create a raceline with 100 points
-        for (int i = 0; i < 100; ++i) {
-            pose_msg point;
-            point.position.x = 10.0 + i * 1.0;
-            point.position.y = 0.0;
-            point.position.z = 0.2; 
-            raceline.push_back(point);
-        }
-        //////////////
+        std::vector<pose_msg> raceline = setRaceline();
 
         float r_total = calculateTotalRadius();
         twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, raceline, r_total);
@@ -160,6 +148,10 @@ private:
 
     void publishMarkers() {
         vis_marker_arr marker_array;
+
+        //raceline
+        std::vector<pose_msg> raceline = setRaceline();
+        visualizeRaceline(raceline, marker_array, this->now());
 
         // Drones
         int id = 0;
@@ -219,8 +211,8 @@ private:
         marker.pose = car.getPose();
         // Set the size of the marker to the car's size
         marker.scale = getCarScale();
-        // calculate r_total for the car and obstacle
-        float r_total = calculateTotalRadius();
+        // calculate r_total for the car and obstacle - maybe not needed
+        //float r_total = calculateTotalRadius();
 
         if (car.isControlled()) {
             marker.color.r = 0.91;
@@ -244,16 +236,16 @@ private:
         int id = 0;  // Marker ID counter
         auto ego_pose = controlled_car_->getPose();
         auto ego_vel = controlled_car_->getVelocity();
-
-        auto scale = getCarScale();
+        // check: maybe not needed  
+        //auto scale = getCarScale();
         float r_total = calculateTotalRadius();
         //RCLCPP_INFO(this->get_logger(), "Total radius: %f", r_total);
         
         for (const auto& drone : drones_) {
             auto obstacle_pose = drone->getPose();
             auto obstacle_vel = drone->getVelocity();
-
-            float dist = vo.distance(ego_pose, obstacle_pose);
+            // check - maybe not needed
+            //float dist = vo.distance(ego_pose, obstacle_pose);
             //RCLCPP_INFO(this->get_logger(), "Distance to drone: %f", dist);
             
             vis_marker cone_marker;
@@ -262,6 +254,16 @@ private:
             cone_marker.id = id++;
             marker_array.markers.push_back(cone_marker);
            // RCLCPP_INFO(this->get_logger(), "Number of points in cone marker: %zu", cone_marker.points.size());
+        }
+
+        // for debugging: show the candidate velocities
+        std::vector<twist_msg> candidate_velocities = vo.generateCandidateVelocities(ego_vel);
+        for (const auto& candidate_velocity : candidate_velocities) {
+            vis_marker candidate_marker;
+            // Set the properties of the candidate marker
+            setCandidateMarker(candidate_marker, ego_pose, candidate_velocity, r_total, 5.0);
+            candidate_marker.id = id++;
+            marker_array.markers.push_back(candidate_marker);
         }
 
         vo_marker_pub_->publish(marker_array);

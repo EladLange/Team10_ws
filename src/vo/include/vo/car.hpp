@@ -9,14 +9,14 @@ public:
     //Constructor
     Car(const std::string& id, bool is_controlled);
     //Set car position manually
-    void setPose(const geometry_msgs::msg::Pose& pose);
+    void setPose(const pose_msg& pose);
     //Set car velocity manually
-    void setVelocity(const geometry_msgs::msg::Twist& vel);
+    void setVelocity(const twist_msg& vel);
     
     //Get car position manually
-    const geometry_msgs::msg::Pose& getPose() const;
+    const pose_msg& getPose() const;
     //Get car velocity manually
-    const geometry_msgs::msg::Twist& getVelocity() const;
+    const twist_msg& getVelocity() const;
     //update car position (integration)
     void update(double dt);
     //Get car ID
