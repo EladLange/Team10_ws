@@ -1,22 +1,22 @@
 #include "raceline_visualization.hpp"
 #include <iostream>
 
-std::vector<pose_msg> setRaceline()
+std::vector<point_msg> setRaceline()
 {
-    std::vector<pose_msg> raceline;
+    std::vector<point_msg> raceline;
     // create a raceline with 100 straight points
     for (int i = 0; i < 100; ++i) 
     {
-        pose_msg point;
-        point.position.x = 10.0 + i * 1.0;
-        point.position.y = 0.0;
-        point.position.z = 0.2; 
+        point_msg point;
+        point.x = 10.0 + i * 1.0;
+        point.y = 0.0;
+        point.z = 0.2; 
         raceline.push_back(point);
     }
     return raceline;
 }
 
-void visualizeRaceline(const std::vector<pose_msg>& raceline, vis_marker_arr& marker_array, const rclcpp::Time& now)
+void visualizeRaceline(const std::vector<point_msg>& raceline, vis_marker_arr& marker_array, const rclcpp::Time& now)
 {
     vis_marker marker;
     marker.header.frame_id = "map";
@@ -35,9 +35,9 @@ void visualizeRaceline(const std::vector<pose_msg>& raceline, vis_marker_arr& ma
     marker.points.clear(); // Clear previous points
     for (const auto& point : raceline) {
         geometry_msgs::msg::Point p;
-        p.x = point.position.x;
-        p.y = point.position.y;
-        p.z = point.position.z;
+        p.x = point.x;
+        p.y = point.y;
+        p.z = point.z;
         marker.points.push_back(p);
     }
 

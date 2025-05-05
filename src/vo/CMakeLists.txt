@@ -33,11 +33,6 @@ add_executable(vo_simulation_node
   src/raceline_visualization.cpp
 )
 
-add_executable(velocity_obstacle
-  src/velocity_obstacle_main.cpp
-  src/velocity_obstacle.cpp
-)
-
 
 # Link required libraries
 ament_target_dependencies(
@@ -48,22 +43,8 @@ ament_target_dependencies(
   tf2_ros
 )
 
-ament_target_dependencies(
-  velocity_obstacle
-  rclcpp
-  geometry_msgs
-  visualization_msgs
-  tf2_ros
-  tf2
-  tf2_geometry_msgs
-)
-
 # Install executable and other files
 install(TARGETS vo_simulation_node
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-install(TARGETS velocity_obstacle
   DESTINATION lib/${PROJECT_NAME}
 )
 

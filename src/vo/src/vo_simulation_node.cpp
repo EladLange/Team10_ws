@@ -26,14 +26,14 @@ public:
 
         // Initialize cars
         controlled_car_ = std::make_shared<Car>("ego", true);
-        controlled_car_->setPose(makePose(20.0, 0.0));  // Center of first lane
+        controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
         controlled_car_->setVelocity(makeVel(2.0, 0.0));
 
         for (int i = 0; i < 1; ++i) {
             auto drone = std::make_shared<Car>("drone_" + std::to_string(i), false);
             //drone->setPose(makePose(15.0 + i * 3.0, 3));
-            drone->setPose(makePose(50, 0.0));
-            drone->setVelocity(makeVel(-2.0, 0.01));
+            drone->setPose(makePose(20, 1.0));
+            drone->setVelocity(makeVel(1.0, -0.1));
             drones_.push_back(drone);
         }
 
@@ -93,11 +93,6 @@ private:
             //RCLCPP_INFO(this->get_logger(), "Drone %zu position: (%f, %f)", i, drones_[i]->getPose().position.x, drones_[i]->getPose().position.y);
             //RCLCPP_INFO(this->get_logger(), "Drone %zu velocity: (%f, %f)", i, drones_[i]->getVelocity().linear.x, drones_[i]->getVelocity().linear.y);
         }
-
-        // For now, keep ego car static or add logic here later
-        // controlled_car_->update(dt);
-        // publishPose(*controlled_car_);
-        // publishTF(*controlled_car_, "map", controlled_car_->getId());
         
         // Get ego car's current pose and velocity
         auto ego_pose = controlled_car_->getPose();
@@ -106,7 +101,7 @@ private:
         //RCLCPP_INFO(this->get_logger(), "Ego car position: (%f, %f)", ego_pose.position.x, ego_pose.position.y);
         //RCLCPP_INFO(this->get_logger(), "Ego car velocity: (%f, %f)", ego_vel.linear.x, ego_vel.linear.y);
 
-        std::vector<pose_msg> raceline = setRaceline();
+        std::vector<point_msg> raceline = setRaceline();
         float r_total = calculateTotalRadius();
         twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, raceline, r_total);
         RCLCPP_INFO(this->get_logger(), "New ego car velocity: (%f, %f)", new_ego_velocity.linear.x, new_ego_velocity.linear.y);
@@ -157,7 +152,7 @@ private:
         vis_marker_arr marker_array;
 
         //raceline
-        std::vector<pose_msg> raceline = setRaceline();
+        std::vector<point_msg> raceline = setRaceline();
         visualizeRaceline(raceline, marker_array, this->now());
 
         // Drones
