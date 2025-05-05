@@ -47,15 +47,15 @@ public:
         }
 
         // ROS2 publishers for actual and desired paths, and visualization marker
-        path_pub_ = this->create_publisher<nav_msgs::msg::Path>("trajectory", 10);
-        desired_path_pub_ = this->create_publisher<nav_msgs::msg::Path>("desired_path", 10);
-        vehicle_marker_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("vehicle_marker", 10);
+        path_pub_ = this->create_publisher<nav_msgs::msg::Path>("trajectory", 10);   // Publisher for actual path
+        desired_path_pub_ = this->create_publisher<nav_msgs::msg::Path>("desired_path", 10);    // Publisher for planned path
+        vehicle_marker_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("vehicle_marker", 10);    // Marker pub
 
         // Create a broadcaster to publish robot's transform (for TF visualization)
-        tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+        tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);   // Create TF broadcaster
 
         // Create a periodic timer that triggers control loop every 10 milliseconds
-        timer_ = this->create_wall_timer(10ms, std::bind(&PurePursuitNode::onTimer, this));
+        timer_ = this->create_wall_timer(10ms, std::bind(&PurePursuitNode::onTimer, this)); // Set loop rate
 
         // Set initial robot position to first path point with yaw=0
         state_ = {path_x_[0], path_y_[0], 0.0};
@@ -83,12 +83,12 @@ private:
         std::string line;
         std::getline(file, line);  // Skip the header line
         while (std::getline(file, line)) {
-            std::stringstream ss(line);
+            std::stringstream ss(line); // Create string stream for parsing line
             std::string x_str, y_str;
-            std::getline(ss, x_str, ',');
-            std::getline(ss, y_str, ',');
-            path_x_.push_back(std::stod(x_str));
-            path_y_.push_back(std::stod(y_str));
+            std::getline(ss, x_str, ',');   // Extract x string
+            std::getline(ss, y_str, ',');   // Extract y string
+            path_x_.push_back(std::stod(x_str));    // Convert x to double
+            path_y_.push_back(std::stod(y_str));    // Convert y to double
         }
     }
 
@@ -96,26 +96,26 @@ private:
     // Calculates approximate curvature using 3 consecutive path points starting from index i
     // Uses triangle area formula (Heron’s) and side lengths to estimate how sharply the path turns
     double computeCurvature(size_t i) {
-        if (i + 2 >= path_x_.size()) return 0.0;  // Prevent out-of-range access
+        if (i + 2 >= path_x_.size()) return 0.0;  // Return 0 if fewer than 3 points left
 
         // Extract 3 points
-        double x1 = path_x_[i], y1 = path_y_[i];
-        double x2 = path_x_[i + 1], y2 = path_y_[i + 1];
-        double x3 = path_x_[i + 2], y3 = path_y_[i + 2];
+        double x1 = path_x_[i], y1 = path_y_[i];    // First point
+        double x2 = path_x_[i + 1], y2 = path_y_[i + 1];    // Second point
+        double x3 = path_x_[i + 2], y3 = path_y_[i + 2];    // Third point
 
         // Compute triangle side lengths
-        double a = std::hypot(x1 - x2, y1 - y2);
-        double b = std::hypot(x2 - x3, y2 - y3);
-        double c = std::hypot(x3 - x1, y3 - y1);
+        double a = std::hypot(x1 - x2, y1 - y2);    // Distance between p1-p2
+        double b = std::hypot(x2 - x3, y2 - y3);    // Distance between p2-p3
+        double c = std::hypot(x3 - x1, y3 - y1);    // Distance between p3-p1
 
         // Semi-perimeter
         double s = (a + b + c) / 2.0;
 
         // Area using Heron's formula
-        double area = std::sqrt(std::max(s * (s - a) * (s - b) * (s - c), 0.0));
+        double area = std::sqrt(std::max(s * (s - a) * (s - b) * (s - c), 0.0));    // Triangle area - Heron's formula
 
         // Return curvature = 4*area / (abc), add epsilon to avoid division by zero
-        return (4 * area) / (a * b * c + 1e-6);
+        return (4 * area) / (a * b * c + 1e-6); // Final curvaturev
     }
 
     // ========== PURE PURSUIT CONTROLLER ==========
@@ -123,38 +123,38 @@ private:
     std::pair<double, int> purePursuit(const State &state) {
         double L = 2.5;  // Wheelbase of the vehicle
         double base_lookahead = 8.0;  // Initial lookahead distance
-        double lookahead = base_lookahead;
+        double lookahead = base_lookahead;  // Initial lookahead
 
         // Step 1: Find the closest point on the path to the current vehicle position
         size_t closest_idx = 0;
         double min_dist = std::numeric_limits<double>::max();
         for (size_t i = 0; i < path_x_.size(); ++i) {
-            double dist = std::hypot(path_x_[i] - state.x, path_y_[i] - state.y);
+            double dist = std::hypot(path_x_[i] - state.x, path_y_[i] - state.y);   // Distance to path point
             if (dist < min_dist) {
                 min_dist = dist;
-                closest_idx = i;
+                closest_idx = i;    // Update closest point index
             }
         }
 
         // Step 2: Find the first point ahead at the lookahead distance
-        size_t target_idx = closest_idx;
+        size_t target_idx = closest_idx;    // Start with closest index
         for (size_t i = closest_idx; i < path_x_.size(); ++i) {
             double dist = std::hypot(path_x_[i] - state.x, path_y_[i] - state.y);
             if (dist >= lookahead) {
                 target_idx = i;
-                break;
+                break;  // Stop at first point further than lookahead
             }
         }
 
         // Step 3: Adapt lookahead distance based on curvature (tight curves → smaller lookahead)
-        double curvature = computeCurvature(target_idx);
-        lookahead = std::clamp(6.0 + 6.0 / (1.0 + std::abs(curvature)), 6.0, 20.0);
+        double curvature = computeCurvature(target_idx);    // Estimate curvature
+        lookahead = std::clamp(6.0 + 6.0 / (1.0 + std::abs(curvature)), 6.0, 20.0); // Adjust lookahead
 
         // Step 4: Compute steering angle using geometric relation
-        double alpha = std::atan2(path_y_[target_idx] - state.y, path_x_[target_idx] - state.x) - state.yaw;
-        double delta = std::atan2(2.0 * L * std::sin(alpha), lookahead);
+        double alpha = std::atan2(path_y_[target_idx] - state.y, path_x_[target_idx] - state.x) - state.yaw;    // Angle to target
+        double delta = std::atan2(2.0 * L * std::sin(alpha), lookahead);    // Pure pursuit formula
 
-        return {delta, static_cast<int>(target_idx)};  // Return result
+        return {delta, static_cast<int>(target_idx)};  // Return steering angle and index
     }
 
     // ========== TIMER CALLBACK ==========
@@ -167,23 +167,23 @@ private:
 
         // Create pose message from new state
         geometry_msgs::msg::PoseStamped pose;
-        pose.header.stamp = now();
-        pose.header.frame_id = "map";
-        pose.pose.position.x = state_.x;
-        pose.pose.position.y = state_.y;
-        pose.pose.position.z = 0.0;
+        pose.header.stamp = now();  // Timestamp
+        pose.header.frame_id = "map";   // Global frame
+        pose.pose.position.x = state_.x;    // Set x position
+        pose.pose.position.y = state_.y;    // Set y position
+        pose.pose.position.z = 0.0; // Set z position
 
         // Convert yaw angle to quaternion
         tf2::Quaternion q;
-        q.setRPY(0, 0, state_.yaw);
-        pose.pose.orientation = tf2::toMsg(q);
+        q.setRPY(0, 0, state_.yaw); // Convert yaw to quaternion
+        pose.pose.orientation = tf2::toMsg(q);  // Assign orientation
 
         // Publish actual path (trajectory traveled)
-        trajectory_.push_back(pose);
+        trajectory_.push_back(pose);    // Append to trajectory
         nav_msgs::msg::Path path_msg;
         path_msg.header = pose.header;
-        path_msg.poses = trajectory_;
-        path_pub_->publish(path_msg);
+        path_msg.poses = trajectory_;   // Set path
+        path_pub_->publish(path_msg);   // Publish trajectory
 
         // Publish desired path (planned path from file)
         nav_msgs::msg::Path desired_path;
@@ -198,7 +198,7 @@ private:
             p.pose.orientation.w = 1.0;  // Default orientation
             desired_path.poses.push_back(p);
         }
-        desired_path_pub_->publish(desired_path);
+        desired_path_pub_->publish(desired_path);   // Publish desired path
 
         // Publish RViz marker showing vehicle position and size
         visualization_msgs::msg::Marker marker;
@@ -208,7 +208,7 @@ private:
         marker.id = 0;
         marker.type = visualization_msgs::msg::Marker::CUBE;
         marker.action = visualization_msgs::msg::Marker::ADD;
-        marker.pose = pose.pose;
+        marker.pose = pose.pose;    // Current pose
         marker.scale.x = 2.5;  // Length of vehicle
         marker.scale.y = 1.0;  // Width
         marker.scale.z = 0.6;  // Height
@@ -217,7 +217,7 @@ private:
         marker.color.b = 1.0f;
         marker.color.a = 1.0f;
         marker.lifetime = rclcpp::Duration::from_seconds(0.1);  // Visible for short time
-        vehicle_marker_pub_->publish(marker);
+        vehicle_marker_pub_->publish(marker);   
 
         // Broadcast current transform for visualization
         geometry_msgs::msg::TransformStamped tf_msg;
@@ -228,7 +228,7 @@ private:
         tf_msg.transform.translation.y = state_.y;
         tf_msg.transform.translation.z = 0.0;
         tf_msg.transform.rotation = tf2::toMsg(q);
-        tf_broadcaster_->sendTransform(tf_msg);
+        tf_broadcaster_->sendTransform(tf_msg); // Broadcast transform
     }
 };
 
