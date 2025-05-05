@@ -1,24 +1,36 @@
 <?xml version="1.0"?>
 <package format="3">
+
+  <!-- Name of the ROS2 package -->
   <name>purepursuit_new</name>
+
+  <!-- Version number of the package -->
   <version>0.1.0</version>
+
+  <!-- Short description of the package -->
   <description>Modular Pure Pursuit implementation with pluggable vehicle models</description>
-  <maintainer email="your_email@example.com">Your Name</maintainer>
+
+  <!-- Maintainer contact information -->
+  <maintainer email="yonatan.rokach@msmail.ariel.ac.il">Your Name</maintainer>
+
+  <!-- License under which this package is released -->
   <license>MIT</license>
 
+  <!-- Required build tool (CMake for ament-based builds) -->
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <!-- Build dependencies -->
-  <depend>rclcpp</depend>
-  <depend>geometry_msgs</depend>
-  <depend>nav_msgs</depend>
-  <depend>visualization_msgs</depend>
-  <depend>tf2</depend>
-  <depend>tf2_ros</depend>
-  <depend>tf2_geometry_msgs</depend>
+  <!-- Runtime and build-time dependencies -->
+  <depend>rclcpp</depend>                   <!-- Core ROS2 client library -->
+  <depend>geometry_msgs</depend>            <!-- For Pose, Point, etc. -->
+  <depend>nav_msgs</depend>                 <!-- For Path messages -->
+  <depend>visualization_msgs</depend>       <!-- For RViz visualization markers -->
+  <depend>tf2</depend>                      <!-- Core transform library -->
+  <depend>tf2_ros</depend>                  <!-- TF broadcasting -->
+  <depend>tf2_geometry_msgs</depend>        <!-- TF2-geometry_msgs conversions -->
 
-  <!-- Export build system info -->
+  <!-- Export information for build system -->
   <export>
-    <build_type>ament_cmake</build_type>
+    <build_type>ament_cmake</build_type>    <!-- Specifies CMake as the build system -->
   </export>
+
 </package>
