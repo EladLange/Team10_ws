@@ -101,9 +101,9 @@ rviz2
         * Set the topic to */visualization_marker_array*
 3.  in the workspace:
 ```bash
- source the install setup file
+ source the install/setup file
  ```
 4. in Team10_ws:
 ```bash
-colcon build && ros2 run vo vo_simulation_node is
+colcon build && ros2 run vo vo_simulation_node 
 ```

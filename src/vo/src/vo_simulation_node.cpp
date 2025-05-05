@@ -26,7 +26,7 @@ public:
 
         // Initialize cars
         controlled_car_ = std::make_shared<Car>("ego", true);
-        controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
+        controlled_car_->setPose(makePose(20.0, 0.0));  // Center of first lane
         controlled_car_->setVelocity(makeVel(2.0, 0.0));
 
         for (int i = 0; i < 1; ++i) {
@@ -90,8 +90,8 @@ private:
             publishTF(*drones_[i], "map", drones_[i]->getId());
             obstacle_poses.push_back(drones_[i]->getPose());
             obstacle_velocities.push_back(drones_[i]->getVelocity());
-            RCLCPP_INFO(this->get_logger(), "Drone %zu position: (%f, %f)", i, drones_[i]->getPose().position.x, drones_[i]->getPose().position.y);
-            RCLCPP_INFO(this->get_logger(), "Drone %zu velocity: (%f, %f)", i, drones_[i]->getVelocity().linear.x, drones_[i]->getVelocity().linear.y);
+            //RCLCPP_INFO(this->get_logger(), "Drone %zu position: (%f, %f)", i, drones_[i]->getPose().position.x, drones_[i]->getPose().position.y);
+            //RCLCPP_INFO(this->get_logger(), "Drone %zu velocity: (%f, %f)", i, drones_[i]->getVelocity().linear.x, drones_[i]->getVelocity().linear.y);
         }
 
         // For now, keep ego car static or add logic here later
@@ -102,16 +102,23 @@ private:
         // Get ego car's current pose and velocity
         auto ego_pose = controlled_car_->getPose();
         auto ego_vel = controlled_car_->getVelocity();
-        RCLCPP_INFO(this->get_logger(), "Ego car position: (%f, %f)", ego_pose.position.x, ego_pose.position.y);
-        RCLCPP_INFO(this->get_logger(), "Ego car velocity: (%f, %f)", ego_vel.linear.x, ego_vel.linear.y);
+
+        //RCLCPP_INFO(this->get_logger(), "Ego car position: (%f, %f)", ego_pose.position.x, ego_pose.position.y);
+        //RCLCPP_INFO(this->get_logger(), "Ego car velocity: (%f, %f)", ego_vel.linear.x, ego_vel.linear.y);
 
         std::vector<pose_msg> raceline = setRaceline();
-
         float r_total = calculateTotalRadius();
         twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, raceline, r_total);
         RCLCPP_INFO(this->get_logger(), "New ego car velocity: (%f, %f)", new_ego_velocity.linear.x, new_ego_velocity.linear.y);
         // Set the new velocity for the ego car
         controlled_car_->setVelocity(new_ego_velocity);
+
+        // Update ego car's orientation based on the new velocity
+        double yaw = std::atan2(new_ego_velocity.linear.y, new_ego_velocity.linear.x);
+        tf2::Quaternion q;
+        q.setRPY(0, 0, yaw);
+        controlled_car_->setOrientation(q);
+        RCLCPP_INFO(this->get_logger(), "Ego car orientation: (%f, %f, %f, %f)", q.x(), q.y(), q.z(), q.w());
 
         // Update ego car's position based on the new velocity
         controlled_car_->update(dt);

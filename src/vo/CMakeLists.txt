@@ -10,6 +10,8 @@ find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 find_package(tf2_ros REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
@@ -52,6 +54,8 @@ ament_target_dependencies(
   geometry_msgs
   visualization_msgs
   tf2_ros
+  tf2
+  tf2_geometry_msgs
 )
 
 # Install executable and other files

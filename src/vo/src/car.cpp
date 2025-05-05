@@ -25,6 +25,13 @@ void Car::setVelocity(const twist_msg& vel) {
     velocity_ = vel;
 }
 
+void Car::setOrientation(const tf2::Quaternion& orientation) {
+    pose_.orientation.x = orientation.x();
+    pose_.orientation.y = orientation.y();
+    pose_.orientation.z = orientation.z();
+    pose_.orientation.w = orientation.w();
+}
+
 const pose_msg& Car::getPose() const {
     return pose_;
 }
