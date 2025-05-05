@@ -19,11 +19,11 @@
             <state_interface name="effort"/>
         </joint>
 
-        <!--
+        
         <joint name="FR_wheel_joint" type="continuous">
             <state_interface name="position"/>
         </joint>
-        -->
+        
         <joint name="steering_joint_fl" type="continuous">
             <command_interface name="position"/>
             <state_interface name="position"/>
@@ -31,11 +31,11 @@
             <state_interface name="effort"/>
         </joint>
 
-        <!--
+        
         <joint name="FL_wheel_joint" type="continuous">
             <state_interface name="position"/>
         </joint>
-        -->
+        
         <joint name="RR_wheel_joint" type="continuous">
             <command_interface name="velocity"/>
             <state_interface name="position"/>

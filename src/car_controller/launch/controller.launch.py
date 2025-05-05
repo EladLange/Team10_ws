@@ -38,8 +38,9 @@ def generate_launch_description():
         ]
     )
 
+
     return LaunchDescription([
-        control_node,
+         control_node,
         joint_state_broadcaster_spawner,
         ackermann_steering_controller
     ])
