@@ -136,7 +136,7 @@ private:
             }
         }
 
-        // Step 2: Find the first point ahead at the lookahead distance
+        // Step 2: Find the first point ahead at the lookahead distance     (Target piont)
         size_t target_idx = closest_idx;    // Start with closest index
         for (size_t i = closest_idx; i < path_x_.size(); ++i) {
             double dist = std::hypot(path_x_[i] - state.x, path_y_[i] - state.y);
@@ -148,22 +148,31 @@ private:
 
         // Step 3: Adapt lookahead distance based on curvature (tight curves → smaller lookahead)
         double curvature = computeCurvature(target_idx);    // Estimate curvature
-        lookahead = std::clamp(6.0 + 6.0 / (1.0 + std::abs(curvature)), 6.0, 20.0); // Adjust lookahead
+        lookahead = std::clamp(6.0 + 6.0 / (1.0 + std::abs(curvature)), 6.0, 20.0); // Adjust lookahead (range between 6[m] to 20[m])
 
         // Step 4: Compute steering angle using geometric relation
-        double alpha = std::atan2(path_y_[target_idx] - state.y, path_x_[target_idx] - state.x) - state.yaw;    // Angle to target
-        double delta = std::atan2(2.0 * L * std::sin(alpha), lookahead);    // Pure pursuit formula
-
+            // Compute the angle to the lookahead point:
+        double alpha = std::atan2(path_y_[target_idx] - state.y, path_x_[target_idx] - state.x) - state.yaw;    // alpha: angle from vehicle heading to the lookahead point
+            // Compute the steering angle using the Pure Pursuit formula:
+        double delta = std::atan2(2.0 * L * std::sin(alpha), lookahead);    // delta: desired steering angle (radians)
         return {delta, static_cast<int>(target_idx)};  // Return steering angle and index
+            /* alpha: The angle between the vehicle’s current heading and the vector pointing from the vehicle to the target lookahead point.
+                        positive alpha means the target is to the left of the heading.
+                        negative alpha means it's to the right.
+                delta: The desired steering angle computed using the Pure Pursuit formula, which assumes a bicycle kinematic model.
+                        It depends on alpha, the wheelbase (L), and the lookahead distance.
+            */
     }
 
     // ========== TIMER CALLBACK ==========
     // Called every 10ms: updates robot state, publishes trajectory and visualization
     void onTimer() {
+        double velocity = 100.0; // m/sec
+        double dt = 0.01;   // sec
         auto [delta, _] = purePursuit(state_);  // Get control command (steering)
 
         // Simulate vehicle motion based on model
-        state_ = vehicle_model_->update(state_, delta, 10.0, 0.01);  // velocity=10, dt=0.01s
+        state_ = vehicle_model_->update(state_, delta, velocity, dt);  // velocity=10, dt=0.01s
 
         // Create pose message from new state
         geometry_msgs::msg::PoseStamped pose;
@@ -218,6 +227,59 @@ private:
         marker.color.a = 1.0f;
         marker.lifetime = rclcpp::Duration::from_seconds(0.1);  // Visible for short time
         vehicle_marker_pub_->publish(marker);   
+
+
+        visualization_msgs::msg::Marker steering_arrow;
+        steering_arrow.header.frame_id = "map";
+        steering_arrow.header.stamp = now();
+        steering_arrow.ns = "steering";
+        steering_arrow.id = 1;
+        steering_arrow.type = visualization_msgs::msg::Marker::ARROW;
+        steering_arrow.action = visualization_msgs::msg::Marker::ADD;
+       // Define the start and end points of the arrow
+        geometry_msgs::msg::Point start, end;
+        start.x = state_.x;
+        start.y = state_.y;
+        start.z = 0.5;  // slightly above ground
+        // Compute the endpoint based on delta (steering angle) and velocity (arrow length)
+        double arrow_length = velocity * 0.2;  // scale length
+        end.x = start.x + arrow_length * std::cos(state_.yaw + delta);
+        end.y = start.y + arrow_length * std::sin(state_.yaw + delta);
+        end.z = 0.5;
+        steering_arrow.points.push_back(start);
+        steering_arrow.points.push_back(end);
+
+        // Set arrow appearance
+        steering_arrow.scale.x = 0.1;  // shaft diameter
+        steering_arrow.scale.y = 0.2;  // head diameter
+        steering_arrow.scale.z = 0.2;  // head length
+        steering_arrow.color.r = 1.0f;
+        steering_arrow.color.g = 0.0f;
+        steering_arrow.color.b = 0.0f;
+        steering_arrow.color.a = 1.0f;
+        steering_arrow.lifetime = rclcpp::Duration::from_seconds(0.1);  // persistent
+
+        vehicle_marker_pub_->publish(steering_arrow);
+        
+        visualization_msgs::msg::Marker text_marker;
+        text_marker.header.frame_id = "map";
+        text_marker.header.stamp = now();
+        text_marker.ns = "info";
+        text_marker.id = 2;
+        text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+        text_marker.action = visualization_msgs::msg::Marker::ADD;
+        text_marker.pose.position.x = state_.x;
+        text_marker.pose.position.y = state_.y;
+        text_marker.pose.position.z = 1.5;
+        text_marker.scale.z = 0.6;
+        text_marker.color.r = 1.0f;
+        text_marker.color.g = 1.0f;
+        text_marker.color.b = 1.0f;
+        text_marker.color.a = 1.0f;
+        text_marker.text = "v: " + std::to_string(velocity) + ", delta: " + std::to_string(delta);
+        text_marker.lifetime = rclcpp::Duration::from_seconds(0.1);
+        vehicle_marker_pub_->publish(text_marker);
+
 
         // Broadcast current transform for visualization
         geometry_msgs::msg::TransformStamped tf_msg;
