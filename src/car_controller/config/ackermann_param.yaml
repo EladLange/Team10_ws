@@ -13,16 +13,22 @@ controller_manager:
       type: velocity_controllers/JointGroupVelocityController
 
 
+velocity_controller:
+  ros__parameters:
+    joints:
+      - RR_wheel_joint
+      - RL_wheel_joint
 
 ackermann_steering_controller:
   ros__parameters:
     reference_timeout: 2.0
-    in_chained_mode: false
+    in_chained_mode: true
     front_steering: true
-    open_loop: true
+    open_loop: false
     velocity_rolling_window_size: 10
     position_feedback: false
     use_stamped_vel: false
+    base_frame_id: 'base_footprint'
     rear_wheels_names: ['RR_wheel_joint','RL_wheel_joint']
     front_wheels_names: ['steering_joint_fr','steering_joint_fl']
     wheelbase: 1.55
@@ -30,5 +36,5 @@ ackermann_steering_controller:
     rear_wheel_track: 1.2
     front_wheels_radius: 0.25
     rear_wheels_radius: 0.25
-    #traction_wheels_radius: 0.25
+
 
