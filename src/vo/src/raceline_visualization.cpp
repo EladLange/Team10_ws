@@ -1,5 +1,7 @@
 #include "raceline_visualization.hpp"
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 std::vector<point_msg> setRaceline()
 {
@@ -13,6 +15,9 @@ std::vector<point_msg> setRaceline()
         point.z = 0.2; 
         raceline.push_back(point);
     }
+
+    
+
     return raceline;
 }
 

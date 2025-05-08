@@ -26,16 +26,20 @@ public:
 
         // Initialize cars
         controlled_car_ = std::make_shared<Car>("ego", true);
-        controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
-        controlled_car_->setVelocity(makeVel(2.0, 0.0));
+        controlled_car_->setPose(makePose(30.0, 0.0));  // Center of first lane
+        controlled_car_->setVelocity(makeVel(1.0, 0.0));
 
-        for (int i = 0; i < 1; ++i) {
-            auto drone = std::make_shared<Car>("drone_" + std::to_string(i), false);
-            //drone->setPose(makePose(15.0 + i * 3.0, 3));
-            drone->setPose(makePose(20, 1.0));
-            drone->setVelocity(makeVel(1.0, -0.1));
-            drones_.push_back(drone);
-        }
+        // First obstacle 
+        auto drone0 = std::make_shared<Car>("drone_0", false);
+        drone0->setPose(makePose(20.0, 1.0));
+        drone0->setVelocity(makeVel(6.0, 0.0));
+        drones_.push_back(drone0);
+
+        // Second obstacle
+        auto drone1 = std::make_shared<Car>("done_1", false);
+        drone1->setPose(makePose(19.0, 0.0));
+        drone1->setVelocity(makeVel(-0.8, 0.0));
+        drones_.push_back(drone1);
 
         pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("car_pose", 10);
         marker_pub_ = this->create_publisher<vis_marker_arr>("visualization_marker_array", 10);
@@ -196,7 +200,7 @@ private:
     float calculateTotalRadius() {
         auto scale = getCarScale();
         float r_ego = 0.5f * std::sqrt(std::pow(scale.x, 2) + std::pow(scale.y, 2));
-        float r_obstacle = r_ego;  // If same size for obstacles, otherwise pass different scale
+        float r_obstacle = r_ego;  
         return r_ego + r_obstacle;
     }
    
@@ -258,15 +262,15 @@ private:
            // RCLCPP_INFO(this->get_logger(), "Number of points in cone marker: %zu", cone_marker.points.size());
         }
 
-        // for debugging: show the candidate velocities
-        std::vector<twist_msg> candidate_velocities = vo.generateCandidateVelocities(ego_vel);
-        for (const auto& candidate_velocity : candidate_velocities) {
-            vis_marker candidate_marker;
-            // Set the properties of the candidate marker
-            setCandidateMarker(candidate_marker, ego_pose, candidate_velocity, r_total, 5.0);
-            candidate_marker.id = id++;
-            marker_array.markers.push_back(candidate_marker);
-        }
+        //for debugging: show the candidate velocities
+        // std::vector<twist_msg> candidate_velocities = vo.generateCandidateVelocities(ego_vel);
+        // for (const auto& candidate_velocity : candidate_velocities) {
+        //     vis_marker candidate_marker;
+        //     // Set the properties of the candidate marker
+        //     setCandidateMarker(candidate_marker, ego_pose, candidate_velocity, r_total, 5.0);
+        //     candidate_marker.id = id++;
+        //     marker_array.markers.push_back(candidate_marker);
+        // }
 
         vo_marker_pub_->publish(marker_array);
         //RCLCPP_INFO(this->get_logger(), "Published %zu markers", marker_array.markers.size());
