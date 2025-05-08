@@ -17,6 +17,7 @@
 #include "types.hpp"  // Defines struct State (x, y, yaw)
 #include "vehicle_model_base.hpp"  // Base interface for vehicle models
 #include "bicycle_model.hpp"  // Concrete bicycle model implementation
+#include "ackermann_model.hpp"  // Concrete ackermann model implementation
 
 // Standard library includes
 #include <vector>  // For storing path points
@@ -34,10 +35,12 @@ public:
     // Constructor – Initializes publishers, timer, path and initial state
     PurePursuitNode() : Node("pure_pursuit_node") {
         // Create a bicycle kinematic model with wheelbase 2.5 meters
-        vehicle_model_ = std::make_unique<BicycleModel>(2.5);
+        vehicle_model_ = std::make_unique<BicycleModel>(2.5); // Bicycle
+        // // Create a ackermann kinematic model with wheelbase 2.5 meters
+        // vehicle_model_ = std::make_unique<AckermannModel>(2.5);   // Ackermann
 
         // Load path from CSV file (list of x,y coordinates)
-        loadPath("/home/yonatan/Desktop/Team10_ws/src/purepursuit_new/track/yasMarina_path.csv");
+        loadPath("/home/yonatan/Desktop/Team10_ws/src/purepursuit_new/track/Oval_path.csv");
 
         // Check if path was successfully loaded
         if (path_x_.empty() || path_y_.empty()) {
@@ -122,7 +125,7 @@ private:
     // Main control logic to compute required steering angle using lookahead target
     std::pair<double, int> purePursuit(const State &state) {
         double L = 2.5;  // Wheelbase of the vehicle
-        double base_lookahead = 8.0;  // Initial lookahead distance
+        double base_lookahead = 4.0;  // Initial lookahead distance
         double lookahead = base_lookahead;  // Initial lookahead
 
         // Step 1: Find the closest point on the path to the current vehicle position
@@ -148,7 +151,7 @@ private:
 
         // Step 3: Adapt lookahead distance based on curvature (tight curves → smaller lookahead)
         double curvature = computeCurvature(target_idx);    // Estimate curvature
-        lookahead = std::clamp(6.0 + 6.0 / (1.0 + std::abs(curvature)), 6.0, 20.0); // Adjust lookahead (range between 6[m] to 20[m])
+        lookahead = std::clamp(2.0 + 2.0 / (1.0 + std::abs(curvature)), 2.0, 7.0); // Adjust lookahead (range between 6[m] to 20[m])
 
         // Step 4: Compute steering angle using geometric relation
             // Compute the angle to the lookahead point:
@@ -167,7 +170,7 @@ private:
     // ========== TIMER CALLBACK ==========
     // Called every 10ms: updates robot state, publishes trajectory and visualization
     void onTimer() {
-        double velocity = 100.0; // m/sec
+        double velocity = 60.0; // m/sec
         double dt = 0.01;   // sec
         auto [delta, _] = purePursuit(state_);  // Get control command (steering)
 
@@ -228,57 +231,54 @@ private:
         marker.lifetime = rclcpp::Duration::from_seconds(0.1);  // Visible for short time
         vehicle_marker_pub_->publish(marker);   
 
-
-        visualization_msgs::msg::Marker steering_arrow;
-        steering_arrow.header.frame_id = "map";
-        steering_arrow.header.stamp = now();
-        steering_arrow.ns = "steering";
-        steering_arrow.id = 1;
-        steering_arrow.type = visualization_msgs::msg::Marker::ARROW;
-        steering_arrow.action = visualization_msgs::msg::Marker::ADD;
-       // Define the start and end points of the arrow
-        geometry_msgs::msg::Point start, end;
-        start.x = state_.x;
-        start.y = state_.y;
-        start.z = 0.5;  // slightly above ground
-        // Compute the endpoint based on delta (steering angle) and velocity (arrow length)
-        double arrow_length = velocity * 0.2;  // scale length
-        end.x = start.x + arrow_length * std::cos(state_.yaw + delta);
-        end.y = start.y + arrow_length * std::sin(state_.yaw + delta);
-        end.z = 0.5;
-        steering_arrow.points.push_back(start);
-        steering_arrow.points.push_back(end);
-
-        // Set arrow appearance
-        steering_arrow.scale.x = 0.1;  // shaft diameter
-        steering_arrow.scale.y = 0.2;  // head diameter
-        steering_arrow.scale.z = 0.2;  // head length
-        steering_arrow.color.r = 1.0f;
-        steering_arrow.color.g = 0.0f;
-        steering_arrow.color.b = 0.0f;
-        steering_arrow.color.a = 1.0f;
-        steering_arrow.lifetime = rclcpp::Duration::from_seconds(0.1);  // persistent
-
-        vehicle_marker_pub_->publish(steering_arrow);
+    //     visualization_msgs::msg::Marker steering_arrow;
+    //     steering_arrow.header.frame_id = "map";
+    //     steering_arrow.header.stamp = now();
+    //     steering_arrow.ns = "steering";
+    //     steering_arrow.id = 1;
+    //     steering_arrow.type = visualization_msgs::msg::Marker::ARROW;
+    //     steering_arrow.action = visualization_msgs::msg::Marker::ADD;
+    //    // Define the start and end points of the arrow
+    //     geometry_msgs::msg::Point start, end;
+    //     start.x = state_.x;
+    //     start.y = state_.y;
+    //     start.z = 0.5;  // slightly above ground
+    //     // Compute the endpoint based on delta (steering angle) and velocity (arrow length)
+    //     double arrow_length = velocity * 0.2;  // scale length
+    //     end.x = start.x + arrow_length * std::cos(state_.yaw + delta);
+    //     end.y = start.y + arrow_length * std::sin(state_.yaw + delta);
+    //     end.z = 0.5;
+    //     steering_arrow.points.push_back(start);
+    //     steering_arrow.points.push_back(end);
+    //     // Set arrow appearance
+    //     steering_arrow.scale.x = 0.1;  // shaft diameter
+    //     steering_arrow.scale.y = 0.2;  // head diameter
+    //     steering_arrow.scale.z = 0.2;  // head length
+    //     steering_arrow.color.r = 1.0f;
+    //     steering_arrow.color.g = 0.0f;
+    //     steering_arrow.color.b = 0.0f;
+    //     steering_arrow.color.a = 1.0f;
+    //     steering_arrow.lifetime = rclcpp::Duration::from_seconds(0.1);  // persistent
+    //     vehicle_marker_pub_->publish(steering_arrow);
         
-        visualization_msgs::msg::Marker text_marker;
-        text_marker.header.frame_id = "map";
-        text_marker.header.stamp = now();
-        text_marker.ns = "info";
-        text_marker.id = 2;
-        text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-        text_marker.action = visualization_msgs::msg::Marker::ADD;
-        text_marker.pose.position.x = state_.x;
-        text_marker.pose.position.y = state_.y;
-        text_marker.pose.position.z = 1.5;
-        text_marker.scale.z = 0.6;
-        text_marker.color.r = 1.0f;
-        text_marker.color.g = 1.0f;
-        text_marker.color.b = 1.0f;
-        text_marker.color.a = 1.0f;
-        text_marker.text = "v: " + std::to_string(velocity) + ", delta: " + std::to_string(delta);
-        text_marker.lifetime = rclcpp::Duration::from_seconds(0.1);
-        vehicle_marker_pub_->publish(text_marker);
+        // visualization_msgs::msg::Marker text_marker;
+        // text_marker.header.frame_id = "map";
+        // text_marker.header.stamp = now();
+        // text_marker.ns = "info";
+        // text_marker.id = 2;
+        // text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+        // text_marker.action = visualization_msgs::msg::Marker::ADD;
+        // text_marker.pose.position.x = state_.x;
+        // text_marker.pose.position.y = state_.y;
+        // text_marker.pose.position.z = 1.5;
+        // text_marker.scale.z = 0.6;
+        // text_marker.color.r = 1.0f;
+        // text_marker.color.g = 1.0f;
+        // text_marker.color.b = 1.0f;
+        // text_marker.color.a = 1.0f;
+        // text_marker.text = "v: " + std::to_string(velocity) + ", delta: " + std::to_string(delta);
+        // text_marker.lifetime = rclcpp::Duration::from_seconds(0.1);
+        // vehicle_marker_pub_->publish(text_marker);
 
 
         // Broadcast current transform for visualization
