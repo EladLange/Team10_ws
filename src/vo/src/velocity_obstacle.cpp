@@ -7,7 +7,7 @@
 
 
 // Global variables
-float time_horizon = 5.0f;
+float time_horizon = 10.0f;
 float max_acceleration = 0.4f;
 float time_step = 1.0f;
 
@@ -214,7 +214,7 @@ float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const t
     // cost function constant
     float obstacle_avoidance_weight = 50.0f;
     float goal_seeling_weight = 100.0f;
-    float smoothness_weight = 100.0f;
+    float smoothness_weight = 55.0f;
     
     // Obstacle avoidance 
     pose_msg ego_future_position;
