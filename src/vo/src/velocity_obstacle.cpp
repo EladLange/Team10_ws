@@ -7,8 +7,8 @@
 
 
 // Global variables
-float time_horizon = 3.0f;
-float max_acceleration = 5.0f;
+float time_horizon = 5.0f;
+float max_acceleration = 0.4f;
 float time_step = 1.0f;
 
 VelocityObstacle::VelocityObstacle() 
@@ -181,7 +181,7 @@ point_msg  VelocityObstacle::findNextGoalPoint(const std::vector<point_msg>& rac
         }
     }  
     
-    // Compute the lookagad distance
+    // Compute the lookahead distance
     int lookahead_index = closest_index + lookahead_step;
 
     // Clamp to raceline size
@@ -212,9 +212,9 @@ float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const t
 
     float cost = 0.0f;
     // cost function constant
-    float obstacle_avoidance_weight = 0.0f;
+    float obstacle_avoidance_weight = 50.0f;
     float goal_seeling_weight = 100.0f;
-    float smoothness_weight = 10.0f;
+    float smoothness_weight = 100.0f;
     
     // Obstacle avoidance 
     pose_msg ego_future_position;

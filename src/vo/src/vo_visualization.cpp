@@ -75,7 +75,7 @@ void setVOConeMarker(vis_marker &cone_marker, const pose_msg& ego_pos, const pos
 
     else 
     {
-        //if (vo.checkCollision(ego_pos, obstacle_pos, ego_vel, obstacle_vel, r_total))
+        if (vo.checkCollision(ego_pos, obstacle_pos, ego_vel, obstacle_vel, r_total) || vo.distance(ego_pos, obstacle_pos) < 4.0)   
         {
             float alpha = vo.getAngle(ego_pos, obstacle_pos);
             float theta = vo.getTheta(dist, r_total);

@@ -7,7 +7,7 @@
 class Road {
 public:
     //Constructor
-    Road(int num_lanes, double lane_width, double length);
+    Road(int num_lanes, double lane_width, double length, double radius = 0.0);
 
     std::vector<double> getLaneCenterlines() const;
     //Get number of lanes
@@ -16,6 +16,8 @@ public:
     double getLaneWidth() const;
     //Get road length
     double getLength() const;
+    // Get road radius
+    double getRadius() const;
 
 private:
     //Number of lanes in the road
@@ -24,4 +26,6 @@ private:
     double lane_width_;
     //Road length in meters
     double length_;
+    //Road radius in meters
+    double radius_;
 };

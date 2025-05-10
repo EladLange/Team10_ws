@@ -1,7 +1,7 @@
 #include "road.hpp"
 
-Road::Road(int num_lanes, double lane_width, double length)
-    : num_lanes_(num_lanes), lane_width_(lane_width), length_(length) {}
+Road::Road(int num_lanes, double lane_width, double length, double radius)
+    : num_lanes_(num_lanes), lane_width_(lane_width), length_(length), radius_(radius) {}
 
 std::vector<double> Road::getLaneCenterlines() const {
     std::vector<double> lanes;
@@ -21,4 +21,8 @@ double Road::getLaneWidth() const {
 
 double Road::getLength() const {
     return length_;
+}
+
+double Road::getRadius() const{
+    return radius_;
 }
