@@ -1,5 +1,6 @@
 #include "vo_visualization.hpp"
 #include "velocity_obstacle.hpp"
+#include "global_variables.hpp"
 #include <iostream>
 
 

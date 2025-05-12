@@ -1,6 +1,7 @@
 #pragma once
 
 #include "settings.hpp"
+#include "global_variables.hpp"
 
 // Struct to hold the center and radius of the disk
 struct VelocityDisk

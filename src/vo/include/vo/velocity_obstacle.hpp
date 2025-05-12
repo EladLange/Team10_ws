@@ -12,13 +12,6 @@ extern float max_acceleration;
 extern float time_step;
 
 
-// Global variables
-float time_horizon = 10.0f;
-float max_acceleration = 0.4f;
-float min_acceleration = -3.0f;
-float time_step = 1.0f;
-float delta_t = 0.1f;
-
 class VelocityObstacle
 {
     private:

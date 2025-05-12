@@ -7,6 +7,7 @@
 #include "vo_visualization.hpp"
 #include "velocity_obstacle.hpp"
 #include "raceline_visualization.hpp"
+#include "global_variables.hpp"
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -14,6 +15,13 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 
 VelocityObstacle vo;
+
+// Global variables
+float time_horizon = 10.0f;
+float max_acceleration = 0.4f;
+float min_acceleration = -3.0f;
+float time_step = 1.0f;
+float delta_t = 0.1f;
 
 class CarSimulationNode : public rclcpp::Node {
 public:
