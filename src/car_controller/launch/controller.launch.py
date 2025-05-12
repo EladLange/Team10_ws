@@ -51,7 +51,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         control_node,
-        # velocity_controller,
+        velocity_controller,
         joint_state_broadcaster_spawner,
         ackermann_steering_controller
     ])
