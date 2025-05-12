@@ -18,6 +18,11 @@
   <exec_depend condition="$ROS_DISTRO==humble">ign_ros2_control</exec_depend>
   <exec_depend>car_controller</exec_depend>
 
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>eigen</depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
