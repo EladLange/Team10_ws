@@ -6,11 +6,6 @@
 
 
 
-// Global variables
-float time_horizon = 10.0f;
-float max_acceleration = 0.4f;
-float time_step = 1.0f;
-
 VelocityObstacle::VelocityObstacle() 
 {
     // Empty constructor
@@ -97,9 +92,14 @@ bool VelocityObstacle::checkCollision(const pose_msg& ego_pose, const pose_msg& 
 
     float relative_speed = sqrt(pow(v_relative.linear.x, 2) + pow(v_relative.linear.y, 2)); // calculate the magnitude of the relative velocity
     float time_to_collision = d / relative_speed; //  calculate the current time to collision
+
+    // Velocities are almost equal, treat as no collision
+    if (relative_speed < 1e-3) {
+        return false;
+    }
     
     // if the relative velocity is inside the cone and the time to collision is less than the time horizon
-    if ((time_to_collision <= time_horizon) && (condition <= theta)) 
+    else if ((time_to_collision <= time_horizon) && (condition <= theta)) 
     {
         return true;
     }
