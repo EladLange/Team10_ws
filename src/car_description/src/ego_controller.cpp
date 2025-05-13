@@ -4,6 +4,8 @@
 
 using std::placeholders::_1;
 
+float wheels_radius=0.25;//wheels radius in m
+
 EgoController::EgoController(const std::string &name) : Node(name)
 {
 
@@ -16,7 +18,7 @@ EgoController::EgoController(const std::string &name) : Node(name)
 void EgoController::msgCallback(const geometry_msgs::msg::Twist & msg)
 {
     float temp_vel=msg.linear.x;
-    temp_vel=temp_vel*4;//linear velocity/wheel radius
+    temp_vel=temp_vel/wheels_radius;//linear velocity/wheel radius
     RCLCPP_INFO_STREAM(get_logger(),"temp vel="<<temp_vel);
     Eigen::Vector2d rear_wheels_speed;
     std_msgs::msg::Float64MultiArray rear_vel;
