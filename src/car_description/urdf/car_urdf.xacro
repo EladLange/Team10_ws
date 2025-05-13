@@ -181,6 +181,8 @@
 
     </joint>
 
+
+
     <link name="RR_wheel">
         <inertial>
             <origin
@@ -285,5 +287,74 @@
         </actuator>
     </transmission>
 
+    <link name="ack_fr">
+        <inertial>
+            <origin
+                xyz="0 0 0"
+                rpy="0 0 0" />
+            <mass
+                value="0.001" />
+            <inertia
+                ixx="0.1"
+                ixy="0.0"
+                ixz="0.0"
+                iyy="0.1"
+                iyz="0.0"
+                izz="0.1" />
+        </inertial>
+    </link>
+    <joint name="ack_fr_joint" type="continuous">
+        <parent link="base_link"/>
+        <child link="ack_fr"/>
+        <axis xyz="0.0 1.0 0.0"/>
+        <origin xyz="0.5 -0.6 -0.5" rpy="0.0 0.0 0.0"/>
+        
+    </joint>
+
+    <transmission name="ack_fr_trans">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="ack_fr_joint">
+            <hardwareInterface>VelocityJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="FR_wheel_motor">
+            <hardwareInterface>VelocityJointInterface</hardwareInterface>
+            <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+    </transmission>
+
+    <link name="ack_fl">
+        <inertial>
+            <origin
+                xyz="0 0 0"
+                rpy="0 0 0" />
+            <mass
+                value="0.001" />
+            <inertia
+                ixx="0.1"
+                ixy="0.0"
+                ixz="0.0"
+                iyy="0.1"
+                iyz="0.0"
+                izz="0.1" />
+        </inertial>
+    </link>
+    <joint name="ack_fl_joint" type="continuous">
+        <parent link="base_link"/>
+        <child link="ack_fl"/>
+        <axis xyz="0.0 1.0 0.0"/>
+        <origin xyz="0.5 0.6 -0.5" rpy="0.0 0.0 0.0"/>
+        
+    </joint>
     
+    <transmission name="ack_fl_trans">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="ack_fl_joint">
+            <hardwareInterface>VelocityJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="FL_wheel_motor">
+            <hardwareInterface>VelocityJointInterface</hardwareInterface>
+            <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+    </transmission>
+
 </robot>

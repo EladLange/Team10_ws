@@ -37,9 +37,21 @@ def generate_launch_description():
             "/controller_manager"
         ]
     )
+    
+    velocity_controller= Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "velocity_controller",
+            "--controller-manager",
+            "/controller_manager"
+        ]
+    )
+
 
     return LaunchDescription([
         control_node,
+        velocity_controller,
         joint_state_broadcaster_spawner,
         ackermann_steering_controller
     ])

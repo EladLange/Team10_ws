@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 
 <robot name="car" xmlns:xacro="http://www.ros.org/wiki/xacro">
-
+    <!--
     <gazebo reference="base_link">
         <pose>0 0 0 0 0 0</pose>
     </gazebo>
-
+    -->
 
     <gazebo reference="FR_wheel">
         <mu1>1.0</mu1>
@@ -28,13 +28,13 @@
     </gazebo>
 
     <gazebo reference="RR_wheel">
-        <mu1>1.0</mu1>
-        <mu2>1.0</mu2>
+        <mu1>10.0</mu1>
+        <mu2>10.0</mu2>
         <kp>100000.0</kp>
         <kd>10.0</kd>
         <minDepth>0.001</minDepth>
         <maxVel>10</maxVel>
-        <fDir1>1 0 0</fDir1>
+        <fDir1>1 1 1</fDir1>
     </gazebo>
     
     <gazebo reference="RR_wheel_joint">
@@ -47,13 +47,13 @@
     </gazebo>
 
     <gazebo reference="RL_wheel">
-        <mu1>1.0</mu1>
-        <mu2>1.0</mu2>
+        <mu1>10.0</mu1>
+        <mu2>10.0</mu2>
         <kp>100000.0</kp>
         <kd>10.0</kd>
         <minDepth>0.001</minDepth>
         <maxVel>10</maxVel>
-        <fDir1>1 0 0</fDir1>
+        <fDir1>1 1 1</fDir1>
     </gazebo>
 
     <gazebo reference="RL_wheel_joint">
@@ -82,6 +82,7 @@
     <gazebo>
         <plugin filename="ignition-gazebo-joint-state-publisher-system" name="ignition::gazebo::systems::JointStatePublisher">
             <topic>joint_states</topic>
+            <joint>base_joint</joint>
             <joint>steering_joint_fr</joint>
             <joint>steering_joint_fl</joint>
             <joint>FR_wheel_joint</joint>
@@ -90,6 +91,5 @@
             <joint>RL_wheel_joint</joint>
         </plugin>
     </gazebo>
-
 
 </robot>
