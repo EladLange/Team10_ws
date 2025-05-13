@@ -17,19 +17,26 @@ Car::Car(const std::string& id, bool is_controlled)
     velocity_.angular.z = 0.0;
 }
 
-void Car::setPose(const geometry_msgs::msg::Pose& pose) {
+void Car::setPose(const pose_msg& pose) {
     pose_ = pose;
 }
 
-void Car::setVelocity(const geometry_msgs::msg::Twist& vel) {
+void Car::setVelocity(const twist_msg& vel) {
     velocity_ = vel;
 }
 
-const geometry_msgs::msg::Pose& Car::getPose() const {
+void Car::setOrientation(const tf2::Quaternion& orientation) {
+    pose_.orientation.x = orientation.x();
+    pose_.orientation.y = orientation.y();
+    pose_.orientation.z = orientation.z();
+    pose_.orientation.w = orientation.w();
+}
+
+const pose_msg& Car::getPose() const {
     return pose_;
 }
 
-const geometry_msgs::msg::Twist& Car::getVelocity() const {
+const twist_msg& Car::getVelocity() const {
     return velocity_;
 }
 
@@ -44,9 +51,16 @@ bool Car::isControlled() const {
 void Car::update(double dt) {
     pose_.position.x += velocity_.linear.x * dt;
     pose_.position.y += velocity_.linear.y * dt;
-    if (pose_.position.x>100.0){
-    std::cout<<id_<<" Is out of bounds"<<"\n";//debug
-    pose_.position.x=0;
+    if (pose_.position.x < 0.0 || pose_.position.x > 200.0 || pose_.position.y < -4.5 || pose_.position.y > 4.5)
+    {
+        std::cout<<id_<<" is out of bounds"<<"\n";//debug
+        velocity_.linear.x = 0.0;
+        velocity_.linear.y = 0.0;
+
+        if (pose_.position.x < 0.0) pose_.position.x = 0.0;
+        if (pose_.position.x > 200.0) pose_.position.x = 200.0;
+        if (pose_.position.y < -4.5) pose_.position.y = -4.5;
+        if (pose_.position.y > 4.5) pose_.position.y = 4.5;
     }
     pose_.orientation.z+=velocity_.angular.z * dt;
 }
