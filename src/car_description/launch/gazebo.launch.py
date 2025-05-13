@@ -66,6 +66,14 @@ def generate_launch_description():
                    "-pose", spawn_pose_value]
     )
 
+    ekf_node =Node(
+        package="robot_localization",
+        executable="ekf_node",
+        name="ekf_filter_node",
+        parameters=[os.path.join(car_description_dir,"config","ekf.yaml")]
+
+    )
+
 
     return LaunchDescription([
     model_arg,
@@ -73,5 +81,6 @@ def generate_launch_description():
     robot_state_publisher,
     gazebo_resource_path,
     gazebo,
-    gz_spawn_entity 
+    gz_spawn_entity,
+    ekf_node
     ])
