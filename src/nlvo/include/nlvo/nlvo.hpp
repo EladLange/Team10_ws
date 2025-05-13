@@ -26,6 +26,15 @@ class NLVO
     // predict obstacle position in time t
     pose_msg predictObstaclePosition(const pose_msg& obstacle_pose, const twist_msg& obstacle_velocity, float t);
 
-    // Compute safe time horiozn
+    // Compute safe time horizon
     float NLVO::computeSafeTimeHorizon(const twist_msg &ego_velocity);
+
+    // make sure the value is within the range [min, max]
+    template <typename T>
+    const T& clamp(const T& value, const T& min, const T& max)
+    {
+        if (v < min) return min;
+        if (max < v) return max;
+        return v;
+    }
 };

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 #include "nlvo.hpp"
 #include "velocity_obstacle.hpp"
 
@@ -47,6 +48,8 @@ pose_msg NLVO::predictObstaclePosition(const pose_msg &obstacle_pose, const twis
     return predicted_pose;
 }
 
+
+
 float NLVO::computeSafeTimeHorizon(const twist_msg &ego_velocity)
 {
     float t_min_limit = 0.3f;
@@ -61,10 +64,7 @@ float NLVO::computeSafeTimeHorizon(const twist_msg &ego_velocity)
     // find stopping time
     float t_s = speed / std::abs(min_acceleration); 
 
-    // if t_s is smaller then t_min_limit, set t_s to t_min_limit
-    // if t_s is greater then t_max_limit, set t_s to t_max_limit
-    // if t_s is between t_min_limit and t_max_limit, set t_s to t_s
-    //float safe_t = std::clamp(t_s, t_min_limit, t_max_limit);
+    float safe_t = clamp(t_s, t_min_limit, t_max_limit);
 }
 
 
