@@ -17,6 +17,15 @@ Car::Car(const std::string& id, bool is_controlled)
     velocity_.angular.z = 0.0;
 }
 
+geometry_msgs::msg::Vector3 Car::getCarScale() const
+{
+    geometry_msgs::msg::Vector3 scale;
+    scale.x = 1.2; // length
+    scale.y = 0.8; // width
+    scale.z = 0.5; // height
+    return scale;
+}
+
 void Car::setPose(const pose_msg& pose) {
     pose_ = pose;
 }

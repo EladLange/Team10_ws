@@ -10,6 +10,8 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>ament_cmake_ros</depend>
   <depend>rosidl_default_generators</depend>
+  <depend>env_sim</depend>
+  
   <exec_depend>rclcpp</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>visualization_msgs</exec_depend>

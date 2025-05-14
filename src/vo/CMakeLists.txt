@@ -16,27 +16,22 @@ find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 
-
 # Include directories for headers
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/vo)
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}
+  )
 
 # Add executable and link libraries
-add_executable(vo_simulation_node
-  src/vo_simulation_node.cpp
-  src/road_visualization.cpp
-  src/road.cpp
-  src/drone_controller.cpp
-  src/car.cpp  
-  src/velocity_visualization.cpp
+add_executable(vo_node
+  src/vo_node.cpp
   src/vo_visualization.cpp
   src/velocity_obstacle.cpp
-  src/raceline_visualization.cpp
 )
 
 
 # Link required libraries
 ament_target_dependencies(
-  vo_simulation_node
+  vo_node
   rclcpp
   geometry_msgs
   visualization_msgs
@@ -44,7 +39,7 @@ ament_target_dependencies(
 )
 
 # Install executable and other files
-install(TARGETS vo_simulation_node
+install(TARGETS vo_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
