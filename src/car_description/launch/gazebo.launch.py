@@ -71,7 +71,11 @@ def generate_launch_description():
         executable="ekf_node",
         name="ekf_filter_node",
         parameters=[os.path.join(car_description_dir,"config","ekf.yaml")]
+    )
 
+    ego_controller= Node(
+        package="car_description",
+        executable="ego_controller"
     )
 
 
@@ -82,5 +86,6 @@ def generate_launch_description():
     gazebo_resource_path,
     gazebo,
     gz_spawn_entity,
-    ekf_node
+    ekf_node,
+    ego_controller
     ])
