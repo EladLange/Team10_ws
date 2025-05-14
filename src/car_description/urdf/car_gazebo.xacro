@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 
 <robot name="car" xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <!--
-    <gazebo reference="base_link">
+    
+    <gazebo reference="base_footprint">
         <pose>0 0 0 0 0 0</pose>
     </gazebo>
-    -->
+    
 
     <gazebo reference="FR_wheel">
         <mu1>1.0</mu1>
@@ -91,5 +91,14 @@
             <joint>RL_wheel_joint</joint>
         </plugin>
     </gazebo>
-
+    <gazebo>
+        <plugin
+            filename="libignition-gazebo-pose-publisher-system.so"
+            name="ignition::gazebo::systems::PosePublisher">
+            <publish_link_pose>true</publish_link_pose>
+            <publish_model_pose>true</publish_model_pose>
+            <update_frequency>1.0</update_frequency>
+        </plugin>
+    </gazebo>
+ 
 </robot>

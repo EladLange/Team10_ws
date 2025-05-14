@@ -1,0 +1,15 @@
+digraph G {
+"base_footprint" -> "base_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"steering_link_fl" -> "FL_wheel"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 28.45\nOldest transform: 23.55\n"];
+"base_link" -> "steering_link_fl"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 28.45\nOldest transform: 23.55\n"];
+"steering_link_fr" -> "FR_wheel"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 28.45\nOldest transform: 23.55\n"];
+"base_link" -> "steering_link_fr"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 28.45\nOldest transform: 23.55\n"];
+"base_link" -> "RL_wheel"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 28.45\nOldest transform: 23.55\n"];
+"base_link" -> "RR_wheel"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 28.45\nOldest transform: 23.55\n"];
+"base_link" -> "ack_fl"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 28.45\nOldest transform: 23.55\n"];
+"base_link" -> "ack_fr"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 28.45\nOldest transform: 23.55\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1747222280.8789442"[ shape=plaintext ] ;
+}->"base_footprint";
+}

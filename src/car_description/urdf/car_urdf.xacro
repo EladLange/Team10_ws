@@ -9,7 +9,9 @@
      <!--include ros control parameters -->
     <xacro:include filename="$(find car_description)/urdf/car_ros2_control.xacro"/>
     
+
     <link name="base_footprint"/>
+
 
     <link name="base_link">
     <inertial>
