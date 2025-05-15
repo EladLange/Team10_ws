@@ -61,7 +61,7 @@ void setVOConeMarker(vis_marker &cone_marker, const pose_msg& ego_pos, const pos
 
     if (dist <= r_total)
     {
-        std::cout << "there is no way out, just prey" << std::endl;
+        //std::cout << "there is no way out, just prey" << std::endl;
         
         auto cone_lines = createConeLines(shifted_apex, -M_PI / 2, M_PI / 2, extension_length, num_segments); // // 180 degree cone from -90° to +90° (in radians)
         //std::cout << "Number of points in marker: " << cone_marker.points.size() << std::endl;
@@ -76,7 +76,7 @@ void setVOConeMarker(vis_marker &cone_marker, const pose_msg& ego_pos, const pos
 
     else 
     {
-        if (vo.checkCollision(ego_pos, obstacle_pos, ego_vel, obstacle_vel, r_total) || vo.distance(ego_pos, obstacle_pos) < 4.0)   
+        if (vo.checkCollision(ego_pos, obstacle_pos, ego_vel, obstacle_vel, r_total) || vo.distance(ego_pos, obstacle_pos) < 6.0)   
         {
             float alpha = vo.getAngle(ego_pos, obstacle_pos);
             float theta = vo.getTheta(dist, r_total);
@@ -86,7 +86,7 @@ void setVOConeMarker(vis_marker &cone_marker, const pose_msg& ego_pos, const pos
 
             // add relative vector
             auto cone_lines = createConeLines(shifted_apex, left_angle, right_angle, extension_length, num_segments);
-            std::cout << "Collision detected, finding the best velocity" << std::endl;
+            //std::cout << "Collision detected, finding the best velocity" << std::endl;
             //std::cout << "Number of points in marker: " << cone_marker.points.size() << std::endl;
             for (const auto& pt : cone_lines) 
             {

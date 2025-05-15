@@ -7,7 +7,7 @@ std::vector<point_msg> setRaceline()
 {
     std::vector<point_msg> raceline;
     // create a raceline with 100 straight points
-    for (int i = 0; i < 100; ++i) 
+    for (int i = 0; i < 200; ++i) 
     {
         point_msg point;
         point.x = 10.0 + i * 1.0;
