@@ -78,6 +78,49 @@ def generate_launch_description():
         executable="ego_controller"
     )
 
+    odom_publisher= Node(
+        package="car_description",
+        executable="ego_pose_pub"
+    )
+
+    ros_gz_bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        name="ros_gz_bridge_node",
+        arguments=[
+            '/world/empty/pose/info@geometry_msgs/msg/PoseArray@ignition.msgs.Pose_V'
+        ]
+    )
+
+    robot_controllers=os.path.join(get_package_share_directory("car_controller"),"config","ackermann_param.yaml")
+
+    control_node = Node(
+    package="controller_manager",
+    executable="ros2_control_node",
+    parameters=[robot_controllers],
+    output="both",
+    )  
+
+    ackermann_steering_controller= Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "ackermann_steering_controller",
+            "--controller-manager",
+            "/controller_manager"
+        ]
+    )
+    
+    velocity_controller= Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "velocity_controller",
+            "--controller-manager",
+            "/controller_manager"
+        ]
+    )
+
 
     return LaunchDescription([
     model_arg,
@@ -86,6 +129,10 @@ def generate_launch_description():
     gazebo_resource_path,
     gazebo,
     gz_spawn_entity,
-    ekf_node,
-    ego_controller
+    ego_controller,
+    ros_gz_bridge,
+    odom_publisher,
+    control_node,
+    ackermann_steering_controller,
+    velocity_controller
     ])
