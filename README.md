@@ -22,6 +22,8 @@ rviz2
 ```bash
 colcon build && ros2 run vo vo_simulation_node 
 ```
+#
+#
 ## open map in rviz
 ### Terminal 1:
 ```
