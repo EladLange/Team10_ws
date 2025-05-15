@@ -121,6 +121,14 @@ def generate_launch_description():
         ]
     )
 
+    rviz_node=  Node(
+        package="rviz2",
+        executable="rviz2",
+        name="rviz2",
+        output="screen",
+        arguments=["-d",os.path.join(get_package_share_directory("car_description"), "rviz", "tempdisplay.rviz")]
+    )
+
 
     return LaunchDescription([
     model_arg,
@@ -134,5 +142,6 @@ def generate_launch_description():
     odom_publisher,
     control_node,
     ackermann_steering_controller,
-    velocity_controller
+    velocity_controller,
+    rviz_node
     ])

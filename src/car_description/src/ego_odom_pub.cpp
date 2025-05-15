@@ -2,6 +2,7 @@
 #include "ego_odom_pub.hpp"
 
 
+
 using std::placeholders::_1;
 
 OdomPub::OdomPub(const std::string &name) : Node(name)
@@ -9,6 +10,7 @@ OdomPub::OdomPub(const std::string &name) : Node(name)
 
     ign_pose_sub_ = create_subscription<geometry_msgs::msg::PoseArray>("/world/empty/pose/info",10,std::bind(&OdomPub::msgCallback,this, _1));   
     odom_pub_ = create_publisher<geometry_msgs::msg::Pose>("/ego_pose",10);
+    tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
     
 }
 
@@ -22,6 +24,17 @@ void OdomPub::msgCallback(const geometry_msgs::msg::PoseArray & msg)
     ego_pose.orientation.z=roundToThreeDecimalPlaces(ego_pose.orientation.z,6);
     ego_pose.orientation.x=roundToThreeDecimalPlaces(ego_pose.orientation.x,6);
     ego_pose.orientation.y=roundToThreeDecimalPlaces(ego_pose.orientation.y,6);
+
+    geometry_msgs::msg::TransformStamped egoTransform;
+    egoTransform.header.stamp = this->now();
+    egoTransform.header.frame_id = "map";// Global frame
+    egoTransform.child_frame_id = "ego";// Ego vehicle frame
+    egoTransform.transform.translation.x = ego_pose.position.x;
+    egoTransform.transform.translation.y = ego_pose.position.y;
+    egoTransform.transform.translation.z = ego_pose.position.z;
+    egoTransform.transform.rotation = ego_pose.orientation;
+
+    tf_broadcaster_->sendTransform(egoTransform);
     odom_pub_-> publish(ego_pose);
 }
 
