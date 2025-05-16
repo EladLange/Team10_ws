@@ -20,7 +20,7 @@ class CarSimulationNode : public rclcpp::Node {
 public:
     CarSimulationNode()
     : Node("car_simulation_node"),
-      road_(3, 3.0, 200.0, 20.0), // 3 lanes, 3 meters wide, 100 meters long, radius 20 meters
+      road_(3, 5.0, 200.0, 20.0), // 3 lanes, 3 meters wide, 100 meters long, radius 20 meters
       controller_(road_)
     {
         RCLCPP_INFO(this->get_logger(), "Starting car simulation...");
@@ -33,13 +33,13 @@ public:
         // // First obstacle
         auto drone0 = std::make_shared<Car>("drone_0", false);
         drone0->setPose(makePose(30.0, 2.25));
-        drone0->setVelocity(makeVel(1.0, 0.0));
+        drone0->setVelocity(makeVel(0.0, 0.0));
         drones_.push_back(drone0);
 
         // // Second obstacle
-        auto drone1 = std::make_shared<Car>("done_1", false);
+        auto drone1 = std::make_shared<Car>("drone_1", false);
         drone1->setPose(makePose(40.0, -2.25));
-        drone1->setVelocity(makeVel(1.0, 0.0));
+        drone1->setVelocity(makeVel(0.0, 0.0));
         drones_.push_back(drone1);
 
         // // Third obstacle
@@ -51,13 +51,13 @@ public:
         // Fourth obstacle
         auto drone3 = std::make_shared<Car>("drone_3", false);
         drone3->setPose(makePose(15.0, 0.0));
-        drone3->setVelocity(makeVel(1.0, 0.0));
+        drone3->setVelocity(makeVel(0.0, 0.0));
         drones_.push_back(drone3);
 
         // Fifth obstacle
         auto drone4 = std::make_shared<Car>("drone_4", false);
         drone4->setPose(makePose(20.0, 0.0));
-        drone4->setVelocity(makeVel(0.5, 0.0));
+        drone4->setVelocity(makeVel(0.0, 0.0));
         drones_.push_back(drone4);
 
 
@@ -68,14 +68,18 @@ public:
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
         drone_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseArray>(
-            "drone_pose", 10, std::bind(&CarSimulationNode::dronePoseCallback, this, std::placeholders::_1));
-
+            "drone_pose", 10,
+            [this](geometry_msgs::msg::PoseArray::SharedPtr msg) {
+                this->dronePoseCallback(msg);
+            }
+        );
+        
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(100),
             std::bind(&CarSimulationNode::update, this));
     }
 
-    void dronePoseCallback(const geometry_msgs::msg::PoseArray::SharedPtr &msg) {
+    void dronePoseCallback(geometry_msgs::msg::PoseArray::SharedPtr msg) {
         // Handle the incoming drone pose array message
         RCLCPP_INFO(this->get_logger(), "Received drone pose array with %zu drones", msg->poses.size());
 

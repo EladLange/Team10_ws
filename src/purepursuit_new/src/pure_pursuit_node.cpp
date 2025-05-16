@@ -87,7 +87,7 @@ public:
             State initial_state("drone_" + std::to_string(i),
                                paths_[i].first[0],  // x
                                paths_[i].second[0], // y
-                               0.5 + i * 0.5,       // z (staggered heights)
+                               0.0,       // z (staggered heights)
                                0.0);                // yaw
 
             // Create the drone with its assigned path
