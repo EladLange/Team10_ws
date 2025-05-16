@@ -11,7 +11,9 @@ OdomPub::OdomPub(const std::string &name) : Node(name)
     ign_pose_sub_ = create_subscription<geometry_msgs::msg::PoseArray>("/world/empty/pose/info",10,std::bind(&OdomPub::msgCallback,this, _1));   
     odom_pub_ = create_publisher<geometry_msgs::msg::Pose>("/ego_pose",10);
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
+    static_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
     
+  publishStaticTransform();  
 }
 
 void OdomPub::msgCallback(const geometry_msgs::msg::PoseArray & msg)
@@ -38,7 +40,25 @@ void OdomPub::msgCallback(const geometry_msgs::msg::PoseArray & msg)
     odom_pub_-> publish(ego_pose);
 }
 
+void OdomPub::publishStaticTransform()
+{
+    geometry_msgs::msg::TransformStamped static_transform;
 
+    static_transform.header.stamp = this->now();
+    static_transform.header.frame_id = "ego";
+    static_transform.child_frame_id = "base_footprint";
+
+    static_transform.transform.translation.x = 0.0;
+    static_transform.transform.translation.y = 0.0;
+    static_transform.transform.translation.z = 0.0;
+
+    static_transform.transform.rotation.x = 0.0;
+    static_transform.transform.rotation.y = 0.0;
+    static_transform.transform.rotation.z = 0.0;
+    static_transform.transform.rotation.w = 1.0;
+
+    static_broadcaster_->sendTransform(static_transform);
+}
 
 double OdomPub::roundToThreeDecimalPlaces(double value, int decimalPlaces) {
     double factor = std::pow(10.0, decimalPlaces);
