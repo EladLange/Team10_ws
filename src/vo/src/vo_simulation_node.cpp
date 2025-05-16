@@ -130,7 +130,7 @@ private:
         // Update drones
         for (size_t i = 0; i < drones_.size(); ++i) {
            // controller_.control(*drones_[i], static_cast<int>(i));
-            drones_[i]->update(dt);
+            // drones_[i]->update(dt);
             publishPose(*drones_[i]);
             publishTF(*drones_[i], "map", drones_[i]->getId());
             obstacle_poses.push_back(drones_[i]->getPose());
