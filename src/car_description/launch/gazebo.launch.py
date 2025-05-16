@@ -78,6 +78,13 @@ def generate_launch_description():
         executable="ego_controller"
     )
 
+    joint_state_pub= Node(
+    package='controller_manager',
+    executable='spawner',
+    arguments=['joint_state_broadcaster', '--controller-manager', '/controller_manager']
+    )
+
+
     odom_publisher= Node(
         package="car_description",
         executable="ego_pose_pub"
@@ -141,6 +148,7 @@ def generate_launch_description():
     ros_gz_bridge,
     odom_publisher,
     control_node,
+    joint_state_pub,
     ackermann_steering_controller,
     velocity_controller,
     rviz_node
