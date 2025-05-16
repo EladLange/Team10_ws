@@ -12,6 +12,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/pose_array.hpp>
 
 VelocityObstacle vo;
 
@@ -29,7 +30,7 @@ public:
         controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
         controlled_car_->setVelocity(makeVel(1.0, 0.0));
 
-        // // First obstacle 
+        // // First obstacle
         auto drone0 = std::make_shared<Car>("drone_0", false);
         drone0->setPose(makePose(30.0, 2.25));
         drone0->setVelocity(makeVel(1.0, 0.0));
@@ -65,10 +66,25 @@ public:
         vo_marker_pub_ = this ->create_publisher<vis_marker_arr>("vo_marker_array", 10);
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
-        
+
+        drone_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseArray>(
+            "drone_pose", 10, std::bind(&CarSimulationNode::dronePoseCallback, this, std::placeholders::_1));
+
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(100),
             std::bind(&CarSimulationNode::update, this));
+    }
+
+    void dronePoseCallback(const geometry_msgs::msg::PoseArray::SharedPtr &msg) {
+        // Handle the incoming drone pose array message
+        RCLCPP_INFO(this->get_logger(), "Received drone pose array with %zu drones", msg->poses.size());
+
+        // Update the drones with the received poses
+        for (size_t i = 0; i < msg->poses.size() && i < drones_.size(); ++i) {
+            drones_[i]->setPose(msg->poses[i]);
+            RCLCPP_INFO(this->get_logger(), "Updated drone %zu pose: (%f, %f, %f)",
+                       i, msg->poses[i].position.x, msg->poses[i].position.y, msg->poses[i].position.z);
+        }
     }
 
 private:
@@ -83,7 +99,9 @@ private:
     rclcpp::Publisher<vis_marker_arr>::SharedPtr marker_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<vis_marker_arr>::SharedPtr vo_marker_pub_;
-    
+
+    rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr drone_pose_sub_;
+
     geometry_msgs::msg::Pose makePose(double x, double y, double z = 0.2) {
         geometry_msgs::msg::Pose pose;
         pose.position.x = x;
@@ -99,7 +117,7 @@ private:
         vel.linear.z = 0.0;
         return vel;
     }
-    
+
     void update() {
         double dt = 0.1;  // 100 ms
         std::vector<pose_msg> obstacle_poses;
@@ -116,7 +134,7 @@ private:
             //RCLCPP_INFO(this->get_logger(), "Drone %zu position: (%f, %f)", i, drones_[i]->getPose().position.x, drones_[i]->getPose().position.y);
             //RCLCPP_INFO(this->get_logger(), "Drone %zu velocity: (%f, %f)", i, drones_[i]->getVelocity().linear.x, drones_[i]->getVelocity().linear.y);
         }
-        
+
         // Get ego car's current pose and velocity
         auto ego_pose = controlled_car_->getPose();
         auto ego_vel = controlled_car_->getVelocity();
@@ -161,15 +179,15 @@ private:
         tf_msg.header.stamp = this->now();
         tf_msg.header.frame_id = parent_frame;
         tf_msg.child_frame_id = child_frame;
-    
+
         tf_msg.transform.translation.x = car.getPose().position.x;
         tf_msg.transform.translation.y = car.getPose().position.y;
         tf_msg.transform.translation.z = car.getPose().position.z;
         tf_msg.transform.rotation = car.getPose().orientation;
-    
+
         tf_broadcaster_->sendTransform(tf_msg);
     }
-    
+
 
     void publishMarkers() {
         vis_marker_arr marker_array;
@@ -184,7 +202,7 @@ private:
             marker_array.markers.push_back(makeCarMarker(*car, id++));
             setVelocityArrowMarker(marker_array, *car, this->now(), id);
         }
-        
+
         // Controlled car
         marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
         setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), 0);
@@ -195,7 +213,7 @@ private:
         vis_marker road_marker;
         setRoadMarker(road_marker, road_, now);
         marker_array.markers.push_back(road_marker);
-        
+
         // lane lines
         for (int i = 1; i < road_.getNumLanes(); ++i) {
             vis_marker lane_marker;
@@ -219,10 +237,10 @@ private:
     float calculateTotalRadius() {
         auto scale = getCarScale();
         float r_ego = 0.5f * std::sqrt(std::pow(scale.x, 2) + std::pow(scale.y, 2));
-        float r_obstacle = r_ego;  
+        float r_obstacle = r_ego;
         return r_ego + r_obstacle;
     }
-   
+
 
     vis_marker makeCarMarker(const Car& car, int id) {
         vis_marker marker;
@@ -261,18 +279,18 @@ private:
         int id = 0;  // Marker ID counter
         auto ego_pose = controlled_car_->getPose();
         auto ego_vel = controlled_car_->getVelocity();
-        // check: maybe not needed  
+        // check: maybe not needed
         //auto scale = getCarScale();
         float r_total = calculateTotalRadius();
         //RCLCPP_INFO(this->get_logger(), "Total radius: %f", r_total);
-        
+
         for (const auto& drone : drones_) {
             auto obstacle_pose = drone->getPose();
             auto obstacle_vel = drone->getVelocity();
             // check - maybe not needed
             //float dist = vo.distance(ego_pose, obstacle_pose);
             //RCLCPP_INFO(this->get_logger(), "Distance to drone: %f", dist);
-            
+
             vis_marker cone_marker;
             // Set the properties of the cone marker
             setVOConeMarker(cone_marker, ego_pose, obstacle_pose, ego_vel, obstacle_vel, r_total);
