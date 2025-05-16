@@ -156,86 +156,10 @@ private:
         return {path_x, path_y};
     }
 
-    void computeCurvature_note2(){
-    // // ========== COMPUTE CURVATURE ==========
-    // // Calculates approximate curvature using 3 consecutive path points starting from index i
-    // // Uses triangle area formula (Heron’s) and side lengths to estimate how sharply the path turns
-    // double computeCurvature(size_t i) {
-    //     if (i + 2 >= path_x_.size()) return 0.0;  // Return 0 if fewer than 3 points left
-
-    //     // Extract 3 points
-    //     double x1 = path_x_[i], y1 = path_y_[i];    // First point
-    //     double x2 = path_x_[i + 1], y2 = path_y_[i + 1];    // Second point
-    //     double x3 = path_x_[i + 2], y3 = path_y_[i + 2];    // Third point
-
-    //     // Compute triangle side lengths
-    //     double a = std::hypot(x1 - x2, y1 - y2);    // Distance between p1-p2
-    //     double b = std::hypot(x2 - x3, y2 - y3);    // Distance between p2-p3
-    //     double c = std::hypot(x3 - x1, y3 - y1);    // Distance between p3-p1
-
-    //     // Semi-perimeter
-    //     double s = (a + b + c) / 2.0;
-
-    //     // Area using Heron's formula
-    //     double area = std::sqrt(std::max(s * (s - a) * (s - b) * (s - c), 0.0));    // Triangle area - Heron's formula
-
-    //     // Return curvature = 4*area / (abc), add epsilon to avoid division by zero
-    //     return (4 * area) / (a * b * c + 1e-6); // Final curvaturev
-    // }
-    }
-
-    void purePursuit_note (){
-        // ========== PURE PURSUIT CONTROLLER ==========
-    // Main control logic to compute required steering angle using lookahead target
-    // std::pair<double, int> purePursuit(const State &state) {
-    //     double L = 1.55;  // Wheelbase of the vehicle
-    //     double base_lookahead = 4.0;  // Initial lookahead distance
-    //     double lookahead = base_lookahead;  // Initial lookahead
-
-    //     // Step 1: Find the closest point on the path to the current vehicle position
-    //     size_t closest_idx = 0;
-    //     double min_dist = std::numeric_limits<double>::max();
-    //     for (size_t i = 0; i < path_x_.size(); ++i) {
-    //         double dist = std::hypot(path_x_[i] - state.x, path_y_[i] - state.y);   // Distance to path point
-    //         if (dist < min_dist) {
-    //             min_dist = dist;
-    //             closest_idx = i;    // Update closest point index
-    //         }
-    //     }
-
-    //     // Step 2: Find the first point ahead at the lookahead distance     (Target piont)
-    //     size_t target_idx = closest_idx;    // Start with closest index
-    //     for (size_t i = closest_idx; i < path_x_.size(); ++i) {
-    //         double dist = std::hypot(path_x_[i] - state.x, path_y_[i] - state.y);
-    //         if (dist >= lookahead) {
-    //             target_idx = i;
-    //             break;  // Stop at first point further than lookahead
-    //         }
-    //     }
-
-    //     // Step 3: Adapt lookahead distance based on curvature (tight curves → smaller lookahead)
-    //     double curvature = computeCurvature(target_idx);    // Estimate curvature
-    //     lookahead = std::clamp(2.0 + 2.0 / (1.0 + std::abs(curvature)), 2.0, 7.0); // Adjust lookahead (range between 6[m] to 20[m])
-
-    //     // Step 4: Compute steering angle using geometric relation
-    //         // Compute the angle to the lookahead point:
-    //     double alpha = std::atan2(path_y_[target_idx] - state.y, path_x_[target_idx] - state.x) - state.yaw;    // alpha: angle from vehicle heading to the lookahead point
-    //         // Compute the steering angle using the Pure Pursuit formula:
-    //     double delta = std::atan2(2.0 * L * std::sin(alpha), lookahead);    // delta: desired steering angle (radians)
-    //     return {delta, static_cast<int>(target_idx)};  // Return steering angle and index
-    //         /* alpha: The angle between the vehicle’s current heading and the vector pointing from the vehicle to the target lookahead point.
-    //                     positive alpha means the target is to the left of the heading.
-    //                     negative alpha means it's to the right.
-    //             delta: The desired steering angle computed using the Pure Pursuit formula, which assumes a bicycle kinematic model.
-    //                     It depends on alpha, the wheelbase (L), and the lookahead distance.
-    //         */
-    // }
-    }
-
     // ========== TIMER CALLBACK ==========
     // Called every 10ms: updates all drone states and publishes visualization
     void onTimer() {
-        const double velocity = 3.0; // m/sec
+        const double velocity = 5.0; // m/sec
         const double dt = 0.01;      // sec
 
         // Create pose array for all drones
@@ -252,7 +176,7 @@ private:
         // Update each drone and collect visualization data
         for (size_t i = 0; i < drones_.size(); ++i) {
             // Update drone state using pure pursuit control
-            drones_[i]->update(dt, velocity);
+            drones_[i]->update(dt, velocity-2);
 
             // Get current drone state
             const State& state = drones_[i]->getState();
@@ -280,7 +204,7 @@ private:
             vehicle_marker.type = visualization_msgs::msg::Marker::CUBE;
             vehicle_marker.action = visualization_msgs::msg::Marker::ADD;
             vehicle_marker.pose = drone_pose;
-            vehicle_marker.scale.x = 1.0;  // Length
+            vehicle_marker.scale.x = 1.55;  // Length
             vehicle_marker.scale.y = 1.0;  // Width
             vehicle_marker.scale.z = 0.5;  // Height
 
