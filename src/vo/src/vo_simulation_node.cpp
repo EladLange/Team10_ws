@@ -18,7 +18,7 @@
 VelocityObstacle vo;
 
 // Global variables
-float time_horizon = 20.0f;
+float time_horizon = 7.0f;
 float max_acceleration = 1.0f;
 float min_acceleration = -3.0f;
 float time_step = 1.0f;
@@ -34,46 +34,11 @@ public:
         RCLCPP_INFO(this->get_logger(), "Starting car simulation...");
         
         intilize_cars();
-        // Initialize cars
-        controlled_car_ = std::make_shared<Car>("ego", true);
-        controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
-        controlled_car_->setVelocity(makeVel(1.0, 0.0));
-
-        // // First obstacle 
-        auto drone0 = std::make_shared<Car>("drone_0", false);
-        drone0->setPose(makePose(30.0, 2.25));
-        drone0->setVelocity(makeVel(0.0, 0.0));
-        drones_.push_back(drone0);
-
-        // // Second obstacle
-        auto drone1 = std::make_shared<Car>("done_1", false);
-        drone1->setPose(makePose(40.0, -2.25));
-        drone1->setVelocity(makeVel(0.0, 0.0));
-        drones_.push_back(drone1);
-
-        // // Third obstacle
-        auto drone2 = std::make_shared<Car>("drone_2", false);
-        drone2->setPose(makePose(40.0, 0.0));
-        drone2->setVelocity(makeVel(0.0, 0.0));
-        drones_.push_back(drone2);
-
-        // Fourth obstacle
-        auto drone3 = std::make_shared<Car>("drone_3", false);
-        drone3->setPose(makePose(15.0, 0.0));
-        drone3->setVelocity(makeVel(0, 0.0));
-        drones_.push_back(drone3);
-
-        // Fifth obstacle
-        auto drone4 = std::make_shared<Car>("drone_4", false);
-        drone4->setPose(makePose(20.0, 0.0));
-        drone4->setVelocity(makeVel(0.0, 0.0));
-        drones_.push_back(drone4);
-
 
         pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("car_pose", 10);
         marker_pub_ = this->create_publisher<vis_marker_arr>("visualization_marker_array", 10);
         vo_marker_pub_ = this ->create_publisher<vis_marker_arr>("vo_marker_array", 10);
-        cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("vel_cmd", 10); // ask aviya
+        cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("vel_cmd", 10);
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -101,22 +66,20 @@ public:
         }
     }
 
-
-    void intilize_cars() //ask aviya
-    {
+    void intilize_cars() {
                 // Initialize cars
                 controlled_car_ = std::make_shared<Car>("ego", true);
                 controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
                 controlled_car_->setVelocity(makeVel(5.0, 0.0));
         
-                // // First obstacle 
+                // First obstacle 
                 auto drone0 = std::make_shared<Car>("drone_0", false);
                 drone0->setPose(makePose(30.0, 4.5));
                 drone0->setVelocity(makeVel(4.0, 0.0));
                 drones_.push_back(drone0);
         
-                // // Second obstacle
-                auto drone1 = std::make_shared<Car>("done_1", false);
+                // Second obstacle
+                auto drone1 = std::make_shared<Car>("drone_1", false);
                 drone1->setPose(makePose(40.0, -4.5));
                 drone1->setVelocity(makeVel(2.0, 0.0));
                 drones_.push_back(drone1);
@@ -127,17 +90,17 @@ public:
                 drone2->setVelocity(makeVel(3.0, 0.0));
                 drones_.push_back(drone2);
         
-                // Fourth obstacle
-                auto drone3 = std::make_shared<Car>("drone_3", false);
-                drone3->setPose(makePose(50.0, 0.0));
-                drone3->setVelocity(makeVel(1.0, 0.0));
-                drones_.push_back(drone3);
+                // // Fourth obstacle
+                // auto drone3 = std::make_shared<Car>("drone_3", false);
+                // drone3->setPose(makePose(50.0, 0.0));
+                // drone3->setVelocity(makeVel(1.0, 0.0));
+                // drones_.push_back(drone3);
         
-                // Fifth obstacle
-                auto drone4 = std::make_shared<Car>("drone_4", false);
-                drone4->setPose(makePose(20.0, 4.5));
-                drone4->setVelocity(makeVel(1.0, 0.0));
-                drones_.push_back(drone4);
+                // // Fifth obstacle
+                // auto drone4 = std::make_shared<Car>("drone_4", false);
+                // drone4->setPose(makePose(20.0, 4.5));
+                // drone4->setVelocity(makeVel(1.0, 0.0));
+                // drones_.push_back(drone4);
     }
 
 private:
@@ -159,7 +122,7 @@ private:
     // ROS subscribers
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr ego_vel_sub_;
 
-    pose_msg makePose(double x, double y, double z = 0.5) { // ask aviya why 0.5 ??
+    pose_msg makePose(double x, double y, double z = 0.5) {
         pose_msg pose;
         pose.position.x = x;
         pose.position.y = y;
@@ -183,7 +146,6 @@ private:
         // Update drones
         for (size_t i = 0; i < drones_.size(); ++i) {
            // controller_.control(*drones_[i], static_cast<int>(i));
-            // drones_[i]->update(dt);
             publishPose(*drones_[i]);
             publishTF(*drones_[i], "map", drones_[i]->getId());
             obstacle_poses.push_back(drones_[i]->getPose());
