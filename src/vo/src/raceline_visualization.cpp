@@ -6,6 +6,7 @@
 std::vector<point_msg> setRaceline()
 {
     std::vector<point_msg> raceline;
+
     // create a raceline with 100 straight points
     for (int i = 0; i < 200; ++i) 
     {
@@ -15,7 +16,8 @@ std::vector<point_msg> setRaceline()
         point.z = 0.2; 
         raceline.push_back(point);
     }
-    // std::string filename = "/home/student/Desktop/Team10_ws/src/vo/src/raceline.csv";
+    
+    // std::string filename = "/home/yonatan/Desktop/Team10_ws/src/racing_line.csv"; // change to raceline path
     // std::ifstream file(filename);
     // if (!file.is_open()) {
     //     std::cerr << "Error opening raceline file." << std::endl;
@@ -37,6 +39,7 @@ std::vector<point_msg> setRaceline()
     //     raceline.push_back(point);
     // }
     // file.close();
+
     return raceline;
 }
 

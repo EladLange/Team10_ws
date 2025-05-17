@@ -14,7 +14,7 @@ after getting this output:
 yonatan@yonatan:~$ ros2 lifecycle set map_server configure
 Transitioning successful
 ```
-run thi command:
+run the command:
 ```
 ros2 lifecycle set map_server activate
 ```
@@ -24,7 +24,7 @@ yonatan@yonatan:~$ ros2 lifecycle set map_server activate
 Transitioning successful
 ```
 # Terminal 3:
-open rviz:
+open RVIZ:
 ```
 rviz2
 ```

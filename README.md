@@ -1,14 +1,14 @@
-# Team 10 workspace
+# Team 10 workspace 
 
-## Open vo in RVIZ:
-I order to open the vo simulation in RVIZ, the next steps required:
+## Open vo in RVIZ
+In order to open the vo simulation in RVIZ, the next steps required:
 1. in Team10_ws:
 ```bash
 cd /mnt/c/repos/Team10_ws
 rviz2
 ```
-2. once the Rviz is open:
-    * Uncheck th grid box
+2. once the RVIZ is open:
+    * Uncheck the grid box
     * Set the fixed frame to *map*
     * Add Marker display:
         * Set the topic to: */visualization_marker*
@@ -23,7 +23,7 @@ rviz2
 colcon build && ros2 run vo vo_simulation_node 
 ```
 
-## open map in rviz
+## open map in RVIZ
 ### Terminal 1:
 ```
 ros2 run nav2_map_server map_server --ros-args -p yaml_filename:=/home/yonatan/Desktop/Team10_ws/free_area_map.yaml
@@ -40,7 +40,7 @@ after getting this output:
 yonatan@yonatan:~$ ros2 lifecycle set map_server configure
 Transitioning successful
 ```
-run thi command:
+run the command:
 ```
 ros2 lifecycle set map_server activate
 ```
@@ -50,13 +50,13 @@ yonatan@yonatan:~$ ros2 lifecycle set map_server activate
 Transitioning successful
 ```
 ### Terminal 3:
-open rviz:
+open RVIZ:
 ```
 rviz2
 ```
-In rviz adding map.
+In RVIZ adding map.
 
-## pure pursuit in rviz
+## pure pursuit in RVIZ
 
 ### Terminal 1:
 Go to the correct location:
@@ -69,7 +69,7 @@ RUN:
 ros2 run purepursuit_new pure_pursuit_node
 ```
 ### Terminal 2:
-open Rviz
+open RVIZ
 
 RUN:
 ```

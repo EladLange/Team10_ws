@@ -11,7 +11,7 @@ RUN:
 ros2 run purepursuit_new pure_pursuit_node
 ```
 ### Terminal 2:
-open Rviz
+open RVIZ
 
 RUN:
 ```
