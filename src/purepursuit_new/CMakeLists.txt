@@ -26,6 +26,7 @@ find_package(visualization_msgs REQUIRED)            # For RViz markers
 # This library contains the base and bicycle model implementations
 add_library(vehicle_models
   src/bicycle_model.cpp
+  src/drone.cpp
 )
 
 # Include directories for the model library
@@ -37,6 +38,9 @@ target_include_directories(vehicle_models PUBLIC
 # Link ROS2 dependencies for the model library
 ament_target_dependencies(vehicle_models
   rclcpp
+  geometry_msgs
+  tf2
+  tf2_geometry_msgs
 )
 
 # =====================================================
