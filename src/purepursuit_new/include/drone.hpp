@@ -1,14 +1,21 @@
+// =================================
+// include/drone.hpp
+// =================================
+// This file defines the Drone class, which implements a pure pursuit controller for a drone
+// that follows a specified path. The class includes methods for updating the drone's state,
+// computing the pure pursuit control command, and converting the drone's state to a ROS message format.
+// It also includes necessary includes for ROS2, geometry messages, and vehicle models.
 #pragma once
 
-#include "types.hpp"
-#include "vehicle_model_base.hpp"
-#include <memory>
-#include <vector>
-#include <string>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geometry_msgs/msg/pose.hpp>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include "types.hpp" // Defines the State struct (x, y, yaw)
+#include "vehicle_model_base.hpp" // Base interface for vehicle models
+#include <memory> // For smart pointers
+#include <vector> // For storing path points
+#include <string> // For string operations
+#include <geometry_msgs/msg/pose_stamped.hpp> // For PoseStamped message
+#include <geometry_msgs/msg/pose.hpp> // For Pose message
+#include <tf2/LinearMath/Quaternion.h> // For quaternion math (yaw to quaternion)
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp> // Conversion between TF2 and geometry_msgs
 
 /**
  * @class Drone

@@ -21,5 +21,5 @@ struct State {
           double y_val = 0.0,
           double z_val = 0.0,
           double yaw_val = 0.0)
-        : id(id_val), x(x_val), y(y_val), z(z_val), yaw(yaw_val) {}
+        : id(id_val), x(x_val), y(y_val), z(z_val), yaw(yaw_val) {} // Initialize with provided values
 };

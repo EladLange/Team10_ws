@@ -39,14 +39,14 @@ State BicycleModel::update(const State &s, double delta, double velocity, double
     return next;  // Return the updated state
 }
 
-geometry_msgs::msg::Pose BicycleModel::updatePose(const geometry_msgs::msg::Pose &pose, double delta, double velocity, double dt) const {
-    geometry_msgs::msg::Pose new_pose = pose;
+geometry_msgs::msg::Pose BicycleModel::updatePose(const geometry_msgs::msg::Pose &pose, double delta, double velocity, double dt) const { // Update the pose of the vehicle based on the bicycle model
+    geometry_msgs::msg::Pose new_pose = pose; // Start from the current pose
 
     // Convert quaternion to yaw
     tf2::Quaternion q_in;
     tf2::fromMsg(pose.orientation, q_in);
     double roll, pitch, yaw;
-    tf2::Matrix3x3(q_in).getRPY(roll, pitch, yaw);
+    tf2::Matrix3x3(q_in).getRPY(roll, pitch, yaw); // Convert quaternion to roll, pitch, yaw
 
     // Update position
     new_pose.position.x += velocity * std::cos(yaw) * dt;
@@ -60,7 +60,7 @@ geometry_msgs::msg::Pose BicycleModel::updatePose(const geometry_msgs::msg::Pose
     q_out.setRPY(0, 0, yaw);
     new_pose.orientation = tf2::toMsg(q_out);
 
-    return new_pose;
+    return new_pose; // Return the updated pose
 }
 
 

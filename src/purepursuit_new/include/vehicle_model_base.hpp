@@ -21,5 +21,5 @@ public:
     //   - dt: time step (in seconds)
     // Returns:
     //   - State object representing the new vehicle state after motion
-    virtual State update(const State &s, double delta, double velocity, double dt) const = 0;
+    virtual State update(const State &s, double delta, double velocity, double dt) const = 0; // Pure virtual function to be implemented by derived classes
 };
