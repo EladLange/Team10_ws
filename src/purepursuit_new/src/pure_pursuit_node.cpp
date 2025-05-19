@@ -44,9 +44,9 @@ public:
 
         // Define paths to load
         std::array<std::string, 3> path_files = {
-            "/home/yonatan/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane0.csv",
-            "/home/yonatan/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane1.csv",
-            "/home/yonatan/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane2.csv"
+            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane0.csv",
+            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane1.csv",
+            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane2.csv"
         };
 
         // Load all paths
