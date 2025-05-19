@@ -32,12 +32,12 @@ void setVelocityArrowMarker(vis_marker_arr& marker_array, const Car& car, rclcpp
     // Set the start point to the car's position
     start_point.x = car_pose_x;
     start_point.y = car_pose_y;
-    start_point.z = 0.2; // Slightly above ground
+    start_point.z = 0.5; // Slightly above ground
 
     // Set the end point based on the car's velocity
     end_point.x = car_pose_x + car_vel_x * 1.0;
     end_point.y = car_pose_y + car_vel_y * 1.0;
-    end_point.z = 0.2; // Same height as start point
+    end_point.z = 0.5; // Same height as start point
 
     arrow_marker.points.push_back(start_point);
     arrow_marker.points.push_back(end_point);

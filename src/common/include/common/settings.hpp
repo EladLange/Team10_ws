@@ -2,6 +2,7 @@
 
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+#include <geometry_msgs/msg/accel.hpp>
 
 #include "visualization_msgs/msg/marker_array.hpp"
 
@@ -21,3 +22,5 @@ using vis_marker_arr = visualization_msgs::msg::MarkerArray;
 using point_msg = geometry_msgs::msg::Point;
 
 using shared_ptr = geometry_msgs::msg::Twist::SharedPtr;
+
+using accel_msg = geometry_msgs::msg::Accel;

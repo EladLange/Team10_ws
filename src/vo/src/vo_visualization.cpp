@@ -120,8 +120,6 @@ void setCandidateMarker(vis_marker &candidate_marker, const pose_msg& ego_pos, c
     car_point.y = ego_pos.position.y;
     car_point.z = ego_pos.position.z;
 
-    float extension_length = 15.0; // Length of the cone lines
-
     point_msg candidate_end_point;
     candidate_end_point.x = car_point.x + candidate_velocity.linear.x * dt;
     candidate_end_point.y = car_point.y + candidate_velocity.linear.y * dt;

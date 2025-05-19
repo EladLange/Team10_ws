@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <string>
-#include "settings.hpp"
+#include "common/settings.hpp"
 
 class Road {
 public:

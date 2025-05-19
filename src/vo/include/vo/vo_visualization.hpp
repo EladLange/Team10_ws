@@ -1,6 +1,6 @@
 #pragma once
 
-#include "settings.hpp"
+#include "common/settings.hpp"
 #include "car.hpp"
 
 // function to create a visualization marker for the velocity obstacle cone

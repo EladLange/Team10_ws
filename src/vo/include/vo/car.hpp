@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "settings.hpp"
+#include "common/settings.hpp"
 
 
 class Car {
