@@ -8,6 +8,7 @@
 #include "velocity_obstacle.hpp"
 #include "raceline_visualization.hpp"
 #include "global_variables.hpp"
+#include "nlvo/nlvo.hpp"
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -16,6 +17,7 @@
 #include <geometry_msgs/msg/pose_array.hpp>
 
 VelocityObstacle vo;
+NLVO nlvo;
 
 // Global variables
 float time_horizon = 7.0f;
@@ -32,9 +34,11 @@ public:
       controller_(road_)
     {
         RCLCPP_INFO(this->get_logger(), "Starting car simulation...");
-        
-        intilize_cars();
 
+
+        initialize_cars();
+
+        // publishers
         pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("car_pose", 10);
         marker_pub_ = this->create_publisher<vis_marker_arr>("visualization_marker_array", 10);
         vo_marker_pub_ = this ->create_publisher<vis_marker_arr>("vo_marker_array", 10);
@@ -66,7 +70,7 @@ public:
         }
     }
 
-    void intilize_cars() {
+    void initialize_cars() {
                 // Initialize cars
                 controlled_car_ = std::make_shared<Car>("ego", true);
                 controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
@@ -83,19 +87,19 @@ public:
                 drone1->setPose(makePose(40.0, -4.5));
                 drone1->setVelocity(makeVel(0.0, 0.0));
                 drones_.push_back(drone1);
-        
+
                 // Third obstacle
                 auto drone2 = std::make_shared<Car>("drone_2", false);
                 drone2->setPose(makePose(60.0, 0.0));
                 drone2->setVelocity(makeVel(0.0, 0.0));
                 drones_.push_back(drone2);
-        
+
                 // Fourth obstacle
                 auto drone3 = std::make_shared<Car>("drone_3", false);
                 drone3->setPose(makePose(50.0, 0.0));
                 drone3->setVelocity(makeVel(1.0, 0.0));
                 drones_.push_back(drone3);
-        
+
                 // Fifth obstacle
                 auto drone4 = std::make_shared<Car>("drone_4", false);
                 drone4->setPose(makePose(20.0, 4.5));
@@ -127,6 +131,54 @@ public:
                 drones_.push_back(drone8);
     }
 
+point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
+{
+    int lookahead_step = 5;
+    point_msg point;
+
+    // fallback if raceline is empty
+    if (raceline.empty())
+    {
+        //std::cout<<"Raceline is empty"<<std::endl;
+        point.x = ego_pose.position.x;
+        point.y = ego_pose.position.y;
+        point.z = ego_pose.position.z;
+        return point;
+
+    }
+
+    // Find closest point that is in front of ego
+    int closest_index = 0;
+    double min_dist_squared = std::numeric_limits<double>::max();
+
+    // Iterate through the raceline points
+    for (size_t i = 0; i < raceline.size(); ++i)
+    {
+        const auto& raceline_point = raceline[i];
+        double dx = ego_pose.position.x - raceline_point.x;
+        double dy = ego_pose.position.y - raceline_point.y;
+
+        double squar_dist = dx * dx + dy * dy;
+
+        if (squar_dist < min_dist_squared)
+        {
+            min_dist_squared = squar_dist;
+            closest_index = static_cast<int>(i);
+        }
+    }
+
+    // Compute the lookahead distance
+    int lookahead_index = closest_index + lookahead_step;
+
+    // Clamp to raceline size
+    if (lookahead_index >= static_cast<int>(raceline.size()))
+    {
+        lookahead_index = static_cast<int>(raceline.size()) - 1;
+    }
+
+    return raceline[lookahead_index];
+}
+
 private:
     Road road_;
     DroneController controller_;
@@ -146,6 +198,7 @@ private:
     // ROS subscribers
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr ego_vel_sub_;
 
+
     pose_msg makePose(double x, double y, double z = 0.5) {
         pose_msg pose;
         pose.position.x = x;
@@ -162,6 +215,12 @@ private:
         return vel;
     }
 
+    // void egoVelCallback(const shared_ptr msg)
+    // {
+    //     controlled_car_->setVelocity(*msg);
+    //     RCLCPP_INFO(this->get_logger(), "Ego car velocity set to: (%f, %f)", msg->linear.x, msg->linear.y);
+    // }
+
     void update() {
         double dt = 0.1;  // 100 ms
         std::vector<pose_msg> obstacle_poses;
@@ -174,21 +233,17 @@ private:
             publishTF(*drones_[i], "map", drones_[i]->getId());
             obstacle_poses.push_back(drones_[i]->getPose());
             obstacle_velocities.push_back(drones_[i]->getVelocity());
-            //RCLCPP_INFO(this->get_logger(), "Drone %zu position: (%f, %f)", i, drones_[i]->getPose().position.x, drones_[i]->getPose().position.y);
-            //RCLCPP_INFO(this->get_logger(), "Drone %zu velocity: (%f, %f)", i, drones_[i]->getVelocity().linear.x, drones_[i]->getVelocity().linear.y);
         }
 
         // Get ego car's current pose and velocity
         auto ego_pose = controlled_car_->getPose();
         auto ego_vel = controlled_car_->getVelocity();
 
-        //RCLCPP_INFO(this->get_logger(), "Ego car position: (%f, %f)", ego_pose.position.x, ego_pose.position.y);
-        //RCLCPP_INFO(this->get_logger(), "Ego car velocity: (%f, %f)", ego_vel.linear.x, ego_vel.linear.y);
-
         std::vector<point_msg> raceline = setRaceline();
+        point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
-        twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, raceline, r_total);
-        // RCLCPP_INFO(this->get_logger(), "New ego car velocity: (%f, %f)", new_ego_velocity.linear.x, new_ego_velocity.linear.y);
+        //twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
+        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         // Set the new velocity for the ego car
         controlled_car_->setVelocity(new_ego_velocity);
         // Publish the new velocity
@@ -199,7 +254,6 @@ private:
         tf2::Quaternion q;
         q.setRPY(0, 0, yaw);
         controlled_car_->setOrientation(q);
-        //RCLCPP_INFO(this->get_logger(), "Ego car orientation: (%f, %f, %f, %f)", q.x(), q.y(), q.z(), q.w());
 
         // Update ego car's position based on the new velocity
         controlled_car_->update(dt);
@@ -229,6 +283,7 @@ private:
         tf_msg.transform.translation.y = car.getPose().position.y;
         tf_msg.transform.translation.z = car.getPose().position.z;
         tf_msg.transform.rotation = car.getPose().orientation;
+
 
         tf_broadcaster_->sendTransform(tf_msg);
     }
@@ -281,9 +336,10 @@ private:
 
     float calculateTotalRadius() {
         auto scale = getCarScale();
-        float r_ego = 0.5f * std::sqrt(std::pow(scale.x, 2) + std::pow(scale.y, 2));
+        float r_ego =0.5f * std::sqrt(std::pow(scale.x, 2) + std::pow(scale.y, 2));
         float r_obstacle = r_ego;
-        return r_ego + r_obstacle;
+        float r_total = r_ego + r_obstacle;
+        return r_total;
     }
 
 
@@ -344,15 +400,15 @@ private:
            // RCLCPP_INFO(this->get_logger(), "Number of points in cone marker: %zu", cone_marker.points.size());
         }
 
-        // //for debugging: show the candidate velocities
-        // std::vector<twist_msg> candidate_velocities = vo.generateCandidateVelocities(ego_vel);
-        // for (const auto& candidate_velocity : candidate_velocities) {
-        //     vis_marker candidate_marker;
-        //     // Set the properties of the candidate marker
-        //     setCandidateMarker(candidate_marker, ego_pose, candidate_velocity, r_total, 5.0);
-        //     candidate_marker.id = id++;
-        //     marker_array.markers.push_back(candidate_marker);
-        // }
+        // for debugging: show the candidate velocities
+        std::vector<twist_msg> candidate_velocities = nlvo.generateACV(ego_vel);
+        for (const auto& candidate_velocity : candidate_velocities) {
+            vis_marker candidate_marker;
+            // Set the properties of the candidate marker
+            setCandidateMarker(candidate_marker, ego_pose, candidate_velocity, r_total, 5.0);
+            candidate_marker.id = id++;
+            marker_array.markers.push_back(candidate_marker);
+        }
 
         vo_marker_pub_->publish(marker_array);
         //RCLCPP_INFO(this->get_logger(), "Published %zu markers", marker_array.markers.size());

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "settings.hpp"
+#include "common/settings.hpp"
 #include "car.hpp"
 
 // function to set a velocity marker for a car

@@ -1,17 +1,6 @@
 #pragma once
 
-#include "settings.hpp"
-#include "global_variables.hpp"
-#include "velocity_obstacle.hpp"
-
-// Struct to hold the center and radius of the disk
-struct Disk
-{
-    float center_x;
-    float center_y;
-    float radius;
-};
-
+#include "common/settings.hpp"
 
 class NLVO
 {
@@ -19,24 +8,33 @@ class NLVO
     // Constructor
     NLVO();
 
-    // Function to create NLVO disk for every obstacle
-    std::vector<Disk> createNLVODisk(const pose_msg& ego_pose, const twist_msg& ego_velocity, const pose_msg& obstacle_pose, const twist_msg& obstacle_velocity);
+    // Global variables
+    const float control_limit_x = 2.5f; // |u_x| <= control_limit_x
+    const float control_limit_y = 2.5f; // |u_y| <= control_limit_y
+    const float dt = 0.1f; // time step
+    const float max_time = 10.0f; // maximum time horizon
+    const float max_acceleration = 2.0f; // maximum acceleration
 
-    // Function that check if the candidate velocity is inside the disk
-    bool isVelocityInsideDisk(const twist_msg& candidate, const Disk& disk);
+    // Function to select the best velocity
+    twist_msg selectBestVelocity(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<pose_msg>& obstacles_poses, const std::vector<twist_msg>& obstacle_vels, const point_msg &goal_point, float r_total);
 
-    // Function that check if the candidate velocity is inside the all disks
-    bool isVelocityFeasible(const twist_msg& candidate, const std::vector<Disk>& nlvo_disks);
+    // Function to generate candidate velocities
+    std::vector<twist_msg> generateACV(const twist_msg& ego_vel);
 
-    twist_msg selectBestVelocity(const std::vector<twist_msg> &candidates, const std::vector<Disk> &nlvo_disks, const twist_msg &desired_velocity);
+    // Function to generate candidate velocities (improved version)
+    std::vector<twist_msg> generateCandidateVelocities(const twist_msg& ego_vel);
+
+    // Function to check if a candidate velocity is in the truncated NLVO
+    bool isVelocityInTruncatedNLVO(const twist_msg& candidate_vel, const pose_msg& ego_pose, const twist_msg& ego_vel, const pose_msg& obstacle_pose, const twist_msg& obstacle_vel, float r_total, float time_horizon);
+
+    // Function to calculate cost for a candidate velocity
+    float calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<pose_msg>obstacle_poses, const std::vector<twist_msg>obstacle_vels, const twist_msg& candidate_velocity, const point_msg& goal_point, float r_total, float time_horizon);
 
     private:
-    // predict obstacle position in time t
-    pose_msg predictObstaclePosition(const pose_msg& obstacle_pose, const twist_msg& obstacle_velocity, float t);
 
-    // Compute safe time horizon
-    float computeSafeTimeHorizon(const twist_msg &ego_velocity);
+    // Function to compute the minimum time horizon
+    float computeMinimumTimeHorizon(const pose_msg& ego_pose, const twist_msg& ego_vel, const pose_msg& obstacle_pose, const twist_msg& obstacle_vel, float r_total);
 
-    // make sure the value is within the range [min, max]
-    float clamp(float value, float min, float max);
+    // Function to evaluate cost (e.g., time-to-go)
+    float evaluateCost(const twist_msg& candidate_vel, const point_msg& to_goal, const twist_msg& ego_vel);
 };
