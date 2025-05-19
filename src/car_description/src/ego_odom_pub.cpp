@@ -8,6 +8,7 @@ OdomPub::OdomPub(const std::string &name) : Node(name)
 
     ign_pose_sub_ = create_subscription<geometry_msgs::msg::PoseArray>("/world/empty/pose/info",10,std::bind(&OdomPub::msgCallback,this, _1));   
     odom_pub_ = create_publisher<geometry_msgs::msg::Pose>("/ego_pose",10);
+    ego_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>("/ego_vel",10);
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
     static_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
     
@@ -24,7 +25,7 @@ void OdomPub::msgCallback(const geometry_msgs::msg::PoseArray & msg)
     ego_pose.orientation.z=roundToThreeDecimalPlaces(ego_pose.orientation.z,6);
     ego_pose.orientation.x=roundToThreeDecimalPlaces(ego_pose.orientation.x,6);
     ego_pose.orientation.y=roundToThreeDecimalPlaces(ego_pose.orientation.y,6);
-
+    
     geometry_msgs::msg::TransformStamped egoTransform;
     egoTransform.header.stamp = this->now();
     egoTransform.header.frame_id = "map";// Global frame
@@ -34,6 +35,19 @@ void OdomPub::msgCallback(const geometry_msgs::msg::PoseArray & msg)
     egoTransform.transform.translation.z = ego_pose.position.z;
     egoTransform.transform.rotation = ego_pose.orientation;
 
+    float dx, dy, vx,vy;
+    dx=egoTransform.transform.translation.x - last_pose.transform.translation.x;
+    dy=egoTransform.transform.translation.y - last_pose.transform.translation.y;
+    rclcpp::Time current_time = egoTransform.header.stamp;
+    rclcpp::Time last_time = last_pose.header.stamp;
+    double dt = (current_time - last_time).seconds();  // returns double in seconds
+    vx=dx/dt;
+    vy=dy/dt;
+    ego_vel.linear.x=vx;
+    ego_vel.linear.y=vy;
+    
+    last_pose=egoTransform;
+    ego_vel_pub_->publish(ego_vel);
     tf_broadcaster_->sendTransform(egoTransform);
     odom_pub_-> publish(ego_pose);
 }
@@ -65,13 +79,13 @@ double OdomPub::roundToThreeDecimalPlaces(double value, int decimalPlaces) {
 
 geometry_msgs::msg::Twist OdomPub::convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Pose ego_pos){
     geometry_msgs::msg::Twist vel_cmd;
-    float k_heading;
+    float k_heading=1.0;
     float theta= atan2(vel.linear.y,vel.linear.x);
-    double vx_local = cos(theta) * vx_global + sin(theta) * vy_global;
-    cmd_vel.linear.x = vx_local;
-    double heading_error = theta- ego_pos.orinetation.z;
-    cmd_vel.angular.z = k_heading * heading_error;
-    return cmd_vel;
+    double vx_local = cos(theta) * vel.linear.x + sin(theta) * vel.linear.y;
+    vel_cmd.linear.x = vx_local;
+    double heading_error = theta- ego_pos.orientation.z;
+    vel_cmd.angular.z = k_heading * heading_error;
+    return vel_cmd;
 }
 
 int main (int argc, char* argv[])

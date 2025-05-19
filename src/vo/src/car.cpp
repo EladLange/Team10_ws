@@ -6,7 +6,7 @@ Car::Car(const std::string& id, bool is_controlled)
     : id_(id), controlled_(is_controlled) {
     pose_.position.x = 0.0;
     pose_.position.y = 0.0;
-    pose_.position.z = 0.0;
+    pose_.position.z = 0.5;
 
     pose_.orientation.w = 1.0;
     pose_.orientation.x = 0.0;

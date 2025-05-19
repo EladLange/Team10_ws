@@ -136,6 +136,15 @@ def generate_launch_description():
         arguments=["-d",os.path.join(car_description_dir, "RVIZ", "vo_display.rviz")]
     )
 
+    vo_node= Node(
+        package="vo",
+        executable="vo_simulation_node"
+    )
+    pure_pursuit_node= Node(
+        package="purepursuit_new",
+        executable="pure_pursuit_node"
+    )
+
 
     return LaunchDescription([
     model_arg,
@@ -151,5 +160,7 @@ def generate_launch_description():
     joint_state_pub,
     ackermann_steering_controller,
     velocity_controller,
-    rviz_node
+    rviz_node,
+    vo_node,
+    pure_pursuit_node
     ])

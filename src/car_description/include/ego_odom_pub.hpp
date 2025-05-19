@@ -20,13 +20,15 @@ private:
     void msgCallback(const geometry_msgs::msg::PoseArray& msg);
     double roundToThreeDecimalPlaces (double value, int decimalPlaces);
     void publishStaticTransform();
-    geometry_msgs::msg::Twist convertCmdVector(const geometry_msgs::msg::Twist &vel);
+    geometry_msgs::msg::Twist convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Pose ego_pos);
 
 
     rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr ign_pose_sub_;
-    rclcpp::Publisher<geometry_msgs::msg::Pose>::SharedPtr odom_pub_; 
+    rclcpp::Publisher<geometry_msgs::msg::Pose>::SharedPtr odom_pub_;
+    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr ego_vel_pub_; 
     std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_broadcaster_;
 
-    geometry_msgs::msg::Twist des_vel;
+    geometry_msgs::msg::Twist ego_vel;
+    geometry_msgs::msg::TransformStamped last_pose;
 };
