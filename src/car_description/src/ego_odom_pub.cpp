@@ -65,6 +65,16 @@ double OdomPub::roundToThreeDecimalPlaces(double value, int decimalPlaces) {
     return std::round(value * factor) / factor;
 }
 
+geometry_msgs::msg::Twist OdomPub::convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Pose ego_pos){
+    geometry_msgs::msg::Twist vel_cmd;
+    float k_heading;
+    float theta= atan2(vel.linear.y,vel.linear.x);
+    double vx_local = cos(theta) * vx_global + sin(theta) * vy_global;
+    cmd_vel.linear.x = vx_local;
+    double heading_error = theta- ego_pos.orinetation.z;
+    cmd_vel.angular.z = k_heading * heading_error;
+    return cmd_vel;
+}
 
 int main (int argc, char* argv[])
 {

@@ -7,6 +7,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/static_transform_broadcaster.h>
+#include <cmath>
 
 
 class OdomPub:public rclcpp::Node
@@ -19,6 +20,7 @@ private:
     void msgCallback(const geometry_msgs::msg::PoseArray& msg);
     double roundToThreeDecimalPlaces (double value, int decimalPlaces);
     void publishStaticTransform();
+    geometry_msgs::msg::Twist convertCmdVector(const geometry_msgs::msg::Twist &vel);
 
 
     rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr ign_pose_sub_;
