@@ -70,7 +70,7 @@ public:
                 // Initialize cars
                 controlled_car_ = std::make_shared<Car>("ego", true);
                 controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
-                controlled_car_->setVelocity(makeVel(10.0, 0.0));
+                controlled_car_->setVelocity(makeVel(50.0, 0.0));
         
                 // First obstacle 
                 auto drone0 = std::make_shared<Car>("drone_0", false);

@@ -39,8 +39,8 @@ class PurePursuitNode : public rclcpp::Node {
 public:
     // Constructor – Initializes publishers, timer, paths and drones
     PurePursuitNode() : Node("pure_pursuit_node") {
-        // Create a shared bicycle kinematic model with wheelbase 2.5 meters
-        vehicle_model_ = std::make_shared<BicycleModel>(2.5);
+        // Create a shared bicycle kinematic model with wheelbase 1.55 meters
+        vehicle_model_ = std::make_shared<BicycleModel>(1.55);
 
         // Define paths to load
         std::array<std::string, 3> path_files = {
