@@ -9,5 +9,7 @@ sudo apt-get install ros-humble-robot-localization
 sudo apt-get install ros-humble-joy
 sudo apt-get install ros-humble-joy-teleop
 sudo apt install ros-humble-tf-transformations
+sudo apt-get install ros-humble-ros-ign-bridge
 sudo apt update
 sudo apt upgrade
+

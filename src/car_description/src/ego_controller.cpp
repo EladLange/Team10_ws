@@ -19,8 +19,7 @@ void EgoController::msgCallback(const geometry_msgs::msg::Twist & msg)
 {
     float temp_vel=msg.linear.x;
     temp_vel=temp_vel/wheels_radius;//linear velocity/wheel radius
-    RCLCPP_INFO_STREAM(get_logger(),"temp vel="<<temp_vel);
-    Eigen::Vector2d rear_wheels_speed;
+    //RCLCPP_INFO_STREAM(get_logger(),"temp vel="<<temp_vel); //debugging
     std_msgs::msg::Float64MultiArray rear_vel;
     rear_vel.data.push_back(temp_vel);
     rear_vel.data.push_back(temp_vel);
