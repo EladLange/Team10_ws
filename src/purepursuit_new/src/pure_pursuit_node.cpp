@@ -77,31 +77,33 @@ public:
         // Create a broadcaster to publish transforms for visualization
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
-        // Create drones (one for each path or up to max_drones)
-        const int max_drones = 3; // Maximum number of drones to create
-        const int num_drones = std::min(static_cast<int>(paths_.size()), max_drones);
+        // Create drones (one for each path or up to drones_per_path)
+        const int drones_per_path = 3; // number of drones per path
+        const int num_drones = std::min(static_cast<int>(paths_.size()), drones_per_path);
 
         for (int i = 0; i < num_drones; ++i) {
             // Create initial state for the drone
             // Position each drone at the start of its path with some z-offset to avoid collisions
-            State initial_state("drone_" + std::to_string(i),
-                               paths_[i].first[0],  // x
+            for (int j=0; j<drones_per_path; ++j){
+
+                State initial_state("drone_" + std::to_string(i),
+                               paths_[i].first[0]+10*j,  // x
                                paths_[i].second[0], // y
                                0.2,       // z (staggered heights)
                                0.0);                // yaw
-
             // Create the drone with its assigned path
-            auto drone = std::make_shared<Drone>(
-                "drone_" + std::to_string(i),
-                vehicle_model_,
-                paths_[i].first,   // x coordinates
-                paths_[i].second,  // y coordinates
-                initial_state
-            );
-
-            drones_.push_back(drone);
-            RCLCPP_INFO(this->get_logger(), "Created drone %d at position (%f, %f, %f)",
-                       i, initial_state.x, initial_state.y, initial_state.z);
+                auto drone = std::make_shared<Drone>(
+                    "drone_" + std::to_string(i),
+                    vehicle_model_,
+                    paths_[i].first,   // x coordinates
+                    paths_[i].second,  // y coordinates
+                    initial_state
+                );
+        
+                drones_.push_back(drone);
+                RCLCPP_INFO(this->get_logger(), "Created drone %d at position (%f, %f, %f)",
+                        i, initial_state.x, initial_state.y, initial_state.z);
+            }
         }
 
         // Create a periodic timer that triggers control loop every 10 milliseconds
@@ -176,7 +178,7 @@ private:
         // Update each drone and collect visualization data
         for (size_t i = 0; i < drones_.size(); ++i) {
             // Update drone state using pure pursuit control
-            drones_[i]->update(dt, velocity-2);
+            drones_[i]->update(dt, velocity+i);
 
             // Get current drone state
             const State& state = drones_[i]->getState();
@@ -209,18 +211,48 @@ private:
             vehicle_marker.scale.z = 0.5;  // Height
 
             // Set color based on drone index (different color for each drone)
-            switch (i % 3) {
+            switch (i % 9) {
                 case 0:
                     vehicle_marker.color.r = 1.0f;
                     vehicle_marker.color.g = 0.0f;
                     vehicle_marker.color.b = 0.0f;
                     break;
                 case 1:
+                vehicle_marker.color.r = 1.0f;
+                vehicle_marker.color.g = 0.0f;
+                vehicle_marker.color.b = 0.0f;
+                break;
+                case 2:
+                vehicle_marker.color.r = 1.0f;
+                vehicle_marker.color.g = 0.0f;
+                vehicle_marker.color.b = 0.0f;
+                break;
+                case 3:
                     vehicle_marker.color.r = 0.0f;
                     vehicle_marker.color.g = 1.0f;
                     vehicle_marker.color.b = 0.0f;
                     break;
-                case 2:
+                case 4:
+                    vehicle_marker.color.r = 0.0f;
+                    vehicle_marker.color.g = 1.0f;
+                    vehicle_marker.color.b = 0.0f;
+                    break;
+                case 5:
+                    vehicle_marker.color.r = 0.0f;
+                    vehicle_marker.color.g = 1.0f;
+                    vehicle_marker.color.b = 0.0f;
+                    break;
+                case 6:
+                    vehicle_marker.color.r = 0.0f;
+                    vehicle_marker.color.g = 0.0f;
+                    vehicle_marker.color.b = 1.0f;
+                    break;
+                case 7:
+                    vehicle_marker.color.r = 0.0f;
+                    vehicle_marker.color.g = 0.0f;
+                    vehicle_marker.color.b = 1.0f;
+                    break;
+                case 8:
                     vehicle_marker.color.r = 0.0f;
                     vehicle_marker.color.g = 0.0f;
                     vehicle_marker.color.b = 1.0f;

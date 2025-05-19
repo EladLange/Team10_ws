@@ -90,17 +90,41 @@ public:
                 drone2->setVelocity(makeVel(0.0, 0.0));
                 drones_.push_back(drone2);
         
-                // // Fourth obstacle
-                // auto drone3 = std::make_shared<Car>("drone_3", false);
-                // drone3->setPose(makePose(50.0, 0.0));
-                // drone3->setVelocity(makeVel(1.0, 0.0));
-                // drones_.push_back(drone3);
+                // Fourth obstacle
+                auto drone3 = std::make_shared<Car>("drone_3", false);
+                drone3->setPose(makePose(50.0, 0.0));
+                drone3->setVelocity(makeVel(1.0, 0.0));
+                drones_.push_back(drone3);
         
-                // // Fifth obstacle
-                // auto drone4 = std::make_shared<Car>("drone_4", false);
-                // drone4->setPose(makePose(20.0, 4.5));
-                // drone4->setVelocity(makeVel(1.0, 0.0));
-                // drones_.push_back(drone4);
+                // Fifth obstacle
+                auto drone4 = std::make_shared<Car>("drone_4", false);
+                drone4->setPose(makePose(20.0, 4.5));
+                drone4->setVelocity(makeVel(1.0, 0.0));
+                drones_.push_back(drone4);
+
+                // Sixth obstacle
+                auto drone5 = std::make_shared<Car>("drone_5", false);
+                drone5->setPose(makePose(20.0, -4.5));
+                drone5->setVelocity(makeVel(1.0, 0.0));
+                drones_.push_back(drone5);
+
+                // Seventh obstacle
+                auto drone6 = std::make_shared<Car>("drone_6", false);
+                drone6->setPose(makePose(10.0, 4.5));
+                drone6->setVelocity(makeVel(1.0, 0.0));
+                drones_.push_back(drone6);
+
+                // Eighth obstacle
+                auto drone7 = std::make_shared<Car>("drone_7", false);
+                drone7->setPose(makePose(10.0, -4.5));
+                drone7->setVelocity(makeVel(1.0, 0.0));
+                drones_.push_back(drone7);
+
+                // Ninth obstacle
+                auto drone8 = std::make_shared<Car>("drone_8", false);
+                drone8->setPose(makePose(10.0, 0.0));
+                drone8->setVelocity(makeVel(1.0, 0.0));
+                drones_.push_back(drone8);
     }
 
 private:

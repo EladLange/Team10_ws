@@ -1,115 +1,129 @@
+#!/usr/bin/env python3
 """
-Module for computing the optimal racing line given track boundaries.
+optimize_lap_time.py
 
-Configure the paths to your boundary CSVs and output directly in the code.
-
-Each boundary CSV must have a header and two columns: x,y
+Compute the minimum-lap-time racing line with CasADi.
 """
+
 import numpy as np
-from scipy.interpolate import splprep, splev
+import casadi as ca
+import pandas as pd
 
-# Configuration: set your file paths here
-INNER_CSV = "/home/yonatan/Desktop/Team10_ws/src/race_line/Oval_path_INNER.csv"    # Replace with your inner boundary CSV path
-OUTER_CSV = "/home/yonatan/Desktop/Team10_ws/src/race_line/Oval_path_OUTER.csv"    # Replace with your outer boundary CSV path
-OUTPUT_CSV = "/home/yonatan/Desktop/Team10_ws/src/race_line/racing_line_new.csv"  # Replace with desired output path
+# === Vehicle physics parameters ===
+a_lat_max  = 8.0    # m/s², max lateral acceleration
+a_long_max = 2.5    # m/s², max acceleration
+a_long_min = -4.0   # m/s², max braking (negative)
 
+# === File paths ===
+CENTER_CSV = "/home/yonatan/Desktop/Team10_ws/src/race_line/baundary/Oval_path.csv"
+INNER_CSV  = "/home/yonatan/Desktop/Team10_ws/src/race_line/baundary/Oval_path_baoundary0.csv"
+OUTER_CSV  = "/home/yonatan/Desktop/Team10_ws/src/race_line/baundary/Oval_path_baoundary2.csv"
+OUTPUT_CSV = "/home/yonatan/Desktop/Team10_ws/src/race_line/baundary/racing_line_min_time.csv"
 
-def load_boundary_csv(path):
-    """
-    Load a boundary CSV file with header "x,y" into an Nx2 numpy array.
-    """
-    try:
-        data = np.loadtxt(path, delimiter=',', skiprows=1)
-    except Exception as e:
-        raise RuntimeError(f"Failed to load boundary CSV '{path}': {e}")
-    if data.ndim != 2 or data.shape[1] != 2:
-        raise ValueError(f"Boundary CSV '{path}' must have two columns x,y")
-    return data
+# === 1. Load data ===
+center = np.loadtxt(CENTER_CSV, delimiter=',', skiprows=1)
+inner  = np.loadtxt(INNER_CSV,  delimiter=',', skiprows=1)
+outer  = np.loadtxt(OUTER_CSV,  delimiter=',', skiprows=1)
 
+N = len(center)
+assert inner.shape[0] == N and outer.shape[0] == N, "Inner/outer must match center length"
 
-def compute_midline(inner, outer, n_points=500):
-    """
-    Compute a smooth midline by averaging inner and outer boundaries
-    and fitting a spline through the midpoint sequence.
-    """
-    mid_raw = (inner + outer) / 2.0
-    tck, _ = splprep([mid_raw[:,0], mid_raw[:,1]], s=0)
-    u_fine = np.linspace(0, 1, n_points)
-    x_smooth, y_smooth = splev(u_fine, tck)
-    return np.vstack([x_smooth, y_smooth]).T
+# === 2. Pre-computations ===
 
+# (a) Segment lengths ds
+ds = np.linalg.norm(np.diff(center, axis=0), axis=1)
+ds = np.hstack([ds, ds[-1]])  # close the loop
 
-def compute_curvature(line):
-    """
-    Estimate curvature κ at each point of the line.
-    κ = |x' y'' - y' x''| / (x'^2 + y'^2)^(3/2)
-    """
-    x, y = line[:,0], line[:,1]
-    dx, dy = np.gradient(x), np.gradient(y)
+# (b) Tangents & normals
+tangents = np.zeros_like(center)
+tangents[1:-1] = center[2:] - center[:-2]
+tangents[0]    = center[1] - center[0]
+tangents[-1]   = center[-1] - center[-2]
+
+normals = np.zeros_like(center)
+for i in range(N):
+    dx, dy = tangents[i]
+    n = np.array([ dy, -dx ])
+    L = np.linalg.norm(n)
+    if L > 0:
+        n /= L
+    # ensure normal points outward toward outer boundary
+    if np.dot(n, outer[i] - center[i]) < 0:
+        n = -n
+    normals[i] = n
+
+# (c) Curvature of centerline
+def compute_curvature(pts):
+    x, y = pts[:,0], pts[:,1]
+    dx, dy   = np.gradient(x), np.gradient(y)
     ddx, ddy = np.gradient(dx), np.gradient(dy)
-    curvature = np.abs(dx * ddy - dy * ddx) / np.power(dx*dx + dy*dy, 1.5)
-    return curvature
+    k = np.abs(dx*ddy - dy*ddx) / (dx*dx + dy*dy)**1.5
+    return np.nan_to_num(k, nan=0.0, posinf=0.0, neginf=0.0)
 
+curv = compute_curvature(center)
 
-def optimize_racing_line(midline, inner, outer):
-    """
-    Compute a racing line by offsetting the midline:
-    - Start hugging the outer boundary
-    - Transition to hugging the inner boundary at the apex (max curvature)
-    - Return to outer boundary after the apex
-    """
-    N = midline.shape[0]
-    # Parameter values along the spline
-    u = np.linspace(0, 1, N)
-    # Resample inner and outer to N points
-    tck_i, _ = splprep([inner[:,0], inner[:,1]], s=0)
-    xi, yi = splev(u, tck_i)
-    tck_o, _ = splprep([outer[:,0], outer[:,1]], s=0)
-    xo, yo = splev(u, tck_o)
-    boundary_inner = np.vstack([xi, yi]).T
-    boundary_outer = np.vstack([xo, yo]).T
-    # Direction vectors from inner to outer
-    widths = np.linalg.norm(boundary_outer - boundary_inner, axis=1)
-    dirs = (boundary_outer - boundary_inner) / widths[:, None]
-    # Find apex index via curvature
-    curvature = compute_curvature(midline)
-    apex_idx = np.argmax(curvature)
-    # Compute offset factor f: +1 at start->-1 at apex->+1 at end
-    f = np.zeros(N)
-    for i in range(N):
-        if i <= apex_idx:
-            f[i] = 1 - 2 * (i / apex_idx)
-        else:
-            f[i] = -1 + 2 * ((i - apex_idx) / (N - 1 - apex_idx))
-    # Compute offsets and apply
-    offsets = dirs * (widths / 2)[:, None] * f[:, None]
-    raw_line = midline + offsets
-    # Smooth the racing line
-    tck, _ = splprep([raw_line[:,0], raw_line[:,1]], s=0)
-    x_opt, y_opt = splev(u, tck)
-    return np.vstack([x_opt, y_opt]).T
+# (d) Offset bounds from center to boundaries
+offset_min = np.zeros(N)
+offset_max = np.zeros(N)
+for i in range(N):
+    off_in  = np.dot(inner[i]  - center[i], normals[i])
+    off_out = np.dot(outer[i]  - center[i], normals[i])
+    offset_min[i] = min(off_in, off_out)
+    offset_max[i] = max(off_in, off_out)
 
+# === 3. Set up optimization ===
+opti = ca.Opti()
+off = opti.variable(N)  # lateral offset
+v   = opti.variable(N)  # speed
 
-def save_line(line, path):
-    """
-    Save N×2 array of x,y points to a CSV file.
-    """
-    header = 'x,y'
-    np.savetxt(path, line, delimiter=',', header=header, comments='')
+# lateral offset bounds
+opti.subject_to(off >= offset_min)
+opti.subject_to(off <= offset_max)
 
+# positive speed
+opti.subject_to(v >= 0.1)
 
-def main():
-    # Load boundaries
-    inner = load_boundary_csv(INNER_CSV)
-    outer = load_boundary_csv(OUTER_CSV)
-    # Compute midline
-    midline = compute_midline(inner, outer, n_points=500)
-    # Optimize racing line
-    racing_line = optimize_racing_line(midline, inner, outer)
-    # Save result
-    save_line(racing_line, OUTPUT_CSV)
-    print(f"Racing line saved to {OUTPUT_CSV}")
+# lateral-acceleration constraint only where curvature > 0
+for i in range(N):
+    if curv[i] > 1e-6:
+        opti.subject_to(v[i]**2 * curv[i] <= a_lat_max)
 
+# longitudinal accel/brake constraints
+for i in range(N-1):
+    opti.subject_to((v[i+1]-v[i]) * v[i] <=  a_long_max * ds[i])
+    opti.subject_to((v[i+1]-v[i]) * v[i] >=  a_long_min * ds[i])
 
-if __name__ == '__main__':
-    main()
+# close the loop
+opti.subject_to(off[0] == off[-1])
+opti.subject_to(v[0]   == v[-1])
+
+# objective: minimize lap time = sum(ds/v)
+time = 0
+for i in range(N):
+    time += ds[i] / v[i]
+opti.minimize(time)
+
+# initial guesses
+opti.set_initial(off, 0)
+v_guess = np.minimum(np.sqrt(a_lat_max / (curv + 1e-6)), 10.0)
+opti.set_initial(v, v_guess)
+
+# solver
+opti.solver('ipopt', {"ipopt.print_level":0})
+sol = opti.solve()
+
+off_opt = sol.value(off)
+v_opt   = sol.value(v)
+
+# === 4. Construct racing line ===
+racing = center + normals * off_opt[:,None]
+
+# add constant Z = 0.2
+zcol    = 0.2 * np.ones((N,1))
+racing3 = np.hstack([racing, zcol])
+
+# === 5. Save CSV ===
+df = pd.DataFrame(racing3, columns=['x','y','z'])
+df.to_csv(OUTPUT_CSV, index=False)
+print("✅ Racing line saved to", OUTPUT_CSV)
+print(f"⏱️ Estimated lap time: {sol.value(time):.3f} s")
