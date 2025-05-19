@@ -1,0 +1,17 @@
+digraph G {
+"map" -> "ego"[label=" Broadcaster: default_authority\nAverage rate: 58.406\nBuffer length: 5.017\nMost recent transform: 1747384388.224208\nOldest transform: 1747384383.207606\n"];
+"base_footprint" -> "base_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"ego" -> "base_footprint"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"steering_link_fl" -> "FL_wheel"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 69.61\nOldest transform: 64.71\n"];
+"base_link" -> "steering_link_fl"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 69.61\nOldest transform: 64.71\n"];
+"steering_link_fr" -> "FR_wheel"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 69.61\nOldest transform: 64.71\n"];
+"base_link" -> "steering_link_fr"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 69.61\nOldest transform: 64.71\n"];
+"base_link" -> "RL_wheel"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 69.61\nOldest transform: 64.71\n"];
+"base_link" -> "RR_wheel"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 69.61\nOldest transform: 64.71\n"];
+"base_link" -> "ack_fl"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 69.61\nOldest transform: 64.71\n"];
+"base_link" -> "ack_fr"[label=" Broadcaster: default_authority\nAverage rate: 20.204\nBuffer length: 4.9\nMost recent transform: 69.61\nOldest transform: 64.71\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1747384388.2339811"[ shape=plaintext ] ;
+}->"map";
+}

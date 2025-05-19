@@ -1,8 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include "ego_odom_pub.hpp"
 
-
-
 using std::placeholders::_1;
 
 OdomPub::OdomPub(const std::string &name) : Node(name)
