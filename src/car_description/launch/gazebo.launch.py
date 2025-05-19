@@ -66,6 +66,85 @@ def generate_launch_description():
                    "-pose", spawn_pose_value]
     )
 
+    ekf_node =Node(
+        package="robot_localization",
+        executable="ekf_node",
+        name="ekf_filter_node",
+        parameters=[os.path.join(car_description_dir,"config","ekf.yaml")]
+    )
+
+    ego_controller= Node(
+        package="car_description",
+        executable="ego_controller"
+    )
+
+    joint_state_pub= Node(
+    package='controller_manager',
+    executable='spawner',
+    arguments=['joint_state_broadcaster', '--controller-manager', '/controller_manager']
+    )
+
+
+    odom_publisher= Node(
+        package="car_description",
+        executable="ego_pose_pub"
+    )
+
+    ros_gz_bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        name="ros_gz_bridge_node",
+        arguments=[
+            '/world/empty/pose/info@geometry_msgs/msg/PoseArray@ignition.msgs.Pose_V'
+        ]
+    )
+
+    robot_controllers=os.path.join(get_package_share_directory("car_controller"),"config","ackermann_param.yaml")
+
+    control_node = Node(
+    package="controller_manager",
+    executable="ros2_control_node",
+    parameters=[robot_controllers],
+    output="both",
+    )  
+
+    ackermann_steering_controller= Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "ackermann_steering_controller",
+            "--controller-manager",
+            "/controller_manager"
+        ]
+    )
+    
+    velocity_controller= Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "velocity_controller",
+            "--controller-manager",
+            "/controller_manager"
+        ]
+    )
+
+    rviz_node=  Node(
+        package="rviz2",
+        executable="rviz2",
+        name="rviz2",
+        output="screen",
+        arguments=["-d",os.path.join(car_description_dir, "RVIZ", "vo_display.rviz")]
+    )
+
+    vo_node= Node(
+        package="vo",
+        executable="vo_simulation_node"
+    )
+    pure_pursuit_node= Node(
+        package="purepursuit_new",
+        executable="pure_pursuit_node"
+    )
+
 
     return LaunchDescription([
     model_arg,
@@ -73,5 +152,15 @@ def generate_launch_description():
     robot_state_publisher,
     gazebo_resource_path,
     gazebo,
-    gz_spawn_entity 
+    gz_spawn_entity,
+    ego_controller,
+    ros_gz_bridge,
+    odom_publisher,
+    control_node,
+    joint_state_pub,
+    ackermann_steering_controller,
+    velocity_controller,
+    rviz_node,
+    vo_node,
+    pure_pursuit_node
     ])

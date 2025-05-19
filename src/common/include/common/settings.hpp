@@ -24,3 +24,5 @@ using point_msg = geometry_msgs::msg::Point;
 using shared_ptr = geometry_msgs::msg::Twist::SharedPtr;
 
 using accel_msg = geometry_msgs::msg::Accel;
+
+using std::placeholders::_1;

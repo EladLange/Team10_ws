@@ -11,13 +11,18 @@ find_package(car_controller)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED) 
 find_package(geometry_msgs REQUIRED)
-find_package(Eigen3 REQUIRED)
+find_package(robot_localization REQUIRED)  
+find_package(ros_gz_bridge REQUIRED) 
+find_package(tf2_ros REQUIRED) 
 
 include_directories(include)
-include_directories(${EIGEN3_INCLUDE_DIR})
+
 
 add_executable(ego_controller src/ego_controller.cpp)
-ament_target_dependencies(ego_controller rclcpp std_msgs geometry_msgs ${Eigen_LIBRARIES})
+ament_target_dependencies(ego_controller rclcpp std_msgs geometry_msgs)
+
+add_executable(ego_pose_pub src/ego_odom_pub.cpp)
+ament_target_dependencies(ego_pose_pub rclcpp std_msgs geometry_msgs tf2_ros)
 
 install(
   DIRECTORY include
@@ -31,6 +36,11 @@ install(
 
 install(TARGETS
   ego_controller
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS
+  ego_pose_pub
   DESTINATION lib/${PROJECT_NAME}
 )
 

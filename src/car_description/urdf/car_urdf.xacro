@@ -9,7 +9,9 @@
      <!--include ros control parameters -->
     <xacro:include filename="$(find car_description)/urdf/car_ros2_control.xacro"/>
     
+
     <link name="base_footprint"/>
+
 
     <link name="base_link">
     <inertial>
@@ -32,7 +34,7 @@
                 <mesh filename="package://car_description/meshes/polygon_car.STL"/>
             </geometry>
             <material name="red">
-                <color rgba="1.0 0.0 0.0 0.8"/>
+                <color rgba="1.0 0.0 0.0 0.85"/>
             </material>
         </visual>
         <collision>

@@ -43,6 +43,10 @@ public:
         marker_pub_ = this->create_publisher<vis_marker_arr>("visualization_marker_array", 10);
         vo_marker_pub_ = this ->create_publisher<vis_marker_arr>("vo_marker_array", 10);
         cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("vel_cmd", 10);
+    
+        // subscribers
+        ego_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&CarSimulationNode::egoVelCallback,this, _1));
+        ego_pos_sub_ = this->create_subscription<geometry_msgs::msg::Pose>("/ego_pose",10,std::bind(&CarSimulationNode::egoPosCallback,this, _1));
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -52,7 +56,7 @@ public:
                 this->dronePoseCallback(msg);
             }
         );
-        
+
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(100),
             std::bind(&CarSimulationNode::update, this));
@@ -131,6 +135,7 @@ public:
                 drones_.push_back(drone8);
     }
 
+
 point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
 {
     int lookahead_step = 5;
@@ -197,6 +202,7 @@ private:
 
     // ROS subscribers
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr ego_vel_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr ego_pos_sub_;
 
 
     pose_msg makePose(double x, double y, double z = 0.5) {
@@ -215,14 +221,21 @@ private:
         return vel;
     }
 
-    // void egoVelCallback(const shared_ptr msg)
-    // {
-    //     controlled_car_->setVelocity(*msg);
-    //     RCLCPP_INFO(this->get_logger(), "Ego car velocity set to: (%f, %f)", msg->linear.x, msg->linear.y);
-    // }
+    void egoVelCallback(const shared_ptr msg)
+    {
+        controlled_car_->setVelocity(*msg);
+        RCLCPP_INFO(this->get_logger(), "Ego car velocity set to: (%f, %f)", msg->linear.x, msg->linear.y);
+    }
+
+    void egoPosCallback(const pose_msg msg)
+    {
+        controlled_car_->setPose(msg);
+        //RCLCPP_INFO(this->get_logger(), "Ego car velocity set to: (%f, %f)", msg->linear.x, msg->linear.y);
+    }
+
 
     void update() {
-        double dt = 0.1;  // 100 ms
+        double dt = 0.01;  // 100 ms
         std::vector<pose_msg> obstacle_poses;
         std::vector<twist_msg> obstacle_velocities;
 
@@ -235,6 +248,7 @@ private:
             obstacle_velocities.push_back(drones_[i]->getVelocity());
         }
 
+
         // Get ego car's current pose and velocity
         auto ego_pose = controlled_car_->getPose();
         auto ego_vel = controlled_car_->getVelocity();
@@ -242,11 +256,12 @@ private:
         std::vector<point_msg> raceline = setRaceline();
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
-        //twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
-        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
+        twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
+        //twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         // Set the new velocity for the ego car
-        controlled_car_->setVelocity(new_ego_velocity);
+        //controlled_car_->setVelocity(new_ego_velocity);
         // Publish the new velocity
+        new_ego_velocity = convertCmdVector(new_ego_velocity, ego_pose);
         cmd_vel_pub_->publish(new_ego_velocity);
 
         // Update ego car's orientation based on the new velocity
@@ -279,6 +294,7 @@ private:
         tf_msg.header.frame_id = parent_frame;
         tf_msg.child_frame_id = child_frame;
 
+
         tf_msg.transform.translation.x = car.getPose().position.x;
         tf_msg.transform.translation.y = car.getPose().position.y;
         tf_msg.transform.translation.z = car.getPose().position.z;
@@ -303,23 +319,25 @@ private:
             setVelocityArrowMarker(marker_array, *car, this->now(), id);
         }
 
-        // Controlled car
-        marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
-        setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), 0);
-        setVelocityTextMarker(marker_array, *controlled_car_, this->now());
 
-        // Road
-        rclcpp::Time now = this->now();
-        vis_marker road_marker;
-        setRoadMarker(road_marker, road_, now);
-        marker_array.markers.push_back(road_marker);
+        // Controlled car
+        // marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
+        // setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), 0);
+        // setVelocityTextMarker(marker_array, *controlled_car_, this->now());
+
+        // // Road
+        // rclcpp::Time now = this->now();
+        // vis_marker road_marker;
+        // setRoadMarker(road_marker, road_, now);
+        // marker_array.markers.push_back(road_marker);
+
 
         // lane lines
-        for (int i = 1; i < road_.getNumLanes(); ++i) {
-            vis_marker lane_marker;
-            setLaneMarker(lane_marker, road_, i, now);
-            marker_array.markers.push_back(lane_marker);
-        }
+        // for (int i = 1; i < road_.getNumLanes(); ++i) {
+        //     vis_marker lane_marker;
+        //     setLaneMarker(lane_marker, road_, i, now);
+        //     marker_array.markers.push_back(lane_marker);
+        // }
 
         marker_pub_->publish(marker_array);
     }
@@ -381,9 +399,11 @@ private:
         auto ego_pose = controlled_car_->getPose();
         auto ego_vel = controlled_car_->getVelocity();
         // check: maybe not needed
+        // check: maybe not needed
         //auto scale = getCarScale();
         float r_total = calculateTotalRadius();
         //RCLCPP_INFO(this->get_logger(), "Total radius: %f", r_total);
+
 
         for (const auto& drone : drones_) {
             auto obstacle_pose = drone->getPose();
@@ -391,6 +411,7 @@ private:
             // check - maybe not needed
             //float dist = vo.distance(ego_pose, obstacle_pose);
             //RCLCPP_INFO(this->get_logger(), "Distance to drone: %f", dist);
+
 
             vis_marker cone_marker;
             // Set the properties of the cone marker
@@ -413,7 +434,20 @@ private:
         vo_marker_pub_->publish(marker_array);
         //RCLCPP_INFO(this->get_logger(), "Published %zu markers", marker_array.markers.size());
     }
+
+    geometry_msgs::msg::Twist convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Pose ego_pos){
+    geometry_msgs::msg::Twist vel_cmd;
+    float k_heading=0.9;
+    float theta= atan2(vel.linear.y,vel.linear.x);
+    double vx_local = cos(theta) * vel.linear.x + sin(theta) * vel.linear.y;
+    vel_cmd.linear.x = vx_local;
+    double heading_error = theta- ego_pos.orientation.z;
+    vel_cmd.angular.z = k_heading * heading_error;
+    return vel_cmd;
+    }
 };
+
+
 
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
