@@ -137,7 +137,7 @@ std::vector<twist_msg> VelocityObstacle::generateCandidateVelocities(const twist
            candidate_velocity.linear.x = ego_vel.linear.x + delta_v.linear.x;
            candidate_velocity.linear.y = ego_vel.linear.y + delta_v.linear.y;
 
-        std::cout << "Candidate velocity: (" << candidate_velocity.linear.x << ", " << candidate_velocity.linear.y << ")" << std::endl;
+        //std::cout << "Candidate velocity: (" << candidate_velocity.linear.x << ", " << candidate_velocity.linear.y << ")" << std::endl;
            candidate_velocities.push_back(candidate_velocity);
        }
     }
@@ -153,7 +153,7 @@ point_msg  VelocityObstacle::findNextGoalPoint(const std::vector<point_msg>& rac
     // fallback if raceline is empty
     if (raceline.empty()) 
     {   
-        std::cout<<"Raceline is empty"<<std::endl;
+        //std::cout<<"Raceline is empty"<<std::endl;
         point.x = ego_pose.position.x;
         point.y = ego_pose.position.y;
         point.z = ego_pose.position.z;
@@ -213,8 +213,8 @@ float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const t
     float cost = 0.0f;
     // cost function constant
     float obstacle_avoidance_weight = 50.0f;
-    float goal_seeling_weight = 100.0f;
-    float smoothness_weight = 55.0f;
+    float goal_seeling_weight = 400.0f;
+    float smoothness_weight = 300.0f;
     
     // Obstacle avoidance 
     pose_msg ego_future_position;
@@ -265,9 +265,9 @@ twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const t
 {
     std::vector<twist_msg> candidates = generateCandidateVelocities(ego_vel); // Generate candidate velocities
     point_msg goal_point = findNextGoalPoint(raceline, ego_pose); // Get goal point from raceline
-    std::cout << "Goal point: (" << goal_point.x << ", " << goal_point.y << ")" << std::endl;
-    std::cout << "Ego position: (" << ego_pose.position.x << ", " << ego_pose.position.y << ")" << std::endl;
-    std::cout << "Ego orientation: (" << ego_pose.orientation.x << ", " << ego_pose.orientation.y << ", " << ego_pose.orientation.z << ", " << ego_pose.orientation.w << ")" << std::endl;
+    // std::cout << "Goal point: (" << goal_point.x << ", " << goal_point.y << ")" << std::endl;
+    // std::cout << "Ego position: (" << ego_pose.position.x << ", " << ego_pose.position.y << ")" << std::endl;
+    // std::cout << "Ego orientation: (" << ego_pose.orientation.x << ", " << ego_pose.orientation.y << ", " << ego_pose.orientation.z << ", " << ego_pose.orientation.w << ")" << std::endl;
     float best_cost = std::numeric_limits<float>::max(); // Initialize with a large number
     //std::cout << "Best cost: " << best_cost << std::endl;
     twist_msg best_velocity; // Default to current velocity
@@ -276,7 +276,7 @@ twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const t
 
     for(const auto& candidate : candidates)
     {
-        std::cout << std::endl;
+        // std::cout << std::endl;
         bool candidate_collision = false;
 
         for(size_t i = 0; i < obstacle_poses.size(); i++)
@@ -284,8 +284,8 @@ twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const t
             if (checkCollision(ego_pose, obstacle_poses[i], candidate, obstacle_vels[i], r_total)) 
             {
                 candidate_collision = true;
-                std::cout << "Candidate velocity collides with obstacle: " << i << std::endl;
-                std::cout << "Candidate velocity collides with candidate: " << candidate.linear.x << ", " << candidate.linear.y << std::endl;
+                // std::cout << "Candidate velocity collides with obstacle: " << i << std::endl;
+                // std::cout << "Candidate velocity collides with candidate: " << candidate.linear.x << ", " << candidate.linear.y << std::endl;
                 break;
             }
         }
@@ -294,7 +294,7 @@ twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const t
         {
             //std::cout << "Candidate velocity is safe. Continuing.\n";
             float cost = calculateCandidateCost(ego_pose, ego_vel, obstacle_poses, obstacle_vels, candidate, goal_point);
-            std::cout << "Candidate " << candidate.linear.x << ", " << candidate.linear.y << " has " << cost << "" << std::endl;
+            // std::cout << "Candidate " << candidate.linear.x << ", " << candidate.linear.y << " has " << cost << "" << std::endl;
             // Check if the cost is lower than the best cost
             if (cost < best_cost)
             {
@@ -305,7 +305,7 @@ twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const t
         }
     }
 
-    std::cout << "\nBest velocity found: (" << best_velocity.linear.x << ", " << best_velocity.linear.y << ") with cost: " << best_cost << std::endl;
+    //std::cout << "\nBest velocity found: (" << best_velocity.linear.x << ", " << best_velocity.linear.y << ") with cost: " << best_cost << std::endl;
     return best_velocity; // Return the best velocity found among the candidates
 }
 

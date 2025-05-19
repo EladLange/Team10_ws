@@ -5,6 +5,10 @@
 
 #include "bicycle_model.hpp"  // Include the header file for this class
 #include <cmath>  // For trigonometric functions (cos, sin, tan)
+#include <geometry_msgs/msg/pose.hpp>
+#include "tf2/LinearMath/Quaternion.h"  // For quaternion math (yaw to quaternion)
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"  // Conversion between TF2 and geometry_msgs
+#include "tf2_ros/transform_broadcaster.h"  // For publishing dynamic transforms
 
 // Constructor: initializes the model with a given wheelbase (distance between front and rear axles)
 BicycleModel::BicycleModel(double wheelbase) : L_(wheelbase) {}
@@ -34,3 +38,29 @@ State BicycleModel::update(const State &s, double delta, double velocity, double
 
     return next;  // Return the updated state
 }
+
+geometry_msgs::msg::Pose BicycleModel::updatePose(const geometry_msgs::msg::Pose &pose, double delta, double velocity, double dt) const { // Update the pose of the vehicle based on the bicycle model
+    geometry_msgs::msg::Pose new_pose = pose; // Start from the current pose
+
+    // Convert quaternion to yaw
+    tf2::Quaternion q_in;
+    tf2::fromMsg(pose.orientation, q_in);
+    double roll, pitch, yaw;
+    tf2::Matrix3x3(q_in).getRPY(roll, pitch, yaw); // Convert quaternion to roll, pitch, yaw
+
+    // Update position
+    new_pose.position.x += velocity * std::cos(yaw) * dt;
+    new_pose.position.y += velocity * std::sin(yaw) * dt;
+
+    // Update yaw using bicycle kinematics
+    yaw += velocity / L_ * std::tan(delta) * dt;
+
+    // Convert back to quaternion
+    tf2::Quaternion q_out;
+    q_out.setRPY(0, 0, yaw);
+    new_pose.orientation = tf2::toMsg(q_out);
+
+    return new_pose; // Return the updated pose
+}
+
+

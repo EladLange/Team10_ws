@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include "nlvo.hpp"
-#include "velocity_obstacle.hpp"
+
 
 VelocityObstacle vo;
 
@@ -11,10 +11,13 @@ twist_msg v_obstacle;
 
 twist_msg v_relative = vo.getVrelative(v_ego, v_obstacle);
 
-std::vector<VelocityDisk> NLVO::createNLVODisk(const pose_msg &ego_pose, const twist_msg &ego_velocity, const pose_msg &obstacle_pose, const twist_msg &obstacle_velocity)
+NLVO::NLVO() { // empty constructor
+}
+
+std::vector<Disk> NLVO::createNLVODisk(const pose_msg &ego_pose, const twist_msg &ego_velocity, const pose_msg &obstacle_pose, const twist_msg &obstacle_velocity)
 {
     float t_h = computeSafeTimeHorizon(ego_velocity);
-    std::vector<VelocityDisk> nlvo_disks;
+    std::vector<Disk> nlvo_disks;
     
     for (float t = delta_t; t <= t_h; t += delta_t)
     {
@@ -27,7 +30,7 @@ std::vector<VelocityDisk> NLVO::createNLVODisk(const pose_msg &ego_pose, const t
 
         float k = 1.0f / t;
 
-        VelocityDisk disk;
+        Disk disk;
         disk.center_x = k * relative_pose.position.x;
         disk.center_y = k * relative_pose.position.y;
         disk.radius = k * r_total;
@@ -49,7 +52,6 @@ pose_msg NLVO::predictObstaclePosition(const pose_msg &obstacle_pose, const twis
 }
 
 
-
 float NLVO::computeSafeTimeHorizon(const twist_msg &ego_velocity)
 {
     float t_min_limit = 0.3f;
@@ -57,7 +59,8 @@ float NLVO::computeSafeTimeHorizon(const twist_msg &ego_velocity)
     
     float speed = std::sqrt(std::pow(ego_velocity.linear.x, 2) + std::pow(ego_velocity.linear.y, 2));
     
-    if (speed < 1e-3) {
+    if (speed < 1e-3) 
+    {
         return std::numeric_limits<float>::max(); // No collision if speed is very low
     }
     
@@ -65,6 +68,12 @@ float NLVO::computeSafeTimeHorizon(const twist_msg &ego_velocity)
     float t_s = speed / std::abs(min_acceleration); 
 
     float safe_t = clamp(t_s, t_min_limit, t_max_limit);
+
+    return safe_t;
 }
 
+float NLVO::clamp(float value, float min, float max)
+{
+    return std::max(min, std::min(value, max));
+}
 
