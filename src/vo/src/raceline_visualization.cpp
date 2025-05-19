@@ -16,8 +16,8 @@ std::vector<point_msg> setRaceline()
         point.z = 0.2; 
         raceline.push_back(point);
     }
-    
-    // std::string filename = "/home/yonatan/Desktop/Team10_ws/src/racing_line.csv"; // change to raceline path
+
+    // std::string filename = "/home/yonatan/Desktop/Team10_ws/src/race_line/racing_line.csv"; // change to raceline path
     // std::ifstream file(filename);
     // if (!file.is_open()) {
     //     std::cerr << "Error opening raceline file." << std::endl;

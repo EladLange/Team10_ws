@@ -9,9 +9,9 @@ import numpy as np
 from scipy.interpolate import splprep, splev
 
 # Configuration: set your file paths here
-INNER_CSV = "/home/yonatan/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane0.csv"    # Replace with your inner boundary CSV path
-OUTER_CSV = "/home/yonatan/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane2.csv"    # Replace with your outer boundary CSV path
-OUTPUT_CSV = "/home/yonatan/Desktop/Team10_ws/src/racing_line.csv"  # Replace with desired output path
+INNER_CSV = "/home/yonatan/Desktop/Team10_ws/src/race_line/Oval_path_INNER.csv"    # Replace with your inner boundary CSV path
+OUTER_CSV = "/home/yonatan/Desktop/Team10_ws/src/race_line/Oval_path_OUTER.csv"    # Replace with your outer boundary CSV path
+OUTPUT_CSV = "/home/yonatan/Desktop/Team10_ws/src/race_line/racing_line_new.csv"  # Replace with desired output path
 
 
 def load_boundary_csv(path):
