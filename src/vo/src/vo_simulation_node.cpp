@@ -47,7 +47,7 @@ public:
 
         // subscribers:
         //ego_vel_sub_ = this->create_subscription<twist_msg>("ego_velocity", 10, std::bind(&CarSimulationNode::egoVelCallback, this, std::placeholders::_1));
-        
+
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(100),
             std::bind(&CarSimulationNode::update, this));
@@ -60,53 +60,53 @@ public:
                 controlled_car_ = std::make_shared<Car>("ego", true);
                 controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
                 controlled_car_->setVelocity(makeVel(1.0, 0.0));
-        
-                // // // First obstacle 
-                // auto drone0 = std::make_shared<Car>("drone_0", false);
-                // drone0->setPose(makePose(30.0, 4.5));
-                // drone0->setVelocity(makeVel(4.0, 0.0));
-                // drones_.push_back(drone0);
-        
-                // // // Second obstacle
-                // auto drone1 = std::make_shared<Car>("done_1", false);
-                // drone1->setPose(makePose(40.0, -4.5));
-                // drone1->setVelocity(makeVel(2.0, 0.0));
-                // drones_.push_back(drone1);
-        
+
+                // // First obstacle
+                auto drone0 = std::make_shared<Car>("drone_0", false);
+                drone0->setPose(makePose(30.0, 4.5));
+                drone0->setVelocity(makeVel(2.0, 0.0));
+                drones_.push_back(drone0);
+
+                // // Second obstacle
+                auto drone1 = std::make_shared<Car>("done_1", false);
+                drone1->setPose(makePose(40.0, -4.5));
+                drone1->setVelocity(makeVel(2.0, 0.0));
+                drones_.push_back(drone1);
+
                 // Third obstacle
                 auto drone2 = std::make_shared<Car>("drone_2", false);
                 drone2->setPose(makePose(18.0, 0.0));
-                drone2->setVelocity(makeVel(0.0, 0.0));
+                drone2->setVelocity(makeVel(1.0, 0.0));
                 drones_.push_back(drone2);
-        
-                // // Fourth obstacle
-                // auto drone3 = std::make_shared<Car>("drone_3", false);
-                // drone3->setPose(makePose(50.0, 0.0));
-                // drone3->setVelocity(makeVel(1.0, 0.0));
-                // drones_.push_back(drone3);
-        
-                // // Fifth obstacle
-                // auto drone4 = std::make_shared<Car>("drone_4", false);
-                // drone4->setPose(makePose(20.0, 4.5));
-                // drone4->setVelocity(makeVel(1.0, 0.0));
-                // drones_.push_back(drone4);
+
+                // Fourth obstacle
+                auto drone3 = std::make_shared<Car>("drone_3", false);
+                drone3->setPose(makePose(50.0, 0.0));
+                drone3->setVelocity(makeVel(1.0, 0.0));
+                drones_.push_back(drone3);
+
+                // Fifth obstacle
+                auto drone4 = std::make_shared<Car>("drone_4", false);
+                drone4->setPose(makePose(20.0, 4.5));
+                drone4->setVelocity(makeVel(1.0, 0.0));
+                drones_.push_back(drone4);
     }
 
 point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
 {
     int lookahead_step = 5;
-    point_msg point; 
-    
+    point_msg point;
+
     // fallback if raceline is empty
-    if (raceline.empty()) 
-    {   
+    if (raceline.empty())
+    {
         //std::cout<<"Raceline is empty"<<std::endl;
         point.x = ego_pose.position.x;
         point.y = ego_pose.position.y;
         point.z = ego_pose.position.z;
         return point;
 
-    } 
+    }
 
     // Find closest point that is in front of ego
     int closest_index = 0;
@@ -126,17 +126,17 @@ point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_m
             min_dist_squared = squar_dist;
             closest_index = static_cast<int>(i);
         }
-    }  
-    
+    }
+
     // Compute the lookahead distance
     int lookahead_index = closest_index + lookahead_step;
 
     // Clamp to raceline size
-    if (lookahead_index >= static_cast<int>(raceline.size())) 
+    if (lookahead_index >= static_cast<int>(raceline.size()))
     {
         lookahead_index = static_cast<int>(raceline.size()) - 1;
     }
-      
+
     return raceline[lookahead_index];
 }
 
@@ -156,7 +156,7 @@ private:
 
     // ROS subscribers
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr ego_vel_sub_;
-    
+
     pose_msg makePose(double x, double y, double z = 0.5) {
         pose_msg pose;
         pose.position.x = x;
@@ -173,12 +173,12 @@ private:
         return vel;
     }
 
-    // void egoVelCallback(const shared_ptr msg) 
+    // void egoVelCallback(const shared_ptr msg)
     // {
     //     controlled_car_->setVelocity(*msg);
     //     RCLCPP_INFO(this->get_logger(), "Ego car velocity set to: (%f, %f)", msg->linear.x, msg->linear.y);
     // }
-    
+
     void update() {
         double dt = 0.1;  // 100 ms
         std::vector<pose_msg> obstacle_poses;
@@ -193,7 +193,7 @@ private:
             obstacle_poses.push_back(drones_[i]->getPose());
             obstacle_velocities.push_back(drones_[i]->getVelocity());
         }
-        
+
         // Get ego car's current pose and velocity
         auto ego_pose = controlled_car_->getPose();
         auto ego_vel = controlled_car_->getVelocity();
@@ -237,12 +237,12 @@ private:
         tf_msg.header.stamp = this->now();
         tf_msg.header.frame_id = parent_frame;
         tf_msg.child_frame_id = child_frame;
-    
+
         tf_msg.transform.translation.x = car.getPose().position.x;
         tf_msg.transform.translation.y = car.getPose().position.y;
         tf_msg.transform.translation.z = car.getPose().position.z;
         tf_msg.transform.rotation = car.getPose().orientation;
-    
+
         tf_broadcaster_->sendTransform(tf_msg);
     }
 
@@ -259,7 +259,7 @@ private:
             marker_array.markers.push_back(makeCarMarker(*car, id++));
             setVelocityArrowMarker(marker_array, *car, this->now(), id);
         }
-        
+
         // Controlled car
         marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
         setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), 0);
@@ -270,7 +270,7 @@ private:
         vis_marker road_marker;
         setRoadMarker(road_marker, road_, now);
         marker_array.markers.push_back(road_marker);
-        
+
         // lane lines
         for (int i = 1; i < road_.getNumLanes(); ++i) {
             vis_marker lane_marker;
@@ -293,11 +293,12 @@ private:
 
     float calculateTotalRadius() {
         auto scale = getCarScale();
-        float r_ego = 0.5f * std::sqrt(std::pow(scale.x, 2) + std::pow(scale.y, 2));
-        float r_obstacle = r_ego;  
-        return r_ego + r_obstacle;
+        float r_ego =0.5f * std::sqrt(std::pow(scale.x, 2) + std::pow(scale.y, 2));
+        float r_obstacle = r_ego;
+        float r_total = r_ego + r_obstacle;
+        return r_total;
     }
-   
+
     vis_marker makeCarMarker(const Car& car, int id) {
         vis_marker marker;
         marker.header.frame_id = "map";
@@ -335,18 +336,18 @@ private:
         int id = 0;  // Marker ID counter
         auto ego_pose = controlled_car_->getPose();
         auto ego_vel = controlled_car_->getVelocity();
-        // check: maybe not needed  
+        // check: maybe not needed
         //auto scale = getCarScale();
         float r_total = calculateTotalRadius();
         //RCLCPP_INFO(this->get_logger(), "Total radius: %f", r_total);
-        
+
         for (const auto& drone : drones_) {
             auto obstacle_pose = drone->getPose();
             auto obstacle_vel = drone->getVelocity();
             // check - maybe not needed
             //float dist = vo.distance(ego_pose, obstacle_pose);
             //RCLCPP_INFO(this->get_logger(), "Distance to drone: %f", dist);
-            
+
             vis_marker cone_marker;
             // Set the properties of the cone marker
             setVOConeMarker(cone_marker, ego_pose, obstacle_pose, ego_vel, obstacle_vel, r_total);

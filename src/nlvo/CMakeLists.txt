@@ -21,7 +21,7 @@ target_include_directories(nlvo_lib
 )
 
 
-ament_target_dependencies(nlvo_lib 
+ament_target_dependencies(nlvo_lib
 rclcpp
 geometry_msgs
 visualization_msgs

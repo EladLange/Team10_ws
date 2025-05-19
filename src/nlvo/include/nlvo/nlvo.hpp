@@ -7,7 +7,7 @@ class NLVO
     public:
     // Constructor
     NLVO();
-    
+
     // Global variables
     const float control_limit_x = 2.5f; // |u_x| <= control_limit_x
     const float control_limit_y = 2.5f; // |u_y| <= control_limit_y
@@ -17,22 +17,24 @@ class NLVO
 
     // Function to select the best velocity
     twist_msg selectBestVelocity(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<pose_msg>& obstacles_poses, const std::vector<twist_msg>& obstacle_vels, const point_msg &goal_point, float r_total);
-    
+
     // Function to generate candidate velocities
     std::vector<twist_msg> generateACV(const twist_msg& ego_vel);
 
-    private:
-
-    // Function to compute the minimum time horizon
-    float computeMinimumTimeHorizon(const pose_msg& ego_pose, const twist_msg& ego_vel, const pose_msg& obstacle_pose, const twist_msg& obstacle_vel, float r_total); 
+    // Function to generate candidate velocities (improved version)
+    std::vector<twist_msg> generateCandidateVelocities(const twist_msg& ego_vel);
 
     // Function to check if a candidate velocity is in the truncated NLVO
     bool isVelocityInTruncatedNLVO(const twist_msg& candidate_vel, const pose_msg& ego_pose, const twist_msg& ego_vel, const pose_msg& obstacle_pose, const twist_msg& obstacle_vel, float r_total, float time_horizon);
 
+    // Function to calculate cost for a candidate velocity
+    float calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<pose_msg>obstacle_poses, const std::vector<twist_msg>obstacle_vels, const twist_msg& candidate_velocity, const point_msg& goal_point, float r_total, float time_horizon);
+
+    private:
+
+    // Function to compute the minimum time horizon
+    float computeMinimumTimeHorizon(const pose_msg& ego_pose, const twist_msg& ego_vel, const pose_msg& obstacle_pose, const twist_msg& obstacle_vel, float r_total);
+
     // Function to evaluate cost (e.g., time-to-go)
     float evaluateCost(const twist_msg& candidate_vel, const point_msg& to_goal, const twist_msg& ego_vel);
-
-    std::vector<twist_msg> generateCandidateVelocities(const twist_msg& ego_vel);
-
-    float calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<pose_msg>obstacle_poses,const std::vector<twist_msg>obstacle_vels, const twist_msg& candidate_velocity, const point_msg& goal_point);
 };
