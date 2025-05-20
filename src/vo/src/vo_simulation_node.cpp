@@ -152,7 +152,6 @@ public:
                 drones_.push_back(drone8);
     }
 
-
 point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
 {
     int lookahead_step = 5;
