@@ -212,6 +212,8 @@ private:
             publishTF(*drones_[i], "map", drones_[i]->getId());
             obstacle_poses.push_back(drones_[i]->getPose());
             obstacle_velocities.push_back(drones_[i]->getVelocity());
+            // check
+            std::cout << "Drone " << i << " velocity: " << obstacle_velocities[i].linear.x << ", " << obstacle_velocities[i].linear.y << std::endl;
         }
 
 
