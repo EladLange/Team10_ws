@@ -8,6 +8,7 @@
 #include "rclcpp/rclcpp.hpp"  // Core ROS2 client library
 #include "geometry_msgs/msg/pose_stamped.hpp"  // Message type for robot pose
 #include "geometry_msgs/msg/pose_array.hpp"  // Message type for robot pose
+#include <geometry_msgs/msg/twist_stamped.hpp> // Message type for velocity commands
 #include "nav_msgs/msg/path.hpp"  // Message type for paths
 #include "visualization_msgs/msg/marker.hpp"  // Message type for RViz visualization markers
 #include "visualization_msgs/msg/marker_array.hpp"  // Message type for RViz visualization marker arrays
@@ -44,9 +45,9 @@ public:
 
         // Define paths to load
         std::array<std::string, 3> path_files = {
-            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane0.csv",
-            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane1.csv",
-            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane2.csv"
+            "/home/yonatan/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane0.csv",
+            "/home/yonatan/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane1.csv",
+            "/home/yonatan/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane2.csv"
         };
 
         // Load all paths
@@ -72,6 +73,7 @@ public:
         path_pub_ = this->create_publisher<nav_msgs::msg::Path>("trajectory", 10);
         drone_poses_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("drone_pose", 10); // Changed to "drone_pose" to match VO package
         drone_paths_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("drone_paths", 10);
+        cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("vel_cmd", 10);
         vehicle_markers_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("vehicle_markers", 10);
 
         // Create a broadcaster to publish transforms for visualization
@@ -116,6 +118,7 @@ private:
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;  // Publisher for trajectory visualization
     rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr drone_poses_pub_;  // Publisher for all drone poses
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr drone_paths_pub_;  // Publisher for all drone paths
+    rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr cmd_vel_pub_;  // Publisher for velocity commands
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr vehicle_markers_pub_;  // Publisher for vehicle markers
     rclcpp::TimerBase::SharedPtr timer_;  // Timer object for periodic updates
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;  // Transform broadcaster for TF visualization
@@ -158,6 +161,20 @@ private:
         return {path_x, path_y};
     }
 
+    // ========== VELOCITY TO TWIST ==========
+    // Converts a velocity to a twist message based on the drone's orientation (yaw)
+    geometry_msgs::msg::TwistStamped velocityToTwist(double velocity, double yaw,const std_msgs::msg::Header & header)
+    {
+      geometry_msgs::msg::TwistStamped cmd;
+      cmd.header = header;          // keep your timestamp/frame
+      cmd.twist.linear.x  = velocity * std::cos(yaw);
+      cmd.twist.linear.y  = velocity * std::sin(yaw);
+      cmd.twist.linear.z  = 0.0;
+      cmd.twist.angular.x = 0.0;
+      cmd.twist.angular.y = 0.0;
+      cmd.twist.angular.z = 0.0;
+      return cmd;
+    }
     // ========== TIMER CALLBACK ==========
     // Called every 10ms: updates all drone states and publishes visualization
     void onTimer() {
@@ -178,10 +195,15 @@ private:
         // Update each drone and collect visualization data
         for (size_t i = 0; i < drones_.size(); ++i) {
             // Update drone state using pure pursuit control
-            drones_[i]->update(dt, velocity+i);
+            double new_velocity = 5.0 + i;
+            drones_[i]->update(dt, new_velocity);
 
             // Get current drone state
             const State& state = drones_[i]->getState();
+
+            // now publish the twist for this drone:
+            auto twist = velocityToTwist(new_velocity, state.yaw, drone_poses.header);
+            cmd_vel_pub_->publish(twist); // publish the twist
 
             // Create pose for this drone
             geometry_msgs::msg::Pose drone_pose;
@@ -218,14 +240,14 @@ private:
                     vehicle_marker.color.b = 0.0f;
                     break;
                 case 1:
-                vehicle_marker.color.r = 1.0f;
-                vehicle_marker.color.g = 0.0f;
-                vehicle_marker.color.b = 0.0f;
+                    vehicle_marker.color.r = 1.0f;
+                    vehicle_marker.color.g = 0.0f;
+                    vehicle_marker.color.b = 0.0f;
                 break;
                 case 2:
-                vehicle_marker.color.r = 1.0f;
-                vehicle_marker.color.g = 0.0f;
-                vehicle_marker.color.b = 0.0f;
+                    vehicle_marker.color.r = 1.0f;
+                    vehicle_marker.color.g = 0.0f;
+                    vehicle_marker.color.b = 0.0f;
                 break;
                 case 3:
                     vehicle_marker.color.r = 0.0f;
