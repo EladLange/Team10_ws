@@ -7,6 +7,7 @@
 #pragma once
 
 #include "common/settings.hpp"
+#include <vector>
 #include <geometry_msgs/msg/accel.hpp>
 
 class NAO
