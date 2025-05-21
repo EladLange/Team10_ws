@@ -17,11 +17,13 @@ find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(nlvo REQUIRED)
 find_package(common REQUIRED)
+find_package(nao REQUIRED)
 
 
 # Include directories for headers
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/vo)
 include_directories(${common_INCLUDE_DIRS})
+include_directories(${nao_INCLUDE_DIRS})
 
 # Add executable and link libraries
 add_executable(vo_simulation_node
@@ -45,6 +47,7 @@ ament_target_dependencies(
   tf2_ros
   nlvo
   common
+  nao
 )
 
 # Install executable and other files

@@ -14,7 +14,7 @@ public:
     const float control_limit_ay = 2.5f;    // |a_y| <= control_limit_ay
     const float dt = 0.1f;                  // time step
     const float max_time = 10.0f;           // maximum time horizon
-    const float max_acceleration = 2.0f;    // maximum longitudinal acceleration
+    const float max_acceleration = 5.0f;    // maximum longitudinal acceleration
 
     /**
      * 

@@ -11,6 +11,7 @@
   <depend>ament_cmake_ros</depend>
   <depend>rosidl_default_generators</depend>
   <depend>nlvo</depend>
+  <depend>nao</depend>
   <depend>common</depend>
 
 

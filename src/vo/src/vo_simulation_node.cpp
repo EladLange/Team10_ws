@@ -9,9 +9,11 @@
 #include "raceline_visualization.hpp"
 #include "global_variables.hpp"
 #include "nlvo/nlvo.hpp"
+#include "nao/nao.hpp"
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <geometry_msgs/msg/accel.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/msg/transform_stamped.hpp>
@@ -19,6 +21,7 @@
 
 VelocityObstacle vo;
 NLVO nlvo;
+NAO nao;
 
 // Global variables
 float time_horizon = 7.0f;
@@ -44,6 +47,8 @@ public:
         marker_pub_ = this->create_publisher<vis_marker_arr>("visualization_marker_array", 10);
         vo_marker_pub_ = this ->create_publisher<vis_marker_arr>("vo_marker_array", 10);
         cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("vel_cmd", 10);
+        cmd_accel_pub_ = this->create_publisher<geometry_msgs::msg::Accel>("accel_cmd", 10);
+
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -215,6 +220,7 @@ private:
 
     rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr drone_pose_sub_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
+    rclcpp::Publisher<geometry_msgs::msg::Accel>::SharedPtr cmd_accel_pub_;
 
     // ROS subscribers
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr ego_vel_sub_;
@@ -270,11 +276,21 @@ private:
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
         //twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
-        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
-        // Set the new velocity for the ego car
+        //twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
+        geometry_msgs::msg::Accel new_ego_accel = nao.selectBestAcceleration(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
+        
+        // // Set the new velocity for the ego car
+        // controlled_car_->setVelocity(new_ego_velocity);
+        // // Publish the new velocity
+        // cmd_vel_pub_->publish(new_ego_velocity);
+
+        // Set the new acceleration for the ego car
+        cmd_accel_pub_->publish(new_ego_accel);
+        // Integrate the acceleration to get the new velocity
+        twist_msg new_ego_velocity = controlled_car_->getVelocity();
+        new_ego_velocity.linear.x += new_ego_accel.linear.x * dt;
+        new_ego_velocity.linear.y += new_ego_accel.linear.y * dt;
         controlled_car_->setVelocity(new_ego_velocity);
-        // Publish the new velocity
-        cmd_vel_pub_->publish(new_ego_velocity);
 
         // Update ego car's orientation based on the new velocity
         double yaw = std::atan2(new_ego_velocity.linear.y, new_ego_velocity.linear.x);
@@ -433,14 +449,37 @@ private:
            // RCLCPP_INFO(this->get_logger(), "Number of points in cone marker: %zu", cone_marker.points.size());
         }
 
-        // for debugging: show the candidate velocities
-        std::vector<twist_msg> candidate_velocities = nlvo.generateACV(ego_vel);
-        for (const auto& candidate_velocity : candidate_velocities) {
-            vis_marker candidate_marker;
-            // Set the properties of the candidate marker
-            setCandidateMarker(candidate_marker, ego_pose, candidate_velocity, r_total, 5.0);
-            candidate_marker.id = id++;
-            marker_array.markers.push_back(candidate_marker);
+        // // for debugging: show the candidate velocities
+        // std::vector<twist_msg> candidate_velocities = nlvo.generateACV(ego_vel);
+        // for (const auto& candidate_velocity : candidate_velocities) {
+        //     vis_marker candidate_marker;
+        //     // Set the properties of the candidate marker
+        //     setCandidateMarker(candidate_marker, ego_pose, candidate_velocity, r_total, 5.0);
+        //     candidate_marker.id = id++;
+        //     marker_array.markers.push_back(candidate_marker);
+        // }
+
+       // for debugging: show the candidate accelerations
+       // convert each Accel candidate into a Twist by integrating over delta_t
+        std::vector<geometry_msgs::msg::Accel> candidate_accels = nao.generateCandidateAccelerations(ego_vel);
+        for (const auto &acc : candidate_accels) {
+            // integrate a * dt → Δv, then add to current velocity
+            twist_msg cand_vel;
+            cand_vel.linear.x  = ego_vel.linear.x + acc.linear.x * delta_t;
+            cand_vel.linear.y  = ego_vel.linear.y + acc.linear.y * delta_t;
+            cand_vel.linear.z  = 0.0;
+            cand_vel.angular.x = 0.0;
+            cand_vel.angular.y = 0.0;
+            cand_vel.angular.z = 0.0;
+
+            vis_marker cand_marker;
+            setCandidateMarker(cand_marker,
+                                ego_pose,
+                                cand_vel,
+                                r_total,
+                                time_horizon /* or your min_time_horizon */);
+            cand_marker.id = id++;
+            marker_array.markers.push_back(cand_marker);
         }
 
         vo_marker_pub_->publish(marker_array);
