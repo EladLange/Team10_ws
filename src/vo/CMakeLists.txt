@@ -53,4 +53,9 @@ install(TARGETS vo_simulation_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
+install(
+  DIRECTORY meshes
+  DESTINATION share/${PROJECT_NAME}
+)
+
 ament_package()

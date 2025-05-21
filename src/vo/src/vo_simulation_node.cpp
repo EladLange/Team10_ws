@@ -326,9 +326,9 @@ private:
     geometry_msgs::msg::Vector3 getCarScale()
     {
         geometry_msgs::msg::Vector3 scale;
-        scale.x = 3.0; // length
-        scale.y = 1.5; // width
-        scale.z = 1.0; // height
+        scale.x =0.001; //3.0; // length
+        scale.y =0.001; //1.5; // width
+        scale.z =0.001; //1.0; // height
         return scale;
     }
 
@@ -347,9 +347,9 @@ private:
         marker.header.stamp = now();
         marker.ns = "cars";
         marker.id = id;
-        marker.type = vis_marker::CUBE;
-        // marker.type= vis_marker::MESH_RESOURCE;
-        // marker.mesh_resource = "package://car_description/meshes/obstacle.STL";
+        // marker.type = vis_marker::CUBE;
+        marker.type= vis_marker::MESH_RESOURCE;
+        marker.mesh_resource = "package://vo/meshes/obstacle.STL";
         marker.action = vis_marker::ADD;
         // Set the pose of the marker to the car's pose
         marker.pose = car.getPose();
