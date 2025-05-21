@@ -27,7 +27,7 @@ ackermann_steering_controller:
     open_loop: false
     velocity_rolling_window_size: 10
     position_feedback: false
-    use_stamped_vel: false
+    use_stamped_vel: true
     base_frame_id: 'base_footprint'
     rear_wheels_names: ['ack_fr_joint','ack_fl_joint']
     front_wheels_names: ['steering_joint_fr','steering_joint_fl']

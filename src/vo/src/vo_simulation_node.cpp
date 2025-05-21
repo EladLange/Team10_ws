@@ -45,8 +45,8 @@ public:
         cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("vel_cmd", 10);
     
         // subscribers
-        // ego_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&CarSimulationNode::egoVelCallback,this, _1));
-        // ego_pos_sub_ = this->create_subscription<geometry_msgs::msg::Pose>("/ego_pose",10,std::bind(&CarSimulationNode::egoPosCallback,this, _1));
+        ego_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&CarSimulationNode::egoVelCallback,this, _1));
+        ego_pos_sub_ = this->create_subscription<geometry_msgs::msg::Pose>("/ego_pose",10,std::bind(&CarSimulationNode::egoPosCallback,this, _1));
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -78,45 +78,45 @@ public:
     {
                 // Initialize cars
                 controlled_car_ = std::make_shared<Car>("ego", true);
-                controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
-                controlled_car_->setVelocity(makeVel(5.0, 1.0));
+                // controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
+                // controlled_car_->setVelocity(makeVel(5.0, 1.0));
 
                 
                 //First obstacle
-                auto drone0 = std::make_shared<Car>("drone_0", false);
-                drone0->setPose(makePose(30.0, 4.5));
-                drone0->setVelocity(makeVel(1.0, 0.0));
-                drones_.push_back(drone0);
+                // auto drone0 = std::make_shared<Car>("drone_0", false);
+                // drone0->setPose(makePose(30.0, 4.5));
+                // drone0->setVelocity(makeVel(1.0, 0.0));
+                // drones_.push_back(drone0);
 
-                // Second obstacle
-                auto drone1 = std::make_shared<Car>("drone_1", false);
-                drone1->setPose(makePose(-22.2,11.904333137552124));
-                drone1->setVelocity(makeVel(0.0, 0.0));
-                drones_.push_back(drone1);
+                // // Second obstacle
+                // auto drone1 = std::make_shared<Car>("drone_1", false);
+                // drone1->setPose(makePose(-22.2,11.904333137552124));
+                // drone1->setVelocity(makeVel(0.0, 0.0));
+                // drones_.push_back(drone1);
 
-                // Third obstacle
-                auto drone2 = std::make_shared<Car>("drone_2", false);
-                drone2->setPose(makePose(15.0, 0.0));
-                drone2->setVelocity(makeVel(0.5, 0.0));
-                drones_.push_back(drone2);
+                // // Third obstacle
+                // auto drone2 = std::make_shared<Car>("drone_2", false);
+                // drone2->setPose(makePose(15.0, 0.0));
+                // drone2->setVelocity(makeVel(0.5, 0.0));
+                // drones_.push_back(drone2);
 
-                // Fourth obstacle
-                auto drone3 = std::make_shared<Car>("drone_3", false);
-                drone3->setPose(makePose(44.89795918367347,40.0));
-                drone3->setVelocity(makeVel(0.1, 0.0));
-                drones_.push_back(drone3);
+                // // Fourth obstacle
+                // auto drone3 = std::make_shared<Car>("drone_3", false);
+                // drone3->setPose(makePose(44.89795918367347,40.0));
+                // drone3->setVelocity(makeVel(0.1, 0.0));
+                // drones_.push_back(drone3);
 
-                // Fifth obstacle
-                auto drone4 = std::make_shared<Car>("drone_4", false);
-                drone4->setPose(makePose(20.0, 4.5));
-                drone4->setVelocity(makeVel(6.0, 0.0));
-                drones_.push_back(drone4);
+                // // Fifth obstacle
+                // auto drone4 = std::make_shared<Car>("drone_4", false);
+                // drone4->setPose(makePose(20.0, 4.5));
+                // drone4->setVelocity(makeVel(6.0, 0.0));
+                // drones_.push_back(drone4);
     }
 
 
 point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
 {
-    int lookahead_step = 5;
+    int lookahead_step = 10;
     point_msg point;
 
     // fallback if raceline is empty
@@ -220,8 +220,8 @@ private:
         // Update drones
         for (size_t i = 0; i < drones_.size(); ++i) {
         //    controller_.control(*drones_[i], static_cast<int>(i));
-            // publishPose(*drones_[i]);
-            // publishTF(*drones_[i], "map", drones_[i]->getId());
+            publishPose(*drones_[i]);
+            publishTF(*drones_[i], "map", drones_[i]->getId());
             drones_[i]->update(dt);
             obstacle_poses.push_back(drones_[i]->getPose());
             obstacle_velocities.push_back(drones_[i]->getVelocity());
@@ -236,24 +236,24 @@ private:
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
         twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
-        //twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
+        // twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         // Set the new velocity for the ego car
-        controlled_car_->setVelocity(new_ego_velocity);
+        // controlled_car_->setVelocity(new_ego_velocity);
         // Publish the new velocity
-        // new_ego_velocity = convertCmdVector(new_ego_velocity, ego_pose);
-        // cmd_vel_pub_->publish(new_ego_velocity);
+        new_ego_velocity = convertCmdVector(new_ego_velocity, ego_pose);
+        cmd_vel_pub_->publish(new_ego_velocity);
 
         // Update ego car's orientation based on the new velocity
         double yaw = std::atan2(new_ego_velocity.linear.y, new_ego_velocity.linear.x);
         tf2::Quaternion q;
         q.setRPY(0, 0, yaw);
-        controlled_car_->setOrientation(q);
-        RCLCPP_INFO(this->get_logger(), "Ego car orientation set to: %f", yaw);
+        // controlled_car_->setOrientation(q);
+        // RCLCPP_INFO(this->get_logger(), "Ego car orientation set to: %f", yaw);
 
         // Update ego car's position based on the new velocity
-        controlled_car_->update(dt);
-        publishPose(*controlled_car_);
-        publishTF(*controlled_car_, "map", controlled_car_->getId());
+        // controlled_car_->update(dt);
+        // publishPose(*controlled_car_);
+        // publishTF(*controlled_car_, "map", controlled_car_->getId());
 
 
         publishMarkers();
@@ -301,7 +301,7 @@ private:
 
 
         // Controlled car
-        marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
+        // marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
         setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), 0);
         setVelocityTextMarker(marker_array, *controlled_car_, this->now());
 
@@ -326,9 +326,9 @@ private:
     geometry_msgs::msg::Vector3 getCarScale()
     {
         geometry_msgs::msg::Vector3 scale;
-        scale.x =0.001; //3.0; // length
-        scale.y =0.001; //1.5; // width
-        scale.z =0.001; //1.0; // height
+        scale.x =3.0; // length
+        scale.y =1.5; // width
+        scale.z =1.0; // height
         return scale;
     }
 
@@ -354,7 +354,10 @@ private:
         // Set the pose of the marker to the car's pose
         marker.pose = car.getPose();
         // Set the size of the marker to the car's size
-        marker.scale = getCarScale();
+        // marker.scale = getCarScale();
+        marker.scale.x =0.001;
+        marker.scale.y =0.001;
+        marker.scale.z =0.001;      
         // calculate r_total for the car and obstacle - maybe not needed
         //float r_total = calculateTotalRadius();
 
@@ -404,14 +407,14 @@ private:
         }
 
         // for debugging: show the candidate velocities
-        std::vector<twist_msg> candidate_velocities = nlvo.generateACV(ego_vel);
-        for (const auto& candidate_velocity : candidate_velocities) {
-            vis_marker candidate_marker;
-            // Set the properties of the candidate marker
-            setCandidateMarker(candidate_marker, ego_pose, candidate_velocity, r_total, 5.0);
-            candidate_marker.id = id++;
-            marker_array.markers.push_back(candidate_marker);
-        }
+        // std::vector<twist_msg> candidate_velocities = nlvo.generateACV(ego_vel);
+        // for (const auto& candidate_velocity : candidate_velocities) {
+        //     vis_marker candidate_marker;
+        //     // Set the properties of the candidate marker
+        //     setCandidateMarker(candidate_marker, ego_pose, candidate_velocity, r_total, 5.0);
+        //     candidate_marker.id = id++;
+        //     marker_array.markers.push_back(candidate_marker);
+        // }
 
         vo_marker_pub_->publish(marker_array);
         //RCLCPP_INFO(this->get_logger(), "Published %zu markers", marker_array.markers.size());
@@ -419,11 +422,37 @@ private:
 
     geometry_msgs::msg::Twist convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Pose ego_pos){
     geometry_msgs::msg::Twist vel_cmd;
-    float k_heading=0.9;
+
+    float k_heading=1.5;
     float theta= atan2(vel.linear.y,vel.linear.x);
     double vx_local = cos(theta) * vel.linear.x + sin(theta) * vel.linear.y;
     vel_cmd.linear.x = vx_local;
-    double heading_error = theta- ego_pos.orientation.z;
+
+
+    // Extract yaw from quaternion
+    tf2::Quaternion q(
+        ego_pos.orientation.x,
+        ego_pos.orientation.y,
+        ego_pos.orientation.z,
+        ego_pos.orientation.w);
+    tf2::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+    // RCLCPP_INFO(this->get_logger(), "Yaw: %f", yaw);
+
+    double heading_error;
+    if (ego_pos.orientation.z>M_PI){
+        heading_error = -theta+ yaw;  
+    }
+    else{
+        heading_error = theta- yaw; 
+    }
+    
+    // if (heading_error > 1.5||heading_error < -1.5)
+    //     k_heading = k_heading/2.0;
+
+    // double heading_error = theta - yaw;
+    // RCLCPP_INFO(this->get_logger(), "Heading error: %f", heading_error);
     vel_cmd.angular.z = k_heading * heading_error;
     return vel_cmd;
     }

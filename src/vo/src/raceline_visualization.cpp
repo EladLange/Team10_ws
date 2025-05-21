@@ -6,11 +6,11 @@
 std::vector<point_msg> setRaceline()
 {
     std::vector<point_msg> raceline;
-    // create a raceline with 100 straight points
+    //create a raceline with 100 straight points
     // for (int i = 0; i < 300; ++i)
     // {
     //     point_msg point;
-    //     point.x = 10.0 + i * 1.0;
+    //     point.x = 0.0 + i * 1.0;
     //     point.y = 0.0 ;
     //     point.z = 0.2;
     //     raceline.push_back(point);
