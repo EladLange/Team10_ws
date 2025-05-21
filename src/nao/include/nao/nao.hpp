@@ -1,3 +1,9 @@
+// =================================
+// include/nao.hpp
+// =================================
+// This file defines the NAO class, which implements the Nonlinear Acceleration Obstacle (NAO) planning algorithm
+// for safe navigation in dynamic environments.
+
 #pragma once
 
 #include "common/settings.hpp"
@@ -17,9 +23,9 @@ public:
     const float max_acceleration = 5.0f;    // maximum longitudinal acceleration
 
     /**
-     * 
+     *
      * @brief Select the best acceleration command based on NAO
-     * 
+     *
      * @param ego_pose      Current pose of the ego vehicle
      * @param ego_vel       Current velocity of the ego vehicle
      * @param obstacles_poses  Vector of obstacle poses
@@ -39,7 +45,7 @@ public:
 
     /**
      * @brief Generate a set of candidate accelerations
-     * 
+     *
      * @param ego_vel  Current ego vehicle velocity
      * @return std::vector<geometry_msgs::msg::Accel>  List of candidate accelerations
      */
@@ -49,7 +55,7 @@ public:
 
     /**
      * @brief Check if a candidate acceleration lies within the truncated NAO set
-     * 
+     *
      * @param candidate_accel  Candidate acceleration to test
      * @param ego_pose         Ego pose
      * @param ego_vel          Ego velocity
@@ -71,7 +77,7 @@ public:
 
     /**
      * @brief Compute cost for a candidate acceleration
-     * 
+     *
      * @param ego_pose          Ego pose
      * @param ego_vel           Ego velocity
      * @param obstacles_poses   Vector of obstacle poses
@@ -96,7 +102,7 @@ public:
 private:
     /**
      * @brief Compute the minimum time horizon until potential collision given NAO
-     * 
+     *
      * @param ego_pose      Ego pose
      * @param ego_vel       Ego velocity
      * @param obstacle_pose Obstacle pose
@@ -114,7 +120,7 @@ private:
 
     /**
      * @brief Evaluate cost metric for a given acceleration (e.g., distance-to-goal time)
-     * 
+     *
      * @param candidate_accel  Candidate acceleration
      * @param to_goal          Vector from ego to goal
      * @param ego_vel          Ego velocity

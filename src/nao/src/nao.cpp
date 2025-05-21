@@ -1,3 +1,8 @@
+// ============================
+// src/nao.cpp
+// ============================
+// Implementation of the NAO (Nonlinear Acceleration Obstacle) planning class
+
 #include <iostream>
 #include <vector>
 #include <cmath>
