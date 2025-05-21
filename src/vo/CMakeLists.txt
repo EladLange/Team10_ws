@@ -17,6 +17,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(nlvo REQUIRED)
 find_package(common REQUIRED)
+find_package(car_description REQUIRED)
 
 
 # Include directories for headers

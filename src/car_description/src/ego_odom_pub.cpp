@@ -79,7 +79,7 @@ double OdomPub::roundToThreeDecimalPlaces(double value, int decimalPlaces) {
 
 geometry_msgs::msg::Twist OdomPub::convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Pose ego_pos){
     geometry_msgs::msg::Twist vel_cmd;
-    float k_heading=1.0;
+    float k_heading=0.9;
     float theta= atan2(vel.linear.y,vel.linear.x);
     double vx_local = cos(theta) * vel.linear.x + sin(theta) * vel.linear.y;
     vel_cmd.linear.x = vx_local;

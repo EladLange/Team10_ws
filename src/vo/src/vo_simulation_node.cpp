@@ -45,72 +45,72 @@ public:
         cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("vel_cmd", 10);
     
         // subscribers
-        ego_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&CarSimulationNode::egoVelCallback,this, _1));
-        ego_pos_sub_ = this->create_subscription<geometry_msgs::msg::Pose>("/ego_pose",10,std::bind(&CarSimulationNode::egoPosCallback,this, _1));
+        // ego_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&CarSimulationNode::egoVelCallback,this, _1));
+        // ego_pos_sub_ = this->create_subscription<geometry_msgs::msg::Pose>("/ego_pose",10,std::bind(&CarSimulationNode::egoPosCallback,this, _1));
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
-        drone_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseArray>(
-            "drone_pose", 10,
-            [this](geometry_msgs::msg::PoseArray::SharedPtr msg) {
-                this->dronePoseCallback(msg);
-            }
-        );
+        // drone_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseArray>(
+        //     "drone_pose", 10,
+        //     [this](geometry_msgs::msg::PoseArray::SharedPtr msg) {
+        //         this->dronePoseCallback(msg);
+        //     }
+        // );
 
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(100),
             std::bind(&CarSimulationNode::update, this));
     }
 
-    void dronePoseCallback(geometry_msgs::msg::PoseArray::SharedPtr msg) {
-        // Handle the incoming drone pose array message
-        RCLCPP_INFO(this->get_logger(), "Received drone pose array with %zu drones", msg->poses.size());
+    // void dronePoseCallback(geometry_msgs::msg::PoseArray::SharedPtr msg) {
+    //     // Handle the incoming drone pose array message
+    //     // RCLCPP_INFO(this->get_logger(), "Received drone pose array with %zu drones", msg->poses.size());
 
-        // Update the drones with the received poses
-        for (size_t i = 0; i < msg->poses.size() && i < drones_.size(); ++i) {
-            drones_[i]->setPose(msg->poses[i]);
-            RCLCPP_INFO(this->get_logger(), "Updated drone %zu pose: (%f, %f, %f)",
-                       i, msg->poses[i].position.x, msg->poses[i].position.y, msg->poses[i].position.z);
-        }
-    }
+    //     // Update the drones with the received poses
+    //     for (size_t i = 0; i < msg->poses.size() && i < drones_.size(); ++i) {
+    //         drones_[i]->setPose(msg->poses[i]);
+    //         // RCLCPP_INFO(this->get_logger(), "Updated drone %zu pose: (%f, %f, %f)",
+    //                 //    i, msg->poses[i].position.x, msg->poses[i].position.y, msg->poses[i].position.z);
+    //     }
+    // }
 
     void initialize_cars()
     {
                 // Initialize cars
                 controlled_car_ = std::make_shared<Car>("ego", true);
-                // controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
-                // controlled_car_->setVelocity(makeVel(1.0, 0.0));
+                controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
+                controlled_car_->setVelocity(makeVel(5.0, 1.0));
 
                 
-                // First obstacle
+                //First obstacle
                 auto drone0 = std::make_shared<Car>("drone_0", false);
-                // drone0->setPose(makePose(30.0, 4.5));
-                // drone0->setVelocity(makeVel(2.0, 0.0));
-                // drones_.push_back(drone0);
+                drone0->setPose(makePose(30.0, 4.5));
+                drone0->setVelocity(makeVel(1.0, 0.0));
+                drones_.push_back(drone0);
 
-                // // Second obstacle
-                // auto drone1 = std::make_shared<Car>("drone_1", false);
-                // drone1->setPose(makePose(40.0, -4.5));
-                // drone1->setVelocity(makeVel(2.0, 0.0));
-                // drones_.push_back(drone1);
+                // Second obstacle
+                auto drone1 = std::make_shared<Car>("drone_1", false);
+                drone1->setPose(makePose(-22.2,11.904333137552124));
+                drone1->setVelocity(makeVel(0.0, 0.0));
+                drones_.push_back(drone1);
 
-                // // Third obstacle
-                // auto drone2 = std::make_shared<Car>("drone_2", false);
-                // drone2->setPose(makePose(25.0, 0.0));
-                // drone2->setVelocity(makeVel(1.0, 0.0));
-                // drones_.push_back(drone2);
+                // Third obstacle
+                auto drone2 = std::make_shared<Car>("drone_2", false);
+                drone2->setPose(makePose(15.0, 0.0));
+                drone2->setVelocity(makeVel(0.5, 0.0));
+                drones_.push_back(drone2);
 
-                // // Fourth obstacle
-                // auto drone3 = std::make_shared<Car>("drone_3", false);
-                // drone3->setPose(makePose(50.0, 0.0));
-                // drone3->setVelocity(makeVel(1.0, 0.0));
-                // drones_.push_back(drone3);
+                // Fourth obstacle
+                auto drone3 = std::make_shared<Car>("drone_3", false);
+                drone3->setPose(makePose(44.89795918367347,40.0));
+                drone3->setVelocity(makeVel(0.1, 0.0));
+                drones_.push_back(drone3);
 
-                // // Fifth obstacle
-                // auto drone4 = std::make_shared<Car>("drone_4", false);
-                // drone4->setPose(makePose(20.0, 4.5));
-                // drone4->setVelocity(makeVel(1.0, 0.0));
-                // drones_.push_back(drone4);
+                // Fifth obstacle
+                auto drone4 = std::make_shared<Car>("drone_4", false);
+                drone4->setPose(makePose(20.0, 4.5));
+                drone4->setVelocity(makeVel(6.0, 0.0));
+                drones_.push_back(drone4);
     }
 
 
@@ -202,7 +202,7 @@ private:
     void egoVelCallback(const shared_ptr msg)
     {
         controlled_car_->setVelocity(*msg);
-        RCLCPP_INFO(this->get_logger(), "Ego car velocity set to: (%f, %f)", msg->linear.x, msg->linear.y);
+        // RCLCPP_INFO(this->get_logger(), "Ego car velocity set to: (%f, %f)", msg->linear.x, msg->linear.y);
     }
 
     void egoPosCallback(const pose_msg msg)
@@ -213,15 +213,16 @@ private:
 
 
     void update() {
-        double dt = 0.01;  // 100 ms
+        double dt = 0.1;  // 100 ms
         std::vector<pose_msg> obstacle_poses;
         std::vector<twist_msg> obstacle_velocities;
 
         // Update drones
         for (size_t i = 0; i < drones_.size(); ++i) {
-           // controller_.control(*drones_[i], static_cast<int>(i));
-            publishPose(*drones_[i]);
-            publishTF(*drones_[i], "map", drones_[i]->getId());
+        //    controller_.control(*drones_[i], static_cast<int>(i));
+            // publishPose(*drones_[i]);
+            // publishTF(*drones_[i], "map", drones_[i]->getId());
+            drones_[i]->update(dt);
             obstacle_poses.push_back(drones_[i]->getPose());
             obstacle_velocities.push_back(drones_[i]->getVelocity());
         }
@@ -237,16 +238,17 @@ private:
         twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         //twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         // Set the new velocity for the ego car
-        //controlled_car_->setVelocity(new_ego_velocity);
+        controlled_car_->setVelocity(new_ego_velocity);
         // Publish the new velocity
-        new_ego_velocity = convertCmdVector(new_ego_velocity, ego_pose);
-        cmd_vel_pub_->publish(new_ego_velocity);
+        // new_ego_velocity = convertCmdVector(new_ego_velocity, ego_pose);
+        // cmd_vel_pub_->publish(new_ego_velocity);
 
         // Update ego car's orientation based on the new velocity
         double yaw = std::atan2(new_ego_velocity.linear.y, new_ego_velocity.linear.x);
         tf2::Quaternion q;
         q.setRPY(0, 0, yaw);
         controlled_car_->setOrientation(q);
+        RCLCPP_INFO(this->get_logger(), "Ego car orientation set to: %f", yaw);
 
         // Update ego car's position based on the new velocity
         controlled_car_->update(dt);
@@ -299,9 +301,9 @@ private:
 
 
         // Controlled car
-        // marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
-        // setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), 0);
-        // setVelocityTextMarker(marker_array, *controlled_car_, this->now());
+        marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
+        setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), 0);
+        setVelocityTextMarker(marker_array, *controlled_car_, this->now());
 
         // // Road
         // rclcpp::Time now = this->now();
@@ -346,6 +348,8 @@ private:
         marker.ns = "cars";
         marker.id = id;
         marker.type = vis_marker::CUBE;
+        // marker.type= vis_marker::MESH_RESOURCE;
+        // marker.mesh_resource = "package://car_description/meshes/obstacle.STL";
         marker.action = vis_marker::ADD;
         // Set the pose of the marker to the car's pose
         marker.pose = car.getPose();

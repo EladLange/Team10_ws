@@ -21,10 +21,11 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
         min_time_horizon = std::min(min_time_horizon, time_horizon);
     }
 
-    min_time_horizon +=1.0f;
+    min_time_horizon +=0.5f;
 
     // Generate candidate velocities
-    std::vector<twist_msg> candidate_velocities = generateACV(ego_vel);
+    std::vector<twist_msg> candidate_velocities = generateCandidateVelocities(ego_vel);
+    twist_msg best_velocity = ego_vel; // Default to current velocity
 
     // Check if candidate velocities are in the truncated NLVO
     std::vector<twist_msg> safe_vels;
@@ -33,20 +34,14 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
         bool is_safe = true;
         for (size_t i = 0; i < obstacles_poses.size(); i++)
         {
-            std::cout<<"checking candidate velocity: ("<<candidate_vel.linear.x<<","<<candidate_vel.linear.y<<")"<<std::endl;
-            std::cout<<"against obstacle "<<i<< " at (" << obstacles_poses[i].position.x << "," << obstacles_poses[i].position.y << ")"
-                      << " with vel=(" << obstacle_vels[i].linear.x << "," << obstacle_vels[i].linear.y << ")" <<std::endl;
-
             if (isVelocityInTruncatedNLVO(candidate_vel, ego_pose, ego_vel, obstacles_poses[i], obstacle_vels[i], r_total, min_time_horizon))
             {
-                std::cout<<"UNSAFE velocity (" << candidate_vel.linear.x << "," << candidate_vel.linear.y << ")" <<std::endl;
                 is_safe = false;
                 break;
             }
         }
         if (is_safe)
         {
-            std::cout << "SAFE: Velocity (" << candidate_vel.linear.x << "," << candidate_vel.linear.y << ") is not in any NLVO" << std::endl;
             safe_vels.push_back(candidate_vel);
         }
     }
@@ -54,10 +49,10 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
     // If no safe velocities found, generate emergency velocities
     if (safe_vels.empty())
     {
-        twist_msg stop_vel;
-        stop_vel.linear.x = 0.0;
-        stop_vel.linear.y = 0.0;
-        safe_vels.push_back(stop_vel);
+        std::cout << "NO SAFE VELOCITIES FOUND" << std::endl;
+        best_velocity.linear.x = 0.0f;
+        best_velocity.linear.y = 0.0f;
+        return best_velocity;
     }
 
     // Select the best velocity from the safe velocities
@@ -69,7 +64,6 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
     twist_msg current_ego_vel = ego_vel;
 
     float best_cost = calculateCandidateCost(ego_pose, ego_vel, obstacles_poses, obstacle_vels, current_ego_vel, goal_point, r_total, min_time_horizon);
-    twist_msg best_velocity = ego_vel; // Default to current velocity
 
     for (const auto &candidate_vel : safe_vels)
     {
@@ -262,26 +256,12 @@ std::vector<twist_msg> NLVO::generateCandidateVelocities(const twist_msg& ego_ve
 
 float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<pose_msg>obstacle_poses,const std::vector<twist_msg>obstacle_vels, const twist_msg& candidate_velocity, const point_msg& goal_point, float r_total, float time_horizon)
 {
-    // std::cout << "ego position: " << ego_pose.position.x << ", " << ego_pose.position.y << std::endl;
-    // std::cout << "ego velocity: " << ego_velocity.linear.x << ", " << ego_velocity.linear.y << std::endl;
-    // std::cout << "candidate velocity: " << candidate_velocity.linear.x << ", " << candidate_velocity.linear.y << std::endl;
-    // std::cout << "goal point: " << goal_point.position.x << ", " << goal_point.position.y << std::endl;
-    // std::cout << "obstacle poses: " << std::endl;
-    // for (size_t i = 0; i < obstacle_poses.size(); i++)
-    // {
-    //     std::cout << "obstacle " << i << ": " << obstacle_poses[i].position.x << ", " << obstacle_poses[i].position.y << std::endl;
-    // }
-    // std::cout << "obstacle velocities: " << std::endl;
-    // for (size_t i = 0; i < obstacle_vels.size(); i++)
-    // {
-    //     std::cout << "obstacle " << i << ": " << obstacle_vels[i].linear.x << ", " << obstacle_vels[i].linear.y << std::endl;
-    // }
 
     float cost = 0.0f;
     // cost function constant
     float obstacle_avoidance_weight = 40.0f;
-    float goal_seeling_weight = 7.0f;
-    float smoothness_weight = 0.1f;
+    float goal_seeling_weight = 300.0f;
+    float smoothness_weight = 50.0f;
     float time_step = 1.0;
     
     // Obstacle avoidance 
