@@ -9,6 +9,7 @@
 #include "raceline_visualization.hpp"
 #include "global_variables.hpp"
 #include "nlvo/nlvo.hpp"
+#include <algorithm>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -21,7 +22,7 @@ NLVO nlvo;
 
 // Global variables
 float time_horizon = 7.0f;
-float max_acceleration = 1.0f;
+float max_acceleration = 10.0f;
 float min_acceleration = -3.0f;
 float time_step = 1.0f;
 float delta_t = 0.1f;
@@ -78,45 +79,45 @@ public:
     {
                 // Initialize cars
                 controlled_car_ = std::make_shared<Car>("ego", true);
-                // controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
+                controlled_car_->setPose(makePose(0.0, 0.0));  // Center of first lane
                 // controlled_car_->setVelocity(makeVel(5.0, 1.0));
 
                 
-                //First obstacle
-                auto drone0 = std::make_shared<Car>("drone_0", false);
-                drone0->setPose(makePose(30.0, 4.5));
-                drone0->setVelocity(makeVel(1.0, 0.0));
-                drones_.push_back(drone0);
+                // //First obstacle
+                // auto drone0 = std::make_shared<Car>("drone_0", false);
+                // drone0->setPose(makePose(30.0, 4.5));
+                // drone0->setVelocity(makeVel(1.0, 0.0));
+                // drones_.push_back(drone0);
 
-                // Second obstacle
-                auto drone1 = std::make_shared<Car>("drone_1", false);
-                drone1->setPose(makePose(-22.2,11.904333137552124));
-                drone1->setVelocity(makeVel(0.0, 0.0));
-                drones_.push_back(drone1);
+                // // Second obstacle
+                // auto drone1 = std::make_shared<Car>("drone_1", false);
+                // drone1->setPose(makePose(-22.2,11.904333137552124));
+                // drone1->setVelocity(makeVel(0.0, 0.0));
+                // drones_.push_back(drone1);
 
-                // Third obstacle
-                auto drone2 = std::make_shared<Car>("drone_2", false);
-                drone2->setPose(makePose(15.0, 0.0));
-                drone2->setVelocity(makeVel(0.5, 0.0));
-                drones_.push_back(drone2);
+                // // Third obstacle
+                // auto drone2 = std::make_shared<Car>("drone_2", false);
+                // drone2->setPose(makePose(15.0, 0.0));
+                // drone2->setVelocity(makeVel(0.5, 0.0));
+                // drones_.push_back(drone2);
 
-                // Fourth obstacle
-                auto drone3 = std::make_shared<Car>("drone_3", false);
-                drone3->setPose(makePose(44.89795918367347,40.0));
-                drone3->setVelocity(makeVel(0.1, 0.0));
-                drones_.push_back(drone3);
+                // // Fourth obstacle
+                // auto drone3 = std::make_shared<Car>("drone_3", false);
+                // drone3->setPose(makePose(44.89795918367347,40.0));
+                // drone3->setVelocity(makeVel(0.1, 0.0));
+                // drones_.push_back(drone3);
 
-                // Fifth obstacle
-                auto drone4 = std::make_shared<Car>("drone_4", false);
-                drone4->setPose(makePose(20.0, 4.5));
-                drone4->setVelocity(makeVel(6.0, 0.0));
-                drones_.push_back(drone4);
+                // // Fifth obstacle
+                // auto drone4 = std::make_shared<Car>("drone_4", false);
+                // drone4->setPose(makePose(20.0, 4.5));
+                // drone4->setVelocity(makeVel(6.0, 0.0));
+                // drones_.push_back(drone4);
     }
 
 
 point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
 {
-    int lookahead_step = 10;
+    int lookahead_step = 5;
     point_msg point;
 
     // fallback if raceline is empty
@@ -157,8 +158,9 @@ point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_m
     if (lookahead_index >= static_cast<int>(raceline.size()))
     {
         lookahead_index = static_cast<int>(raceline.size()) - 1;
+        // RCLCPP_INFO(get_logger(), "Lookahead index is out of bounds");
     }
-
+    // RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
     return raceline[lookahead_index];
 }
 
@@ -240,6 +242,7 @@ private:
         // Set the new velocity for the ego car
         // controlled_car_->setVelocity(new_ego_velocity);
         // Publish the new velocity
+        RCLCPP_INFO(this->get_logger(), "New ego car velocity set to: (%f, %f)", new_ego_velocity.linear.x, new_ego_velocity.linear.y);
         new_ego_velocity = convertCmdVector(new_ego_velocity, ego_pose);
         cmd_vel_pub_->publish(new_ego_velocity);
 
@@ -437,18 +440,27 @@ private:
     tf2::Matrix3x3 m(q);
     double roll, pitch, yaw;
     m.getRPY(roll, pitch, yaw);
-    // RCLCPP_INFO(this->get_logger(), "Yaw: %f", yaw);
+    
 
     double heading_error;
-    if (ego_pos.orientation.z>M_PI){
-        heading_error = -theta+ yaw;  
+    if (yaw<0&&theta>0){
+        heading_error = theta- (yaw+M_PI);  
+    }
+    else if(yaw>0&&theta<0){
+        heading_error = (theta+M_PI)- yaw;
+    }
+    else if (yaw<0&&theta<0){
+        heading_error = -theta- yaw;
     }
     else{
         heading_error = theta- yaw; 
     }
+    RCLCPP_INFO(this->get_logger(), "Yaw: %f, theta: %f, heading_error: %f", yaw,theta,heading_error);
+    // heading_error=std::clamp(heading_error, -M_PI/6, M_PI/6);
     float vel_size= sqrt(pow(vel.linear.x,2)+pow(vel.linear.y,2));
     double vx_local = cos(heading_error) * vel_size;
     vel_cmd.linear.x = vx_local;
+    // RCLCPP_INFO(this->get_logger(), "vel_size: %f", vel_size);  
     
     // if (heading_error > 1.5||heading_error < -1.5)
     //     k_heading = k_heading/2.0;
