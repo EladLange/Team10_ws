@@ -425,8 +425,7 @@ private:
 
     float k_heading=1.5;
     float theta= atan2(vel.linear.y,vel.linear.x);
-    double vx_local = cos(theta) * vel.linear.x + sin(theta) * vel.linear.y;
-    vel_cmd.linear.x = vx_local;
+    
 
 
     // Extract yaw from quaternion
@@ -447,6 +446,9 @@ private:
     else{
         heading_error = theta- yaw; 
     }
+    float vel_size= sqrt(pow(vel.linear.x,2)+pow(vel.linear.y,2));
+    double vx_local = cos(heading_error) * vel_size;
+    vel_cmd.linear.x = vx_local;
     
     // if (heading_error > 1.5||heading_error < -1.5)
     //     k_heading = k_heading/2.0;
