@@ -76,41 +76,41 @@ public:
 
     void initialize_cars()
     {
-                // Initialize cars
-                controlled_car_ = std::make_shared<Car>("ego", true);
-                controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
-                controlled_car_->setVelocity(makeVel(5.0, 1.0));
+        // Initialize cars
+        controlled_car_ = std::make_shared<Car>("ego", true);
+        controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
+        controlled_car_->setVelocity(makeVel(5.0, 1.0));
 
-                
-                //First obstacle
-                auto drone0 = std::make_shared<Car>("drone_0", false);
-                drone0->setPose(makePose(30.0, 4.5));
-                drone0->setVelocity(makeVel(1.0, 0.0));
-                drones_.push_back(drone0);
+        
+        //First obstacle
+        auto drone0 = std::make_shared<Car>("drone_0", false);
+        drone0->setPose(makePose(30.0, 4.5));
+        drone0->setVelocity(makeVel(1.0, 0.0));
+        drones_.push_back(drone0);
 
-                // Second obstacle
-                auto drone1 = std::make_shared<Car>("drone_1", false);
-                drone1->setPose(makePose(-22.2,11.904333137552124));
-                drone1->setVelocity(makeVel(0.0, 0.0));
-                drones_.push_back(drone1);
+        // Second obstacle
+        auto drone1 = std::make_shared<Car>("drone_1", false);
+        drone1->setPose(makePose(15.0,0.0));
+        drone1->setVelocity(makeVel(0.0, 0.0));
+        drones_.push_back(drone1);
 
-                // Third obstacle
-                auto drone2 = std::make_shared<Car>("drone_2", false);
-                drone2->setPose(makePose(15.0, 0.0));
-                drone2->setVelocity(makeVel(0.5, 0.0));
-                drones_.push_back(drone2);
+        // Third obstacle
+        auto drone2 = std::make_shared<Car>("drone_2", false);
+        drone2->setPose(makePose(15.0, 0.0));
+        drone2->setVelocity(makeVel(0.5, 0.0));
+        drones_.push_back(drone2);
 
-                // Fourth obstacle
-                auto drone3 = std::make_shared<Car>("drone_3", false);
-                drone3->setPose(makePose(44.89795918367347,40.0));
-                drone3->setVelocity(makeVel(0.1, 0.0));
-                drones_.push_back(drone3);
+        // Fourth obstacle
+        auto drone3 = std::make_shared<Car>("drone_3", false);
+        drone3->setPose(makePose(44.89795918367347,40.0));
+        drone3->setVelocity(makeVel(0.1, 0.0));
+        drones_.push_back(drone3);
 
-                // Fifth obstacle
-                auto drone4 = std::make_shared<Car>("drone_4", false);
-                drone4->setPose(makePose(20.0, 4.5));
-                drone4->setVelocity(makeVel(6.0, 0.0));
-                drones_.push_back(drone4);
+        // Fifth obstacle
+        auto drone4 = std::make_shared<Car>("drone_4", false);
+        drone4->setPose(makePose(69.743635668289,16.808002099332416));
+        drone4->setVelocity(makeVel(0.0, 0.0));
+        drones_.push_back(drone4);
     }
 
 
@@ -235,8 +235,8 @@ private:
         std::vector<point_msg> raceline = setRaceline();
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
-        twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
-        //twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
+        //twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
+        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         // Set the new velocity for the ego car
         controlled_car_->setVelocity(new_ego_velocity);
         // Publish the new velocity
@@ -248,7 +248,7 @@ private:
         tf2::Quaternion q;
         q.setRPY(0, 0, yaw);
         controlled_car_->setOrientation(q);
-        RCLCPP_INFO(this->get_logger(), "Ego car orientation set to: %f", yaw);
+        //RCLCPP_INFO(this->get_logger(), "Ego car orientation set to: %f", yaw);
 
         // Update ego car's position based on the new velocity
         controlled_car_->update(dt);

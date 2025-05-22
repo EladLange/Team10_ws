@@ -18,7 +18,7 @@ std::vector<point_msg> setRaceline()
 
     // return raceline;
 
-    std::string filename = "/home/zvi/Desktop/Team10_ws/src/vo/src/raceline.csv";
+    std::string filename = "src/vo/src/raceline.csv";
     std::ifstream file(filename);
     if (!file.is_open()) {
         std::cerr << "Error opening raceline file." << std::endl;
