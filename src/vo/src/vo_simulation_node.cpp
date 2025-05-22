@@ -117,7 +117,7 @@ public:
 
 point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
 {
-    int lookahead_step = 5;
+    int lookahead_step = 10;
     point_msg point;
 
     // fallback if raceline is empty
@@ -242,8 +242,7 @@ private:
         // Set the new velocity for the ego car
         // controlled_car_->setVelocity(new_ego_velocity);
         // Publish the new velocity
-        RCLCPP_INFO(this->get_logger(), "New ego car velocity set to: (%f, %f)", new_ego_velocity.linear.x, new_ego_velocity.linear.y);
-        new_ego_velocity = convertCmdVector(new_ego_velocity, ego_pose);
+        // RCLCPP_INFO(this->get_logger(), "New ego car velocity set to: (%f, %f)", new_ego_velocity.linear.x, new_ego_velocity.linear.y);
         cmd_vel_pub_->publish(new_ego_velocity);
 
         // Update ego car's orientation based on the new velocity
@@ -421,54 +420,6 @@ private:
 
         vo_marker_pub_->publish(marker_array);
         //RCLCPP_INFO(this->get_logger(), "Published %zu markers", marker_array.markers.size());
-    }
-
-    geometry_msgs::msg::Twist convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Pose ego_pos){
-    geometry_msgs::msg::Twist vel_cmd;
-
-    float k_heading=1.5;
-    float theta= atan2(vel.linear.y,vel.linear.x);
-    
-
-
-    // Extract yaw from quaternion
-    tf2::Quaternion q(
-        ego_pos.orientation.x,
-        ego_pos.orientation.y,
-        ego_pos.orientation.z,
-        ego_pos.orientation.w);
-    tf2::Matrix3x3 m(q);
-    double roll, pitch, yaw;
-    m.getRPY(roll, pitch, yaw);
-    
-
-    double heading_error;
-    if (yaw<0&&theta>0){
-        heading_error = theta- (yaw+M_PI);  
-    }
-    else if(yaw>0&&theta<0){
-        heading_error = (theta+M_PI)- yaw;
-    }
-    else if (yaw<0&&theta<0){
-        heading_error = -theta- yaw;
-    }
-    else{
-        heading_error = theta- yaw; 
-    }
-    RCLCPP_INFO(this->get_logger(), "Yaw: %f, theta: %f, heading_error: %f", yaw,theta,heading_error);
-    // heading_error=std::clamp(heading_error, -M_PI/6, M_PI/6);
-    float vel_size= sqrt(pow(vel.linear.x,2)+pow(vel.linear.y,2));
-    double vx_local = cos(heading_error) * vel_size;
-    vel_cmd.linear.x = vx_local;
-    // RCLCPP_INFO(this->get_logger(), "vel_size: %f", vel_size);  
-    
-    // if (heading_error > 1.5||heading_error < -1.5)
-    //     k_heading = k_heading/2.0;
-
-    // double heading_error = theta - yaw;
-    // RCLCPP_INFO(this->get_logger(), "Heading error: %f", heading_error);
-    vel_cmd.angular.z = k_heading * heading_error;
-    return vel_cmd;
     }
 };
 

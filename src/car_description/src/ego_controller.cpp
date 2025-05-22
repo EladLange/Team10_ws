@@ -8,16 +8,23 @@ float wheels_radius=0.25;//wheels radius in m
 
 EgoController::EgoController(const std::string &name) : Node(name)
 {
-
+    ego_pose_sub_ = create_subscription<geometry_msgs::msg::Pose>("/ego_pose",10,std::bind(&EgoController::poseCallback,this, _1));
     vel_cmd_sub_ = create_subscription<geometry_msgs::msg::Twist>("/vel_cmd",10,std::bind(&EgoController::msgCallback,this, _1));   
     ackermann_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>("/ackermann_steering_controller/reference",10);
     rear_vel_pub_ = create_publisher<std_msgs::msg::Float64MultiArray>("/velocity_controller/commands",10);
     
 }
 
+void EgoController::poseCallback(const geometry_msgs::msg::Pose & msg)
+{
+   ego_pos=msg;
+}
+
+
 void EgoController::msgCallback(const geometry_msgs::msg::Twist & msg)
 {
-    float temp_vel=msg.linear.x;
+    geometry_msgs::msg::Twist des_vel=convertCmdVector(msg,ego_pos);
+    float temp_vel=des_vel.linear.x;
     geometry_msgs::msg::TwistStamped ackermann_msg;
     temp_vel=temp_vel/wheels_radius;//linear velocity/wheel radius
     //RCLCPP_INFO_STREAM(get_logger(),"temp vel="<<temp_vel); //debugging
@@ -25,10 +32,44 @@ void EgoController::msgCallback(const geometry_msgs::msg::Twist & msg)
     rear_vel.data.push_back(temp_vel);
     rear_vel.data.push_back(temp_vel);
     ackermann_msg.header.stamp = this->get_clock()->now();
-    ackermann_msg.twist=msg;
+    ackermann_msg.twist=des_vel;
 
     rear_vel_pub_-> publish (rear_vel);
     ackermann_pub_-> publish(ackermann_msg);
+}
+
+geometry_msgs::msg::Twist EgoController::convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Pose ego_pos){
+    geometry_msgs::msg::Twist vel_cmd;
+
+    float k_heading=1.5;
+    float theta= atan2(vel.linear.y,vel.linear.x);
+
+    // Extract yaw from quaternion
+    tf2::Quaternion q(
+        ego_pos.orientation.x,
+        ego_pos.orientation.y,
+        ego_pos.orientation.z,
+        ego_pos.orientation.w);
+    tf2::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+
+    double abs_yaw=yaw;
+    double abs_theta=theta;
+    if (yaw<0){
+        double abs_yaw=yaw+2*M_PI;
+    }
+    if (theta<0){
+        double abs_theta = theta+2*M_PI;
+    }
+    double heading_error;
+    heading_error=abs_theta-abs_yaw;
+    float vel_size= sqrt(pow(vel.linear.x,2)+pow(vel.linear.y,2));
+    double vx_local = (sin(heading_error) +cos(heading_error)) * vel_size;
+    vel_cmd.linear.x = vx_local;
+    RCLCPP_INFO(this->get_logger(), "vel_cmd_linear_x: %f", vel_cmd.linear.x);  
+    vel_cmd.angular.z = k_heading * heading_error;
+    return vel_cmd;
 }
 
 int main (int argc, char* argv[])

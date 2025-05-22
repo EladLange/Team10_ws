@@ -14,12 +14,13 @@ find_package(geometry_msgs REQUIRED)
 find_package(robot_localization REQUIRED)  
 find_package(ros_gz_bridge REQUIRED) 
 find_package(tf2_ros REQUIRED) 
+find_package(tf2 REQUIRED)
 
 include_directories(include)
 
 
 add_executable(ego_controller src/ego_controller.cpp)
-ament_target_dependencies(ego_controller rclcpp std_msgs geometry_msgs)
+ament_target_dependencies(ego_controller rclcpp std_msgs geometry_msgs tf2_ros)
 
 add_executable(ego_pose_pub src/ego_odom_pub.cpp)
 ament_target_dependencies(ego_pose_pub rclcpp std_msgs geometry_msgs tf2_ros)

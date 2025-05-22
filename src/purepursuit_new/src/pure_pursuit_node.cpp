@@ -14,6 +14,7 @@
 #include "tf2/LinearMath/Quaternion.h"  // For quaternion math (yaw to quaternion)
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"  // Conversion between TF2 and geometry_msgs
 #include "tf2_ros/transform_broadcaster.h"  // For publishing dynamic transforms
+#include "geometry_msgs/msg/twist.hpp"
 
 // Include custom headers for vehicle state and model
 #include "types.hpp"  // Defines struct State (x, y, yaw)
@@ -34,6 +35,8 @@
 
 using namespace std::chrono_literals;  // Allow writing 10ms, 1s etc. as time literals
 
+using std::placeholders::_1;
+
 // ========== NODE CLASS DEFINITION ==========
 class PurePursuitNode : public rclcpp::Node {
 public:
@@ -41,11 +44,13 @@ public:
     PurePursuitNode() : Node("pure_pursuit_node") {
         // Create a shared bicycle kinematic model with wheelbase 2.5 meters
         vehicle_model_ = std::make_shared<BicycleModel>(2.5);
+        
+
 
         // Define paths to load
         std::array<std::string, 3> path_files = {
             "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane0.csv",
-            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane1.csv",
+            "/home/zvi/Desktop/Team10_ws/src/vo/src/track_points.csv",
             "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane2.csv"
         };
 
@@ -73,6 +78,8 @@ public:
         drone_poses_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("drone_pose", 10); // Changed to "drone_pose" to match VO package
         drone_paths_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("drone_paths", 10);
         vehicle_markers_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("vehicle_markers", 10);
+        vel_cmd_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("vel_cmd", 10);
+        robot_pose_sub_ = this->create_subscription<geometry_msgs::msg::Pose>("/ego_pose", 10, std::bind(&PurePursuitNode::robotPoseCallback, this, _1));
 
         // Create a broadcaster to publish transforms for visualization
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
@@ -108,6 +115,10 @@ public:
         timer_ = this->create_wall_timer(10ms, std::bind(&PurePursuitNode::onTimer, this));
     }
 
+    void robotPoseCallback(const geometry_msgs::msg::Pose &msg) {
+        EgoPose = msg;
+    }
+
 private:
     // ========== PRIVATE MEMBER VARIABLES ==========
     std::shared_ptr<VehicleModelBase> vehicle_model_;  // Shared vehicle model for all drones
@@ -115,9 +126,13 @@ private:
     rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr drone_poses_pub_;  // Publisher for all drone poses
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr drone_paths_pub_;  // Publisher for all drone paths
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr vehicle_markers_pub_;  // Publisher for vehicle markers
+    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr vel_cmd_pub_;
     rclcpp::TimerBase::SharedPtr timer_;  // Timer object for periodic updates
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;  // Transform broadcaster for TF visualization
 
+    rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr robot_pose_sub_;
+
+    geometry_msgs::msg::Pose EgoPose;
     // Vector of paths, each path is a pair of vectors (x coordinates, y coordinates)
     std::vector<std::pair<std::vector<double>, std::vector<double>>> paths_;
 
@@ -156,6 +171,14 @@ private:
         return {path_x, path_y};
     }
 
+    geometry_msgs::msg::Twist velToTwist(double velocity, double yaw){
+
+        geometry_msgs::msg::Twist vel_cmd;
+        vel_cmd.linear.x = velocity * std::cos(yaw);
+        vel_cmd.linear.y = velocity * std::sin(yaw);
+        return vel_cmd;
+    }
+
     // ========== TIMER CALLBACK ==========
     // Called every 10ms: updates all drone states and publishes visualization
     void onTimer() {
@@ -174,23 +197,36 @@ private:
         visualization_msgs::msg::MarkerArray vehicle_markers;
 
         // Update each drone and collect visualization data
-        for (size_t i = 0; i < drones_.size(); ++i) {
+        for (size_t i = 0; i < 1; ++i) {
             // Update drone state using pure pursuit control
             drones_[i]->update(dt, velocity-2);
-
             // Get current drone state
             const State& state = drones_[i]->getState();
 
+            
+
             // Create pose for this drone
             geometry_msgs::msg::Pose drone_pose;
-            drone_pose.position.x = state.x;
-            drone_pose.position.y = state.y;
-            drone_pose.position.z = state.z;
+            drone_pose.position.x = EgoPose.position.x;
+            drone_pose.position.y = EgoPose.position.y;
+            drone_pose.position.z = EgoPose.position.z;
 
-            // Convert yaw to quaternion
-            tf2::Quaternion q;
-            q.setRPY(0, 0, state.yaw);
-            drone_pose.orientation = tf2::toMsg(q);
+            // // Convert yaw to quaternion
+            // tf2::Quaternion q;
+            // q.setRPY(0, 0, state.yaw);
+            // drone_pose.orientation = tf2::toMsg(q);
+
+            tf2::Quaternion q(
+            EgoPose.orientation.x,
+            EgoPose.orientation.y,
+            EgoPose.orientation.z,
+            EgoPose.orientation.w);
+            tf2::Matrix3x3 m(q);
+            double roll, pitch, yaw;
+            m.getRPY(roll, pitch, yaw);
+
+            geometry_msgs::msg::Twist vel_cmd = velToTwist(velocity, yaw);
+            vel_cmd_pub_->publish(vel_cmd);
 
             // Add to pose array
             drone_poses.poses.push_back(drone_pose);

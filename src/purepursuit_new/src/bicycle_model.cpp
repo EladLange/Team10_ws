@@ -63,4 +63,9 @@ geometry_msgs::msg::Pose BicycleModel::updatePose(const geometry_msgs::msg::Pose
     return new_pose; // Return the updated pose
 }
 
+geometry_msgs::msg::Pose BicycleModel::robotPose(const geometry_msgs::msg::Pose &pose){
+    
+
+}
+
 
