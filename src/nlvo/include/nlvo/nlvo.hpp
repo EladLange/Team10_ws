@@ -14,6 +14,7 @@ class NLVO
     const float dt = 0.1f; // time step
     const float max_time = 10.0f; // maximum time horizon
     const float max_acceleration = 2.0f; // maximum acceleration
+    const float max_speed = 5.0f; // maximum speed
 
     // Function to select the best velocity
     twist_msg selectBestVelocity(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<pose_msg>& obstacles_poses, const std::vector<twist_msg>& obstacle_vels, const point_msg &goal_point, float r_total);
@@ -31,9 +32,8 @@ class NLVO
     float calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<pose_msg>obstacle_poses, const std::vector<twist_msg>obstacle_vels, const twist_msg& candidate_velocity, const point_msg& goal_point, float r_total, float time_horizon);
 
     private:
-
     // Function to compute the minimum time horizon
-    float computeMinimumTimeHorizon(const pose_msg& ego_pose, const twist_msg& ego_vel, const pose_msg& obstacle_pose, const twist_msg& obstacle_vel, float r_total);
+    float computeMinimumTimeHorizon(const pose_msg& ego_pose, const twist_msg& ego_vel, const pose_msg& obstacle_pose, const twist_msg& obstacle_vel, float r_total, std::vector<std::pair<double, double>> control_set);
 
     // Function to evaluate cost (e.g., time-to-go)
     float evaluateCost(const twist_msg& candidate_vel, const point_msg& to_goal, const twist_msg& ego_vel);

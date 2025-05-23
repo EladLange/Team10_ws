@@ -11,17 +11,25 @@ NLVO::NLVO()
 
 twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &ego_vel, const std::vector<pose_msg> &obstacles_poses, const std::vector<twist_msg> &obstacle_vels, const point_msg &goal_point, float r_total)
 {
+    // Create a set of control limits (bang-bang corners of control set)
+    std::vector<std::pair<double, double>> control_set = {
+        {control_limit_x, control_limit_y},
+        {-control_limit_x, control_limit_y},
+        {control_limit_x, -control_limit_y},
+        {-control_limit_x, -control_limit_y},
+    };
+
     // Find the minimum time horizon
     float min_time_horizon = max_time;
 
     for (size_t i = 0; i < obstacles_poses.size(); i++)
     {
-        float time_horizon = computeMinimumTimeHorizon(ego_pose, ego_vel, obstacles_poses[i], obstacle_vels[i], r_total);
+        float time_horizon = computeMinimumTimeHorizon(ego_pose, ego_vel, obstacles_poses[i], obstacle_vels[i], r_total, control_set);
         std::cout<<"time horizon for obstacle "<<i<<": "<<time_horizon<<std::endl;
         min_time_horizon = std::min(min_time_horizon, time_horizon);
     }
 
-    min_time_horizon +=0.5f;
+    min_time_horizon += 2.0f;
 
     // Generate candidate velocities
     std::vector<twist_msg> candidate_velocities = generateCandidateVelocities(ego_vel);
@@ -55,16 +63,10 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
         return best_velocity;
     }
 
-    // Select the best velocity from the safe velocities
-    point_msg to_goal;
-    to_goal.x = goal_point.x - ego_pose.position.x;
-    to_goal.y = goal_point.y - ego_pose.position.y;
-    to_goal.z = ego_pose.position.z;
-
     twist_msg current_ego_vel = ego_vel;
 
-    float best_cost = calculateCandidateCost(ego_pose, ego_vel, obstacles_poses, obstacle_vels, current_ego_vel, goal_point, r_total, min_time_horizon);
-
+    float best_cost = std::numeric_limits<float>::max();
+            
     for (const auto &candidate_vel : safe_vels)
     {
         float cost = calculateCandidateCost(ego_pose, ego_vel, obstacles_poses, obstacle_vels, candidate_vel, goal_point, r_total, min_time_horizon);
@@ -82,16 +84,8 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
     return best_velocity; // Return the best velocity found among the candidates
 }
 
-float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg &ego_vel, const pose_msg &obstacle_pose, const twist_msg &obstacle_vel, float r_total)
+float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg &ego_vel, const pose_msg &obstacle_pose, const twist_msg &obstacle_vel, float r_total, std::vector<std::pair<double, double>> control_set)
 {
-    // Create a set of control limits (bang-bang corners of control set)
-    std::vector<std::pair<double, double>> control_set = {
-        {control_limit_x, control_limit_y},
-        {-control_limit_x, control_limit_y},
-        {control_limit_x, -control_limit_y},
-        {-control_limit_x, -control_limit_y},
-    };
-
     float min_collision_time = max_time;
     float r_total_squared = r_total * r_total;
     float first_collision_time_for_control;
@@ -100,16 +94,11 @@ float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg 
     for (const auto &control : control_set)
     {
         first_collision_time_for_control = max_time;
-
-        // Calculate the ego future velocity with this control
-        twist_msg ego_future_vel;
-        ego_future_vel.linear.x = ego_vel.linear.x + control.first * dt;
-        ego_future_vel.linear.y = ego_vel.linear.y + control.second * dt;
-
-        // Calculate the relative velocity
+        
+        // Calculate the initial relative velocity
         twist_msg relative_velocity;
-        relative_velocity.linear.x = ego_future_vel.linear.x - obstacle_vel.linear.x;
-        relative_velocity.linear.y = ego_future_vel.linear.y - obstacle_vel.linear.y;
+        relative_velocity.linear.x = ego_vel.linear.x - obstacle_vel.linear.x;
+        relative_velocity.linear.y = ego_vel.linear.y - obstacle_vel.linear.y;
 
         // Calculate the initial relative position
         pose_msg relative_pose;
@@ -121,8 +110,8 @@ float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg 
         {
             // Relative position at time t
             pose_msg future_relative_pose;
-            future_relative_pose.position.x = relative_pose.position.x + relative_velocity.linear.x * t;
-            future_relative_pose.position.y = relative_pose.position.y + relative_velocity.linear.y * t;
+            future_relative_pose.position.x = relative_pose.position.x + relative_velocity.linear.x * t + 0.5 * control.first * t * t;
+            future_relative_pose.position.y = relative_pose.position.y + relative_velocity.linear.y * t + 0.5 * control.second * t * t;
 
             double future_relative_pose_length_squared = pow(future_relative_pose.position.x, 2) + pow(future_relative_pose.position.y, 2);
 
@@ -173,17 +162,7 @@ bool NLVO::isVelocityInTruncatedNLVO(const twist_msg &candidate_vel, const pose_
     float current_dist_squared = pow(ego_pose.position.x - obstacle_pose.position.x, 2) + pow(ego_pose.position.y - obstacle_pose.position.y, 2);
     if (current_dist_squared <= r_total_squared)
     {
-        // Calculate vector from obstacle to ego
-        float dx = ego_pose.position.x - obstacle_pose.position.x;
-        float dy = ego_pose.position.y - obstacle_pose.position.y;
-
-        // Check if candidate velocity points away from obstacle
-        float dot_product = candidate_vel.linear.x * dx + candidate_vel.linear.y * dy;
-        if (dot_product > 0) {
-            // Velocity point torwards obstacle
-            std::cout<<"immidiate collision with obstacle"<<std::endl;
-            return true;
-        }
+        return true;
     }
 
     // Check future positions
@@ -259,10 +238,10 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
 
     float cost = 0.0f;
     // cost function constant
-    float obstacle_avoidance_weight = 40.0f;
-    float goal_seeling_weight = 300.0f;
+    float obstacle_avoidance_weight = 100.0f;
+    float goal_seeling_weight = 150.0f;
     float smoothness_weight = 50.0f;
-    float time_step = 1.0;
+    float time_step = 1.0f;
     
     // Obstacle avoidance 
     pose_msg ego_future_position;
