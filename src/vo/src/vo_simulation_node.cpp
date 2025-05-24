@@ -20,7 +20,10 @@
 #include <geometry_msgs/msg/transform_stamped.hpp> // TransformStamped message type
 #include <geometry_msgs/msg/pose_array.hpp> // PoseArray message type
 #include <visualization_msgs/msg/marker.hpp> // Marker message type
-#include <tf2/utils.hpp>
+#include <tf2/utils.hpp> // For quaternion math (yaw to quaternion)
+#include <rclcpp/parameter.hpp> // For handling parameters
+#include "rcl_interfaces/msg/set_parameters_result.hpp" // For handling parameters
+
 
 VelocityObstacle vo;
 NLVO nlvo;
@@ -57,6 +60,19 @@ public:
 
         purepursuitInit(); // Initialize pure pursuit car
 
+        /**
+         * @brief change the control mode from the terminal:
+         * @ros2 param set /car_simulation_node control_mode VO
+         * ros2 param set /car_simulation_node control_mode NLVO
+         * ros2 param set /car_simulation_node control_mode NAO
+        */
+        declare_parameter<std::string>("control_mode", "VO"); // VO / NLVO / NAO (default: NLVO)
+        control_mode_ = get_parameter("control_mode").as_string(); // VO / NLVO / NAO
+        // Print the control mode - debug
+        RCLCPP_INFO(this->get_logger(), "Control mode: %s", control_mode_.c_str());
+        
+
+
         // publishers
         pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("car_pose", 10);
         marker_pub_ = this->create_publisher<vis_marker_arr>("visualization_marker_array", 10);
@@ -78,6 +94,21 @@ public:
             "drone_vel", 10,
             [this](geometry_msgs::msg::TwistStamped::SharedPtr msg) {
                 this->droneVelCallback(msg);
+            }
+        );
+        // Add callback for dynamic parameters 
+        param_callback_handle_ = add_on_set_parameters_callback(
+            [this](const std::vector<rclcpp::Parameter> &params) -> rcl_interfaces::msg::SetParametersResult {
+                for (const auto &param : params) {
+                    if (param.get_name() == "control_mode") {
+                        this->control_mode_ = param.as_string();
+                        RCLCPP_INFO(this->get_logger(), "Switched control mode to: %s", control_mode_.c_str());
+                    }
+                }
+                rcl_interfaces::msg::SetParametersResult result;
+                result.successful = true;
+                result.reason = "";
+                return result;
             }
         );
 
@@ -244,6 +275,10 @@ private:
     std::vector<std::shared_ptr<Car>> drones_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
+    std::string control_mode_; // "VO" / "NLVO" / "NAO"
+    std::shared_ptr<OnSetParametersCallbackHandle> param_callback_handle_;
+
+
     // ROS publishers
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
     rclcpp::Publisher<vis_marker_arr>::SharedPtr marker_pub_;
@@ -316,6 +351,43 @@ private:
         publishTF  (*purepursuit_car_, "map", purepursuit_car_->getId());
     }
 
+    geometry_msgs::msg::Twist voUpdate(std::vector<pose_msg> obstacle_poses, std::vector<twist_msg> obstacle_velocities,auto ego_pose, auto ego_vel) {
+        // — VO for ego car —
+        std::vector<point_msg> raceline = setRaceline();
+        point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
+        float r_total = calculateTotalRadius();
+        twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
+        controlled_car_->setVelocity(new_ego_velocity);
+        return new_ego_velocity;
+    }
+
+    geometry_msgs::msg::Twist nlvoUpdate(std::vector<pose_msg> obstacle_poses, std::vector<twist_msg> obstacle_velocities,auto ego_pose, auto ego_vel) {
+        // — NLVO for ego car —
+        std::vector<point_msg> raceline = setRaceline();
+        point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
+        float r_total = calculateTotalRadius();
+        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
+        controlled_car_->setVelocity(new_ego_velocity);
+        return new_ego_velocity;
+    }
+    
+    geometry_msgs::msg::Twist naoUpdate(std::vector<pose_msg> obstacle_poses, std::vector<twist_msg> obstacle_velocities,auto ego_pose, auto ego_vel) {
+        // — NAO for ego car —
+        std::vector<point_msg> raceline = setRaceline();
+        point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
+        float r_total = calculateTotalRadius();
+        // Set the new acceleration for the ego car
+        geometry_msgs::msg::Accel new_ego_accel = nao.selectBestAcceleration(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
+        cmd_accel_pub_->publish(new_ego_accel);
+        // Integrate the acceleration to get the new velocity
+        twist_msg new_ego_velocity = controlled_car_->getVelocity();
+        new_ego_velocity.linear.x += new_ego_accel.linear.x * dt;
+        new_ego_velocity.linear.y += new_ego_accel.linear.y * dt;
+        controlled_car_->setVelocity(new_ego_velocity);
+
+        return new_ego_velocity;
+    }
+
     void update() {
         //double dt = 0.1;  // 100 ms
         std::vector<pose_msg> obstacle_poses;
@@ -340,22 +412,22 @@ private:
         std::vector<point_msg> raceline = setRaceline();
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
-        //twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
-        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
-        //geometry_msgs::msg::Accel new_ego_accel = nao.selectBestAcceleration(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         
-        // Set the new velocity for the ego car
-        controlled_car_->setVelocity(new_ego_velocity);
-        // Publish the new velocity
-        cmd_vel_pub_->publish(new_ego_velocity);
+        twist_msg new_ego_velocity;
 
-        // // Set the new acceleration for the ego car
-        // cmd_accel_pub_->publish(new_ego_accel);
-        // // Integrate the acceleration to get the new velocity
-        // twist_msg new_ego_velocity = controlled_car_->getVelocity();
-        // new_ego_velocity.linear.x += new_ego_accel.linear.x * dt;
-        // new_ego_velocity.linear.y += new_ego_accel.linear.y * dt;
-        controlled_car_->setVelocity(new_ego_velocity);
+        if (control_mode_ == "VO") {
+            new_ego_velocity = voUpdate(obstacle_poses, obstacle_velocities, ego_pose, ego_vel);
+        }
+        else if (control_mode_ == "NLVO") {
+            new_ego_velocity = nlvoUpdate(obstacle_poses, obstacle_velocities, ego_pose, ego_vel);
+        }
+        else if (control_mode_ == "NAO") {
+            new_ego_velocity = naoUpdate(obstacle_poses, obstacle_velocities, ego_pose, ego_vel);
+        }
+        else {
+            RCLCPP_WARN(get_logger(), "Unknown control_mode: %s, using default NLVO", control_mode_.c_str());
+            new_ego_velocity = nlvoUpdate(obstacle_poses, obstacle_velocities, ego_pose, ego_vel);
+        } 
 
         // Update ego car's orientation based on the new velocity
         double yaw = std::atan2(new_ego_velocity.linear.y, new_ego_velocity.linear.x);
@@ -398,7 +470,6 @@ private:
         tf_broadcaster_->sendTransform(tf_msg);
     }
 
-
     void publishMarkers() {
         vis_marker_arr marker_array;
 
@@ -415,9 +486,11 @@ private:
 
 
         // Controlled car
-        marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
-        setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), 0);
-        setVelocityTextMarker(marker_array, *controlled_car_, this->now());
+        {
+            marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
+            setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), 0);
+            setVelocityTextMarker(marker_array, *controlled_car_, this->now());
+        }
 
         // Pure pursuit car
         {
@@ -449,18 +522,22 @@ private:
             m.color.g = 1.0; m.color.a = 0.8;
             marker_array.markers.push_back(m);
           }
+        
         // Road
+        {
         rclcpp::Time now = this->now();
         vis_marker road_marker;
         setRoadMarker(road_marker, road_, now);
         marker_array.markers.push_back(road_marker);
-
+        }
 
         // lane lines
-        for (int i = 1; i < road_.getNumLanes(); ++i) {
-            vis_marker lane_marker;
-            setLaneMarker(lane_marker, road_, i, now);
-            marker_array.markers.push_back(lane_marker);
+        {
+            for (int i = 1; i < road_.getNumLanes(); ++i) {
+                vis_marker lane_marker;
+                setLaneMarker(lane_marker, road_, i, now());
+                marker_array.markers.push_back(lane_marker);
+            }
         }
 
         marker_pub_->publish(marker_array);
@@ -483,7 +560,6 @@ private:
         float r_total = r_ego + r_obstacle;
         return r_total;
     }
-
 
     vis_marker makeCarMarker(const Car& car, int id) {
         vis_marker marker;
