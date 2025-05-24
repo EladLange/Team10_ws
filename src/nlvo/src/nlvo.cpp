@@ -25,6 +25,7 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
     min_time_horizon += 2.0f; 
 
     std::vector<VelDisk> all_disks;
+    
     for (size_t i = 0; i < obstacles_poses.size(); i++)
     {
         std::vector<VelDisk> disks = generateNLVODisks(ego_pose, obstacles_poses[i], obstacle_vels[i], r_total, min_time_horizon);
@@ -181,7 +182,7 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
     float cost = 0.0f;
     // cost function constant
     float obstacle_avoidance_weight = 100.0f;
-    float goal_seeling_weight = 150.0f;
+    float goal_seeking_weight = 150.0f;
     float smoothness_weight = 50.0f;
     float time_step = 1.0f;
     
@@ -214,7 +215,7 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
     float dy = goal_point.y - ego_future_position.position.y;
 
     float dist_to_goal = std::sqrt(std::pow(dx,2) + std::pow(dy, 2));
-    float goal_seeking_cost = goal_seeling_weight * dist_to_goal; 
+    float goal_seeking_cost = goal_seeking_weight * dist_to_goal; 
     //std::cout << "goal seeking cost: " << goal_seeking_cost << std::endl;
 
     // smoothness cost

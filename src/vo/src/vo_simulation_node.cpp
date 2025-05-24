@@ -47,7 +47,7 @@ public:
         marker_pub_ = this->create_publisher<vis_marker_arr>("visualization_marker_array", 10);
         vo_marker_pub_ = this ->create_publisher<vis_marker_arr>("vo_marker_array", 10);
         cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("vel_cmd", 10);
-        nlvo_marker_pub_ = this->create_publisher<vis_marker_arr>("nlvo_marker_array", 10);
+        // nlvo_marker_pub_ = this->create_publisher<vis_marker_arr>("nlvo_marker_array", 10);
     
         // subscribers
         // ego_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&CarSimulationNode::egoVelCallback,this, _1));
@@ -179,7 +179,7 @@ private:
     rclcpp::Publisher<vis_marker_arr>::SharedPtr marker_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<vis_marker_arr>::SharedPtr vo_marker_pub_;
-    rclcpp::Publisher<vis_marker_arr>::SharedPtr nlvo_marker_pub_;
+    // rclcpp::Publisher<vis_marker_arr>::SharedPtr nlvo_marker_pub_;
 
     rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr drone_pose_sub_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
@@ -305,13 +305,13 @@ private:
         int id = 0;
         for (const auto& car : drones_) {
             marker_array.markers.push_back(makeCarMarker(*car, id++));
-            setVelocityArrowMarker(marker_array, *car, this->now(), id);
+            setVelocityArrowMarker(marker_array, *car, this->now(), "map",id);
         }
 
 
         // Controlled car
         marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
-        setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), 0);
+        setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), "map" , 0);
         setVelocityTextMarker(marker_array, *controlled_car_, this->now());
 
         // // Road
@@ -443,11 +443,6 @@ private:
         float time_horizon = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, obstacle_pose, obstacle_vel, r_total, nlvo.control_set) + 2.0f;
         std::vector<VelDisk> disks = nlvo.generateNLVODisks(ego_pose, obstacle_pose, obstacle_vel, r_total, time_horizon);  
 
-        
-        for (auto &disk : disks) {
-        
-    }
-
         // Visualize each disk
         for (auto &disk : disks)
         {
@@ -460,6 +455,8 @@ private:
             setNLVODiskMarker(disk_marker, disk, id++);
             marker_array.markers.push_back(disk_marker);
         }
+
+        setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), "ego", 0);
     }
 
     marker_pub_->publish(marker_array);

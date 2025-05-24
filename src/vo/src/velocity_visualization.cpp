@@ -1,7 +1,7 @@
 #include "velocity_visualization.hpp"
 #include <sstream>
 
-void setVelocityArrowMarker(vis_marker_arr& marker_array, const Car& car, rclcpp::Time now, int car_index)
+void setVelocityArrowMarker(vis_marker_arr& marker_array, const Car& car, rclcpp::Time now, const std::string& frame_id,int car_index)
 {
     // Extract position and velocity from the Car object
     double car_pose_x = car.getPose().position.x;
@@ -11,7 +11,7 @@ void setVelocityArrowMarker(vis_marker_arr& marker_array, const Car& car, rclcpp
 
     // Set Arrow Marker 
     vis_marker arrow_marker;
-    arrow_marker.header.frame_id = "map";
+    arrow_marker.header.frame_id = frame_id;
     arrow_marker.header.stamp = now;
     arrow_marker.ns = "velocity_arrow";
     arrow_marker.id = car.isControlled() ? 100 : 200 + car_index; // Different ID for controlled and non-controlled cars
@@ -29,19 +29,39 @@ void setVelocityArrowMarker(vis_marker_arr& marker_array, const Car& car, rclcpp
 
     geometry_msgs::msg::Point start_point, end_point;
 
-    // Set the start point to the car's position
-    start_point.x = car_pose_x;
-    start_point.y = car_pose_y;
-    start_point.z = 0.5; // Slightly above ground
+    if (frame_id == "map")
+    {
+        // Set the start point to the car's position
+        start_point.x = car_pose_x;
+        start_point.y = car_pose_y;
+        start_point.z = 0.5; // Slightly above ground
 
-    // Set the end point based on the car's velocity
-    end_point.x = car_pose_x + car_vel_x * 1.0;
-    end_point.y = car_pose_y + car_vel_y * 1.0;
-    end_point.z = 0.5; // Same height as start point
+        // Set the end point based on the car's velocity
+        end_point.x = car_pose_x + car_vel_x * 1.0;
+        end_point.y = car_pose_y + car_vel_y * 1.0;
+        end_point.z = 0.5; // Same height as start point
 
-    arrow_marker.points.push_back(start_point);
-    arrow_marker.points.push_back(end_point);
+        arrow_marker.points.push_back(start_point);
+        arrow_marker.points.push_back(end_point);
 
+    }
+    
+    else if (frame_id == "ego")
+    {
+        // Set the start point to the origin
+        start_point.x = 0.0;
+        start_point.y = 0.0;
+        start_point.z = 0.5; // Slightly above ground
+
+        // Set the end point based on the car's velocity
+        end_point.x = car_vel_x * 1.0;
+        end_point.y = car_vel_y * 1.0;
+        end_point.z = 0.5; // Same height as start point
+
+        arrow_marker.points.push_back(start_point);
+        arrow_marker.points.push_back(end_point);
+    }
+    
     marker_array.markers.push_back(arrow_marker);
 }
 
