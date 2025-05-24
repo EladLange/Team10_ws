@@ -33,6 +33,9 @@ public:
     //Optional- true if car is ego vehicle
     bool isControlled() const;
 
+    //update pure pursuit car position
+    void updateAckermann(double dt);
+
 private:
     //Car ID
     std::string id_;

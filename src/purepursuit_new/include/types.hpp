@@ -12,7 +12,7 @@ struct State {
     std::string id;  // Identifier for the drone/vehicle
     double x;        // X position in meters
     double y;        // Y position in meters
-    double z;        // Z position in meters (for drones)
+    double z;        // Z position in meters
     double yaw;      // Orientation angle (heading) in radians, where 0 points along the positive X-axis
 
     // Constructor with default values

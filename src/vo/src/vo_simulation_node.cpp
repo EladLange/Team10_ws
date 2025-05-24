@@ -1,23 +1,26 @@
-#include "rclcpp/rclcpp.hpp"
-#include "car.hpp"
-#include "road.hpp"
-#include "drone_controller.hpp"
-#include "road_visualization.hpp"
-#include "velocity_visualization.hpp"
-#include "vo_visualization.hpp"
-#include "velocity_obstacle.hpp"
-#include "raceline_visualization.hpp"
-#include "global_variables.hpp"
-#include "nlvo/nlvo.hpp"
-#include "nao/nao.hpp"
+#include "rclcpp/rclcpp.hpp" // ROS2 client library
+#include "car.hpp" // Car class
+#include "road.hpp" // Road class
+#include "drone_controller.hpp" // DroneController class
+#include "road_visualization.hpp" // RoadVisualization class
+#include "velocity_visualization.hpp" // VelocityVisualization class
+#include "vo_visualization.hpp" // VOVisualization class
+#include "velocity_obstacle.hpp" // VelocityObstacle class
+#include "raceline_visualization.hpp" // RacelineVisualization class
+#include "global_variables.hpp" // Global variables
+#include "nlvo/nlvo.hpp" // NLVO class
+#include "nao/nao.hpp" // NAO class
+#include "purepursuit.hpp" // PurePursuitController
 
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
-#include <geometry_msgs/msg/accel.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
-#include <tf2_ros/transform_broadcaster.h>
-#include <geometry_msgs/msg/transform_stamped.hpp>
-#include <geometry_msgs/msg/pose_array.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp> // PoseStamped message type
+#include <geometry_msgs/msg/twist_stamped.hpp> // TwistStamped message type
+#include <geometry_msgs/msg/accel.hpp> // Accel message type
+#include <visualization_msgs/msg/marker_array.hpp> // MarkerArray message type
+#include <tf2_ros/transform_broadcaster.h> // For publishing transforms
+#include <geometry_msgs/msg/transform_stamped.hpp> // TransformStamped message type
+#include <geometry_msgs/msg/pose_array.hpp> // PoseArray message type
+#include <visualization_msgs/msg/marker.hpp> // Marker message type
+#include <tf2/utils.hpp>
 
 VelocityObstacle vo;
 NLVO nlvo;
@@ -30,17 +33,29 @@ float min_acceleration = -3.0f;
 float time_step = 1.0f;
 float delta_t = 0.1f;
 
+// Pure pursuit parameters
+double base_lookahead = 2.0;
+double min_lookahead = 2.0;
+double max_lookahead = 7.0;
+double max_angular_z = 0.5;
+
+double dt = 0.1;  // 100 ms
+
+
 class CarSimulationNode : public rclcpp::Node {
 public:
     CarSimulationNode()
     : Node("car_simulation_node"),
       road_(3, 5.0, 200.0, 20.0), // 3 lanes, 3 meters wide, 100 meters long, radius 20 meters
-      controller_(road_)
+      controller_(road_),
+      purepursuit_controller_(base_lookahead, min_lookahead, max_lookahead, max_angular_z)
     {
         RCLCPP_INFO(this->get_logger(), "Starting car simulation...");
 
 
         initialize_cars();
+
+        purepursuitInit(); // Initialize pure pursuit car
 
         // publishers
         pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("car_pose", 10);
@@ -48,7 +63,7 @@ public:
         vo_marker_pub_ = this ->create_publisher<vis_marker_arr>("vo_marker_array", 10);
         cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("vel_cmd", 10);
         cmd_accel_pub_ = this->create_publisher<geometry_msgs::msg::Accel>("accel_cmd", 10);
-
+        pp_cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("pp_cmd_vel", 10);
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -97,12 +112,14 @@ public:
 
     void initialize_cars()
     {
+                //pure pursuit car
+
                 // Initialize cars
                 controlled_car_ = std::make_shared<Car>("ego", true);
                 controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
                 controlled_car_->setVelocity(makeVel(1.0, 0.0));
 
-                // // First obstacle
+                // First obstacle
                 auto drone0 = std::make_shared<Car>("drone_0", false);
                 drone0->setPose(makePose(30.0, 4.5));
                 drone0->setVelocity(makeVel(2.0, 0.0));
@@ -157,6 +174,19 @@ public:
                 drones_.push_back(drone8);
     }
 
+    void purepursuitInit(){
+        //  — now create & init the pure-pursuit car —
+        purepursuit_car_ = std::make_shared<Car>("pp_ego", true);
+        purepursuit_car_->setPose( makePose( 0.0, 0.0 ) );
+        purepursuit_car_->setVelocity( makeVel( 0.0, 0.0 ) );
+
+        // load your waypoint CSV
+        if (!purepursuit_controller_.loadPathFromCSV("/home/yonatan/Desktop/Team10_ws/src/vo/src/raceline.csv"))
+        {
+            RCLCPP_ERROR(get_logger(), "Failed to load PP path CSV");
+        }
+    }
+
 point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
 {
     int lookahead_step = 5;
@@ -208,7 +238,9 @@ point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_m
 private:
     Road road_;
     DroneController controller_;
+    PurePursuitController purepursuit_controller_;
     std::shared_ptr<Car> controlled_car_;
+    std::shared_ptr<Car> purepursuit_car_;
     std::vector<std::shared_ptr<Car>> drones_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
@@ -217,6 +249,7 @@ private:
     rclcpp::Publisher<vis_marker_arr>::SharedPtr marker_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<vis_marker_arr>::SharedPtr vo_marker_pub_;
+    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pp_cmd_vel_pub_;
 
     rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr drone_pose_sub_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
@@ -250,9 +283,41 @@ private:
     //     RCLCPP_INFO(this->get_logger(), "Ego car velocity set to: (%f, %f)", msg->linear.x, msg->linear.y);
     // }
 
+    void purepursuitUpdate(){
+        // — Pure pursuit for pp_car_ —
+        geometry_msgs::msg::PoseStamped purepursuitPose;
+        purepursuitPose.header.stamp    = now();
+        purepursuitPose.header.frame_id = "map";
+        purepursuitPose.pose            = purepursuit_car_->getPose();
+        double forward_speed = 5.0;
+        // compute the twist
+        auto pp_twist = purepursuit_controller_.computeCommand(purepursuitPose, forward_speed);
+        pp_cmd_vel_pub_->publish(pp_twist);
+
+        // extract current yaw of the car
+        // tf2::Quaternion q;
+        // tf2::fromMsg(purepursuit_car_->getPose().orientation, q);
+        // double yaw = tf2::getYaw(q);
+        // convert to your Car’s twist_msg
+        twist_msg v;
+         // body→world conversion:
+        v.linear.x = pp_twist.linear.x;
+        if (pp_twist.linear.x < 1.0) v.linear.x = pp_twist.linear.y;
+        v.linear.y = 0.0;
+        v.angular.z = pp_twist.angular.z;
+        // set the velocity
+        purepursuit_car_->setVelocity(pp_twist);
+
+        // integrate kinematics exactly as you do for the ego car:
+        purepursuit_car_->updateAckermann(dt);
+
+        // publish pose & TF for the pure-pursuit car
+        publishPose(*purepursuit_car_);
+        publishTF  (*purepursuit_car_, "map", purepursuit_car_->getId());
+    }
 
     void update() {
-        double dt = 0.1;  // 100 ms
+        //double dt = 0.1;  // 100 ms
         std::vector<pose_msg> obstacle_poses;
         std::vector<twist_msg> obstacle_velocities;
 
@@ -276,20 +341,20 @@ private:
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
         //twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
-        //twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
-        geometry_msgs::msg::Accel new_ego_accel = nao.selectBestAcceleration(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
+        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
+        //geometry_msgs::msg::Accel new_ego_accel = nao.selectBestAcceleration(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         
-        // // Set the new velocity for the ego car
-        // controlled_car_->setVelocity(new_ego_velocity);
-        // // Publish the new velocity
-        // cmd_vel_pub_->publish(new_ego_velocity);
+        // Set the new velocity for the ego car
+        controlled_car_->setVelocity(new_ego_velocity);
+        // Publish the new velocity
+        cmd_vel_pub_->publish(new_ego_velocity);
 
-        // Set the new acceleration for the ego car
-        cmd_accel_pub_->publish(new_ego_accel);
-        // Integrate the acceleration to get the new velocity
-        twist_msg new_ego_velocity = controlled_car_->getVelocity();
-        new_ego_velocity.linear.x += new_ego_accel.linear.x * dt;
-        new_ego_velocity.linear.y += new_ego_accel.linear.y * dt;
+        // // Set the new acceleration for the ego car
+        // cmd_accel_pub_->publish(new_ego_accel);
+        // // Integrate the acceleration to get the new velocity
+        // twist_msg new_ego_velocity = controlled_car_->getVelocity();
+        // new_ego_velocity.linear.x += new_ego_accel.linear.x * dt;
+        // new_ego_velocity.linear.y += new_ego_accel.linear.y * dt;
         controlled_car_->setVelocity(new_ego_velocity);
 
         // Update ego car's orientation based on the new velocity
@@ -303,6 +368,7 @@ private:
         publishPose(*controlled_car_);
         publishTF(*controlled_car_, "map", controlled_car_->getId());
 
+        purepursuitUpdate(); // update pure pursuit car
 
         publishMarkers();
         publishVOMarkers();
@@ -353,6 +419,36 @@ private:
         setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), 0);
         setVelocityTextMarker(marker_array, *controlled_car_, this->now());
 
+        // Pure pursuit car
+        {
+            auto pp = purepursuit_car_.get();
+            // make marker
+            vis_marker pp_marker = makeCarMarker(*pp, id++);
+            // set color to green
+            pp_marker.color.r = 0.0;
+            pp_marker.color.g = 1.0;
+            pp_marker.color.b = 0.0;
+            pp_marker.color.a = 1.0;
+            // add to marker array
+            marker_array.markers.push_back(pp_marker);
+            // velocity arrow
+            setVelocityArrowMarker(marker_array, *pp, now(), id++);
+            // if you want a text marker for the velocity
+            setVelocityTextMarker(marker_array, *pp, now());
+
+            // add a line from the car to the last goal
+            auto goal = purepursuit_controller_.lastGoal();
+            visualization_msgs::msg::Marker m;
+            m.header = goal.header;
+            m.ns     = "pp_goal";
+            m.id     = 999;
+            m.type   = visualization_msgs::msg::Marker::SPHERE;
+            m.action = visualization_msgs::msg::Marker::ADD;
+            m.pose.position = goal.point;
+            m.scale.x = m.scale.y = m.scale.z = 0.3;
+            m.color.g = 1.0; m.color.a = 0.8;
+            marker_array.markers.push_back(m);
+          }
         // Road
         rclcpp::Time now = this->now();
         vis_marker road_marker;

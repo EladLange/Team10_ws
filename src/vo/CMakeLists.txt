@@ -22,6 +22,7 @@ find_package(nao REQUIRED)
 
 # Include directories for headers
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/vo)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${common_INCLUDE_DIRS})
 include_directories(${nao_INCLUDE_DIRS})
 
@@ -36,6 +37,7 @@ add_executable(vo_simulation_node
   src/vo_visualization.cpp
   src/velocity_obstacle.cpp
   src/raceline_visualization.cpp
+  src/purepursuit.cpp
 )
 
 # Link required libraries
@@ -45,6 +47,8 @@ ament_target_dependencies(
   geometry_msgs
   visualization_msgs
   tf2_ros
+  tf2
+  tf2_geometry_msgs
   nlvo
   common
   nao

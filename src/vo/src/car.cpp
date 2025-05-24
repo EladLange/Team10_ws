@@ -64,3 +64,31 @@ void Car::update(double dt) {
     // }
     pose_.orientation.z+=velocity_.angular.z * dt;
 }
+
+void Car::updateAckermann(double dt) {
+    // extract yaw from orientation
+    tf2::Quaternion q(
+        pose_.orientation.x,
+        pose_.orientation.y,
+        pose_.orientation.z,
+        pose_.orientation.w
+    );
+    double roll, pitch, yaw;
+    tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+
+    // move forward in direction of yaw
+    double v = velocity_.linear.x;      // forward speed (body frame)
+    pose_.position.x += v * std::cos(yaw) * dt;
+    pose_.position.y += v * std::sin(yaw) * dt;
+
+    // update yaw
+    yaw += velocity_.angular.z * dt;
+
+    // update orientation quaternion
+    tf2::Quaternion q_new;
+    q_new.setRPY(0, 0, yaw);
+    pose_.orientation.x = q_new.x();
+    pose_.orientation.y = q_new.y();
+    pose_.orientation.z = q_new.z();
+    pose_.orientation.w = q_new.w();
+}
