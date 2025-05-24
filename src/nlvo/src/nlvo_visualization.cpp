@@ -1,54 +1,32 @@
 #include "nlvo/nlvo_visualization.hpp"
+#include "nlvo/nlvo_visualization.hpp"
 
 // Make nlvo static to avoid multiple definition errors
 static NLVO nlvo;
 
-void setNLVOMarker(std::vector<vis_marker> &nlvo_marker, const pose_msg &ego_pos, const twist_msg &ego_vel, const pose_msg &obstacle_pos, const twist_msg &obstacle_vel, float r_total, float time_horizon, int &id_counter)
+void setNLVODiskMarker(vis_marker &disk_marker, const VelDisk &disk, int id)
 {
-    vis_marker cylinder;
-    cylinder.header.frame_id = "map";
-    cylinder.header.stamp = rclcpp::Clock().now();
-    cylinder.ns = "nlvo_disk";
-    cylinder.id = id_counter++;
-    cylinder.type = vis_marker::CYLINDER;
-    cylinder.action = vis_marker::ADD;
+    disk_marker.header.frame_id = "ego";
+    disk_marker.header.stamp = rclcpp::Clock().now();
+    disk_marker.ns = "nlvo_disk";
+    disk_marker.id = id;
+    disk_marker.type = vis_marker::CYLINDER;
+    disk_marker.action = vis_marker::ADD;
 
-    cylinder.scale.x = r_total * 2.0;
-    cylinder.scale.y = r_total * 2.0;
-    cylinder.scale.z = 0.01;
+    // Radius to diameter, z thickness
+    disk_marker.scale.x = disk.radius * 2.0;
+    disk_marker.scale.y = disk.radius * 2.0;
+    disk_marker.scale.z = 0.05;
 
     // Yellow disk
-    cylinder.color.r = 0.8;
-    cylinder.color.g = 0.86;
-    cylinder.color.b = 0.22;
-    cylinder.color.a = 0.5; // 50% transparent
+    disk_marker.color.r = 0.8;
+    disk_marker.color.g = 0.86;
+    disk_marker.color.b = 0.22;
+    disk_marker.color.a = 0.5; // 50% transparent
 
-    // Set the pose of the marker to the car's pose
-    for (float t = nlvo.dt; t<= time_horizon; t += nlvo.dt)
-    {
-        // Obstacle presicted future position
-        pose_msg obstacle_future_pos;
-        obstacle_future_pos.position.x = obstacle_pos.position.x + obstacle_vel.linear.x * t;
-        obstacle_future_pos.position.y = obstacle_pos.position.y + obstacle_vel.linear.x * t;
-
-
-        // Relative position at time t
-        pose_msg relative_pose;
-        relative_pose.position.x = obstacle_future_pos.position.x - ego_pos.position.x;
-        relative_pose.position.y = obstacle_future_pos.position.y - ego_pos.position.y;
-        
-        // Center of the NLVO disk in velocity space
-        twist_msg center;
-        center.linear.x = relative_pose.position.x / t;
-        center.linear.y = relative_pose.position.y / t;
-
-        float radius = r_total / t;
-
-        cylinder.pose.position.x = center.linear.x;
-        cylinder.pose.position.y = center.linear.y;
-        cylinder.pose.position.z = 0.5;
-        cylinder.pose.orientation.w = 1.0;
-
-        nlvo_marker.push_back(cylinder);
-    }
+    // Set the pose of the marker to the disk's center
+    disk_marker.pose.position.x = disk.cx;
+    disk_marker.pose.position.y = disk.cy;
+    disk_marker.pose.position.z = 0.0;
+    disk_marker.pose.orientation.w = 1.0;
 }

@@ -45,11 +45,11 @@ class NLVO
     // Function to compute the minimum time horizon
     float computeMinimumTimeHorizon(const pose_msg& ego_pose, const twist_msg& ego_vel, const pose_msg& obstacle_pose, const twist_msg& obstacle_vel, float r_total, std::vector<std::pair<double, double>> control_set);
 
-
-    private:
-
     // Function to generate NLVO disks
     std::vector<VelDisk> generateNLVODisks(const pose_msg& ego_pose, const pose_msg& obstacle_pose, const twist_msg& obstacle_vel, float r_total, float time_horizon);
+
+
+    private:
 
     // Function to check if a candidate velocity is in the truncated NLVO
     bool isVelocityInNLVO(const twist_msg& candidate_vel, const std::vector<VelDisk>& disks);

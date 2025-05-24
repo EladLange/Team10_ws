@@ -47,6 +47,7 @@ public:
         marker_pub_ = this->create_publisher<vis_marker_arr>("visualization_marker_array", 10);
         vo_marker_pub_ = this ->create_publisher<vis_marker_arr>("vo_marker_array", 10);
         cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("vel_cmd", 10);
+        nlvo_marker_pub_ = this->create_publisher<vis_marker_arr>("nlvo_marker_array", 10);
     
         // subscribers
         // ego_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&CarSimulationNode::egoVelCallback,this, _1));
@@ -178,6 +179,7 @@ private:
     rclcpp::Publisher<vis_marker_arr>::SharedPtr marker_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<vis_marker_arr>::SharedPtr vo_marker_pub_;
+    rclcpp::Publisher<vis_marker_arr>::SharedPtr nlvo_marker_pub_;
 
     rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr drone_pose_sub_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
@@ -265,6 +267,7 @@ private:
 
         publishMarkers();
         publishVOMarkers();
+        publishNLVOMarkers();
     }
 
     void publishPose(const Car& car) {
@@ -424,33 +427,42 @@ private:
 
     void publishNLVOMarkers()
     {
-        vis_marker_arr marker_array;
-        int id = 0;  // Marker ID counter
+       vis_marker_arr marker_array;
 
-        auto ego_pose = controlled_car_->getPose();
-        auto ego_vel = controlled_car_->getVelocity();
-        float r_total = calculateTotalRadius();
+       int id = 0;  // Marker ID counter
+       auto ego_pose = controlled_car_->getPose();
+       auto ego_vel = controlled_car_->getVelocity();
+       float r_total = calculateTotalRadius();
 
-        float min_time_horizon = nlvo.max_time;
-        for (const auto& drone : drones_) {
-            float t = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, drone->getPose(), drone->getVelocity(), r_total, nlvo.control_set);
-            min_time_horizon = std::min(min_time_horizon, t);
+       for (const auto& drone : drones_) {
+           auto obstacle_pose = drone->getPose();
+           auto obstacle_vel = drone->getVelocity();
+
+
+        // Compute the NLVO disks
+        float time_horizon = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, obstacle_pose, obstacle_vel, r_total, nlvo.control_set) + 2.0f;
+        std::vector<VelDisk> disks = nlvo.generateNLVODisks(ego_pose, obstacle_pose, obstacle_vel, r_total, time_horizon);  
+
+        
+        for (auto &disk : disks) {
+        
+    }
+
+        // Visualize each disk
+        for (auto &disk : disks)
+        {
+            // Shift NLVO disk centers to base_link frame (ego-relative velocity space)
+            disk.cx = disk.cx - ego_vel.linear.x;
+            disk.cy = disk.cy - ego_vel.linear.y;
+            
+            // Visualize
+            vis_marker disk_marker;
+            setNLVODiskMarker(disk_marker, disk, id++);
+            marker_array.markers.push_back(disk_marker);
         }
+    }
 
-        min_time_horizon += 2.0f;
-
-        for (const auto& drone : drones_) {
-            auto obstacle_pose = drone->getPose();
-            auto obstacle_vel = drone->getVelocity();
-            std::vector<vis_marker> nlvo_markers;
-            setNLVOMarker(nlvo_markers, ego_pose, ego_vel, obstacle_pose, obstacle_vel, r_total, min_time_horizon, id);
-
-            for (const auto& marker : nlvo_markers) {
-                marker_array.markers.push_back(marker);
-            }
-        }
-
-        vo_marker_pub_->publish(marker_array);
+    marker_pub_->publish(marker_array);
     }
     
     geometry_msgs::msg::Twist convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Pose ego_pos){
