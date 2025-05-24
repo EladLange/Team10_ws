@@ -1,15 +1,15 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include "nlvo/nlvo.hpp"
+#include "pscav/pscav.hpp"
 
 
-NLVO::NLVO()
+PSCAV::PSCAV ()
 {
     // Empty constructor
 }
 
-twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &ego_vel, const std::vector<pose_msg> &obstacles_poses, const std::vector<twist_msg> &obstacle_vels, const point_msg &goal_point, float r_total)
+twist_msg PSCAV::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &ego_vel, const std::vector<pose_msg> &obstacles_poses, const std::vector<twist_msg> &obstacle_vels, const point_msg &goal_point, float r_total)
 {
     
     // Find the minimum time horizon
@@ -24,26 +24,28 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
 
     min_time_horizon += 2.0f; 
 
-    std::vector<VelDisk> all_disks;
-    for (size_t i = 0; i < obstacles_poses.size(); i++)
-    {
-        std::vector<VelDisk> disks = generateNLVODisks(ego_pose, obstacles_poses[i], obstacle_vels[i], r_total, min_time_horizon);
-        all_disks.insert(all_disks.end(), disks.begin(), disks.end());
-    }
-
     // Generate candidate velocities
     std::vector<twist_msg> candidate_velocities = generateCandidateVelocities(ego_vel);
     twist_msg best_velocity = ego_vel; // Default to current velocity
 
-    // Check if candidate velocities are in the truncated NLVO
+    // Check if candidate velocities are in the truncated PSCAV
     std::vector<twist_msg> safe_vels;
     for (const auto &candidate_vel : candidate_velocities)
-    {  
-        if (!isVelocityInNLVO(candidate_vel, all_disks))
+    {
+        bool is_safe = true;
+        for (size_t i = 0; i < obstacles_poses.size(); i++)
+        {
+            if (isVelocityInTruncatedPSCAV(candidate_vel, ego_pose, ego_vel, obstacles_poses[i], obstacle_vels[i], r_total, min_time_horizon))
+            {
+                is_safe = false;
+                break;
+            }
+        }
+        if (is_safe)
         {
             safe_vels.push_back(candidate_vel);
-            std::cout << "vel: " << candidate_vel.linear.x << ", " << candidate_vel.linear.y << " is safe" << std::endl;
         }
+        
     }
 
     // If no safe velocities found, generate emergency velocities
@@ -76,7 +78,7 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
     return best_velocity; // Return the best velocity found among the candidates
 }
 
-float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg &ego_vel, const pose_msg &obstacle_pose, const twist_msg &obstacle_vel, float r_total, std::vector<std::pair<double, double>> control_set)
+float PSCAV::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg &ego_vel, const pose_msg &obstacle_pose, const twist_msg &obstacle_vel, float r_total, std::vector<std::pair<double, double>> control_set)
 {
     float min_collision_time = max_time;
     float r_total_squared = r_total * r_total;
@@ -120,29 +122,57 @@ float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg 
     return min_collision_time;
 }
 
-std::vector<twist_msg> NLVO::generateACV(const twist_msg &ego_vel)
+bool PSCAV::isVelocityInTruncatedPSCAV(const twist_msg &candidate_vel, const pose_msg &ego_pose, const twist_msg &ego_vel, const pose_msg &obstacle_pose, const twist_msg &obstacle_vel, float r_total, float time_horizon)
 {
-    std::vector<twist_msg> candidate_velocities;
+    float r_total_squared = r_total * r_total;
 
-    float delta_x = control_limit_x / 2;
-    float delta_y = control_limit_y / 2;
+    std::cout << "Checking velocity (" << candidate_vel.linear.x << "," << candidate_vel.linear.y
+              << ") with time_horizon=" << time_horizon << std::endl;
 
-    // Generate candidate velocities based on the ego velocity
-    for (float ux = -control_limit_x; ux <= control_limit_x; ux += delta_x)
+
+    // First, check if we're already too close to the obstacle
+    float current_dist_squared = pow(ego_pose.position.x - obstacle_pose.position.x, 2) + pow(ego_pose.position.y - obstacle_pose.position.y, 2);
+    if (current_dist_squared <= r_total_squared)
     {
-        for (float uy = -control_limit_y; uy <= control_limit_y; uy += delta_y)
-        {
-            twist_msg candidate_velocity;
-            candidate_velocity.linear.x = ego_vel.linear.x + ux * dt;
-            candidate_velocity.linear.y = ego_vel.linear.y + uy * dt;
-            candidate_velocities.push_back(candidate_velocity);
-        }
+        return true;
     }
 
-    return candidate_velocities;
+    // Check future positions
+    for (float t = dt; t < time_horizon; t += dt)
+    {
+        // Calculate obstacle position at time t
+        point_msg obstacle_future_pos;
+        obstacle_future_pos.x = obstacle_pose.position.x + obstacle_vel.linear.x * t;
+        obstacle_future_pos.y = obstacle_pose.position.y + obstacle_vel.linear.y * t;
+
+        // Calculate ego position at time t with candidate velocity
+        pose_msg ego_future_pose;
+        ego_future_pose.position.x = ego_pose.position.x + candidate_vel.linear.x * t;
+        ego_future_pose.position.y = ego_pose.position.y + candidate_vel.linear.y * t;
+
+        // Calculate relative position
+        float rel_x = ego_future_pose.position.x - obstacle_future_pos.x;
+        float rel_y = ego_future_pose.position.y - obstacle_future_pos.y;
+
+        // Check if distance is less than r_total
+        float dist_squared = rel_x * rel_x + rel_y * rel_y;
+
+        if (dist_squared <= r_total_squared) // Collision detected
+        {
+            std::cout << "Collision detected at t=" << t
+            << " with candidate vel=(" << candidate_vel.linear.x << "," << candidate_vel.linear.y
+            << "), dist=" << sqrt(dist_squared) << " vs r_total=" << r_total
+            << ", ego future=(" << ego_future_pose.position.x << "," << ego_future_pose.position.y
+            << "), obstacle future=(" << obstacle_future_pos.x << "," << obstacle_future_pos.y << ")" << std::endl;
+            std::cout << "  COLLISION DETECTED at t=" << t << std::endl;
+            return true; // Candidate velocity is in the truncated PSCAV
+        }
+    }
+     std::cout << "  NO COLLISION DETECTED within time horizon" << std::endl;
+    return false; // Candidate velocity is not in the truncated PSCAV
 }
 
-std::vector<twist_msg> NLVO::generateCandidateVelocities(const twist_msg& ego_vel)
+std::vector<twist_msg> PSCAV::generateCandidateVelocities(const twist_msg& ego_vel)
 {
 
     std::vector<twist_msg> candidate_velocities;
@@ -175,7 +205,7 @@ std::vector<twist_msg> NLVO::generateCandidateVelocities(const twist_msg& ego_ve
     return candidate_velocities;
 }
 
-float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<pose_msg>obstacle_poses,const std::vector<twist_msg>obstacle_vels, const twist_msg& candidate_velocity, const point_msg& goal_point, float r_total, float time_horizon)
+float PSCAV::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<pose_msg>obstacle_poses,const std::vector<twist_msg>obstacle_vels, const twist_msg& candidate_velocity, const point_msg& goal_point, float r_total, float time_horizon)
 {
 
     float cost = 0.0f;
@@ -236,50 +266,4 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
 
     return cost;
 }
-
-std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg &ego_pose, const pose_msg &obstacle_pose, const twist_msg &obstacle_vel, float r_total, float time_horizon)
-{
-        std::vector<VelDisk> disks;
-
-    for (float t = dt; t < time_horizon; t += dt)
-    {
-        // Obstacle future position at time t
-        pose_msg obstacle_future_pos;
-        obstacle_future_pos.position.x = obstacle_pose.position.x + obstacle_vel.linear.x * t;
-        obstacle_future_pos.position.y = obstacle_pose.position.y + obstacle_vel.linear.y * t;
-
-        // Relative position at time t
-        pose_msg relative_pose;
-        relative_pose.position.x = obstacle_future_pos.position.x - ego_pose.position.x;
-        relative_pose.position.y = obstacle_future_pos.position.y - ego_pose.position.y;
-
-        // Center of the NLVO disk in velocity space
-        VelDisk disk;
-        disk.cx = relative_pose.position.x / t;
-        disk.cy = relative_pose.position.y / t;
-        disk.radius = r_total / t;
-
-        disks.push_back(disk);
-    }
-
-    return disks;
-}
-
-bool NLVO::isVelocityInNLVO(const twist_msg &candidate_vel, const std::vector<VelDisk> &disks)
-{
-    for (const auto& disk : disks)
-    {
-        float dx = candidate_vel.linear.x - disk.cx;
-        float dy = candidate_vel.linear.y - disk.cy;
-        float dist = std::sqrt(dx * dx + dy * dy);
-
-        if (dist <= disk.radius)
-        {
-            return true; // Candidate velocity is in the NLVO
-        }
-    }
-
-    return false; // Candidate velocity is not in the NLVO
-}
-
 

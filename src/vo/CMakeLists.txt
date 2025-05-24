@@ -18,6 +18,7 @@ find_package(visualization_msgs REQUIRED)
 find_package(nlvo REQUIRED)
 find_package(common REQUIRED)
 find_package(car_description REQUIRED)
+find_package(pscav REQUIRED)
 
 
 # Include directories for headers
@@ -46,6 +47,7 @@ ament_target_dependencies(
   tf2_ros
   nlvo
   common
+  pscav
 )
 
 # Install executable and other files
