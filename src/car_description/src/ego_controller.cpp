@@ -9,6 +9,7 @@ float wheels_radius=0.25;//wheels radius in m
 EgoController::EgoController(const std::string &name) : Node(name)
 {
     ego_pose_sub_ = create_subscription<geometry_msgs::msg::Pose>("/ego_pose",10,std::bind(&EgoController::poseCallback,this, _1));
+    ego_vel_sub_ = create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&EgoController::velCallback,this, _1));
     vel_cmd_sub_ = create_subscription<geometry_msgs::msg::Twist>("/vel_cmd",10,std::bind(&EgoController::msgCallback,this, _1));   
     ackermann_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>("/ackermann_steering_controller/reference",10);
     rear_vel_pub_ = create_publisher<std_msgs::msg::Float64MultiArray>("/velocity_controller/commands",10);
@@ -18,6 +19,11 @@ EgoController::EgoController(const std::string &name) : Node(name)
 void EgoController::poseCallback(const geometry_msgs::msg::Pose & msg)
 {
    ego_pos=msg;
+}
+
+void EgoController::velCallback(const geometry_msgs::msg::Twist & msg)
+{
+   ego_vel=msg;
 }
 
 
