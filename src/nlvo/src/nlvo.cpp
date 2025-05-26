@@ -79,6 +79,8 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
 
 float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg &ego_vel, const pose_msg &obstacle_pose, const twist_msg &obstacle_vel, float r_total, std::vector<std::pair<double, double>> control_set)
 {
+    // Old time horizon - delete if the new one is
+    /*
     float min_collision_time = max_time;
     float r_total_squared = r_total * r_total;
     float first_collision_time_for_control;
@@ -86,6 +88,7 @@ float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg 
     // For every control in the set
     for (const auto &control : control_set)
     {
+        
         first_collision_time_for_control = max_time;
         
         // Calculate the initial relative velocity
@@ -119,7 +122,65 @@ float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg 
         min_collision_time = std::min(min_collision_time, first_collision_time_for_control);
     }
     return min_collision_time;
+    */
+
+    float min_collision_time = max_time;
+    
+    // Calculate initial relative position
+    pose_msg relative_pose;
+    relative_pose.position.x = obstacle_pose.position.x - ego_pose.position.x;
+    relative_pose.position.y = obstacle_pose.position.y - ego_pose.position.y;
+    float d = std::sqrt(pow(relative_pose.position.x, 2) + pow(relative_pose.position.y, 2));
+
+    if (d <= r_total) {
+        return 0.0f;
+    }
+
+    float alpha = atan2(relative_pose.position.y, relative_pose.position.x);
+    float theta = asin(r_total / d);
+
+    // Calculate the time to collision for each control
+    for (const auto &control : control_set)
+    {
+        float first_safe_time = max_time;
+
+        for (float t = dt; t < max_time; t += dt)
+        {
+           // Ego velocity under this control at time t
+           twist_msg ego_future_vel;
+           ego_future_vel.linear.x = ego_vel.linear.x + control.first * t;
+           ego_future_vel.linear.y = ego_vel.linear.y + control.second * t;
+
+            // Relative velocity
+            twist_msg v_rel;
+            v_rel.linear.x = ego_future_vel.linear.x - obstacle_vel.linear.x;
+            v_rel.linear.y = ego_future_vel.linear.y - obstacle_vel.linear.y;
+
+            // Check if relative velocity is within the VO cone
+            float beta = atan2(v_rel.linear.y, v_rel.linear.x);
+            float angle_diff = normalizeAngle(beta - alpha);
+
+            if (std::abs(angle_diff) > theta) 
+            {
+                first_safe_time = t;
+                break; // Exit VO → we're safe
+            } 
+        }
+
+        // Choose the shortest time among all controls
+        min_collision_time = std::min(min_collision_time, first_safe_time);
+    }
+
+    return min_collision_time;
 }
+
+float NLVO::normalizeAngle(float angle)
+{
+    while (angle <= -M_PI) angle += 2 * M_PI;
+    while (angle > M_PI) angle -= 2 * M_PI;
+    return angle;
+}
+
 
 std::vector<twist_msg> NLVO::generateACV(const twist_msg &ego_vel)
 {
