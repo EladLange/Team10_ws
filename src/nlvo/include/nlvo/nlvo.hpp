@@ -54,4 +54,7 @@ class NLVO
     // Function to check if a candidate velocity is in the truncated NLVO
     bool isVelocityInNLVO(const twist_msg& candidate_vel, const std::vector<VelDisk>& disks);
 
+    // Function to normalize angle
+    float NLVO::normalizeAngle(float angle);
+
 };

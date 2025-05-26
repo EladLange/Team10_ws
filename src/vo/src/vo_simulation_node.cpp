@@ -411,15 +411,15 @@ private:
            // RCLCPP_INFO(this->get_logger(), "Number of points in cone marker: %zu", cone_marker.points.size());
         }
 
-        // // for debugging: show the candidate velocities
-        // std::vector<twist_msg> candidate_velocities = nlvo.generateACV(ego_vel);
-        // for (const auto& candidate_velocity : candidate_velocities) {
-        //     vis_marker candidate_marker;
-        //     // Set the properties of the candidate marker
-        //     setCandidateMarker(candidate_marker, ego_pose, candidate_velocity, r_total, 5.0);
-        //     candidate_marker.id = id++;
-        //     marker_array.markers.push_back(candidate_marker);
-        // }
+        // for debugging: show the candidate velocities
+        std::vector<twist_msg> candidate_velocities = nlvo.generateACV(ego_vel);
+        for (const auto& candidate_velocity : candidate_velocities) {
+            vis_marker candidate_marker;
+            // Set the properties of the candidate marker
+            setCandidateMarker(candidate_marker, ego_pose, candidate_velocity, r_total, 5.0);
+            candidate_marker.id = id++;
+            marker_array.markers.push_back(candidate_marker);
+        }
 
         vo_marker_pub_->publish(marker_array);
         //RCLCPP_INFO(this->get_logger(), "Published %zu markers", marker_array.markers.size());
