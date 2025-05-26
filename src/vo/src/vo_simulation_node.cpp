@@ -79,15 +79,15 @@ public:
     {
                 // Initialize cars
                 controlled_car_ = std::make_shared<Car>("ego", true);
-                controlled_car_->setPose(makePose(0.0, 0.0));  // Center of first lane
+                // controlled_car_->setPose(makePose(0.0, 0.0));  // Center of first lane
                 // controlled_car_->setVelocity(makeVel(5.0, 1.0));
 
                 
-                // //First obstacle
-                // auto drone0 = std::make_shared<Car>("drone_0", false);
-                // drone0->setPose(makePose(30.0, 4.5));
-                // drone0->setVelocity(makeVel(1.0, 0.0));
-                // drones_.push_back(drone0);
+                //First obstacle
+                auto drone0 = std::make_shared<Car>("drone_0", false);
+                drone0->setPose(makePose(100.0, 0.0));
+                drone0->setVelocity(makeVel(1.0, 0.0));
+                drones_.push_back(drone0);
 
                 // // Second obstacle
                 // auto drone1 = std::make_shared<Car>("drone_1", false);

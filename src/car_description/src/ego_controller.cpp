@@ -27,7 +27,6 @@ void EgoController::msgCallback(const geometry_msgs::msg::Twist & msg)
     float temp_vel=des_vel.linear.x;
     geometry_msgs::msg::TwistStamped ackermann_msg;
     temp_vel=temp_vel/wheels_radius;//linear velocity/wheel radius
-    //RCLCPP_INFO_STREAM(get_logger(),"temp vel="<<temp_vel); //debugging
     std_msgs::msg::Float64MultiArray rear_vel;
     rear_vel.data.push_back(temp_vel);
     rear_vel.data.push_back(temp_vel);
@@ -56,18 +55,20 @@ geometry_msgs::msg::Twist EgoController::convertCmdVector(const geometry_msgs::m
 
     double abs_yaw=yaw;
     double abs_theta=theta;
-    if (yaw<0){
-        double abs_yaw=yaw+2*M_PI;
-    }
-    if (theta<0){
-        double abs_theta = theta+2*M_PI;
-    }
+    // if (yaw<0){
+    //     abs_yaw=yaw+2*M_PI;
+    // }
+    // if (theta<0){
+    //     abs_theta = theta+2*M_PI;
+    // }
     double heading_error;
     heading_error=abs_theta-abs_yaw;
+    heading_error=std::clamp(heading_error, (-M_PI/5), (M_PI/5));
+    RCLCPP_INFO(this->get_logger(), "theat: %f, yaw: %f,heading_error: %f", abs_theta, abs_yaw, heading_error);
     float vel_size= sqrt(pow(vel.linear.x,2)+pow(vel.linear.y,2));
     double vx_local = (sin(heading_error) +cos(heading_error)) * vel_size;
     vel_cmd.linear.x = vx_local;
-    RCLCPP_INFO(this->get_logger(), "vel_cmd_linear_x: %f", vel_cmd.linear.x);  
+    // RCLCPP_INFO(this->get_logger(), "vel_cmd_linear_x: %f", vel_cmd.linear.x);  
     vel_cmd.angular.z = k_heading * heading_error;
     return vel_cmd;
 }

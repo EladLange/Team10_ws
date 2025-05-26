@@ -173,6 +173,6 @@ def generate_launch_description():
     velocity_controller,
     delay(0.5),
     rviz_node,
-    # vo_node,
-    pure_pursuit_node
+    vo_node#,
+    # pure_pursuit_node
     ])

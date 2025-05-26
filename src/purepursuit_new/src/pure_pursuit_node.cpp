@@ -226,7 +226,7 @@ private:
             m.getRPY(roll, pitch, yaw);
 
             geometry_msgs::msg::Twist vel_cmd = velToTwist(velocity, yaw);
-            vel_cmd_pub_->publish(vel_cmd);
+            // vel_cmd_pub_->publish(vel_cmd);
 
             // Add to pose array
             drone_poses.poses.push_back(drone_pose);
