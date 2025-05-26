@@ -22,7 +22,7 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
         min_time_horizon = std::min(min_time_horizon, time_horizon);
     }
 
-    min_time_horizon += 2.0f; 
+    min_time_horizon += 2.0f;
 
     std::vector<VelDisk> all_disks;
     
