@@ -52,8 +52,8 @@ void visualizeRaceline(const std::vector<point_msg>& raceline, vis_marker_arr& m
     marker.type = vis_marker::LINE_STRIP;
     marker.action = vis_marker::ADD;
     marker.scale.x = 0.1; // line width
-    marker.color.r = 1.0f; 
-    marker.color.g = 0.0f; 
+    marker.color.r = 1.0f;
+    marker.color.g = 0.0f;
     marker.color.b = 0.0f;
     marker.color.a = 1.0f;
 

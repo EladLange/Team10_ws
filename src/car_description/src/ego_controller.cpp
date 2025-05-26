@@ -10,7 +10,7 @@ EgoController::EgoController(const std::string &name) : Node(name)
 {
 
     vel_cmd_sub_ = create_subscription<geometry_msgs::msg::Twist>("/vel_cmd",10,std::bind(&EgoController::msgCallback,this, _1));   
-    ackermann_pub_ = create_publisher<geometry_msgs::msg::Twist>("/ackermann_steering_controller/reference_unstamped",10);
+    ackermann_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>("/ackermann_steering_controller/reference_unstamped",10);
     rear_vel_pub_ = create_publisher<std_msgs::msg::Float64MultiArray>("/velocity_controller/commands",10);
     
 }
@@ -18,14 +18,17 @@ EgoController::EgoController(const std::string &name) : Node(name)
 void EgoController::msgCallback(const geometry_msgs::msg::Twist & msg)
 {
     float temp_vel=msg.linear.x;
+    geometry_msgs::msg::TwistStamped ackermann_msg;
     temp_vel=temp_vel/wheels_radius;//linear velocity/wheel radius
     //RCLCPP_INFO_STREAM(get_logger(),"temp vel="<<temp_vel); //debugging
     std_msgs::msg::Float64MultiArray rear_vel;
     rear_vel.data.push_back(temp_vel);
     rear_vel.data.push_back(temp_vel);
+    ackermann_msg.header.stamp = this->get_clock()->now();
+    ackermann_msg.twist=msg;
 
     rear_vel_pub_-> publish (rear_vel);
-    ackermann_pub_-> publish(msg);
+    ackermann_pub_-> publish(ackermann_msg);
 }
 
 int main (int argc, char* argv[])

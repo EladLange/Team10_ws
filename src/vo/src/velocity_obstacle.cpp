@@ -164,9 +164,9 @@ float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const t
 
     float cost = 0.0f;
     // cost function constant
-    float obstacle_avoidance_weight = 50.0f;
-    float goal_seeling_weight = 400.0f;
-    float smoothness_weight = 250.0f;
+    float obstacle_avoidance_weight = 300.0f;
+    float goal_seeking_wright = 350.0f;
+    float smoothness_weight = 20.0f;
     
     // Obstacle avoidance 
     pose_msg ego_future_position;
@@ -189,7 +189,7 @@ float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const t
         }  
     }
     //std::cout << "Minimum distance to obstacle: " << min_distance << std::endl;
-    float obstacle_avoidance_cost = obstacle_avoidance_weight * (1.0f / min_distance);
+    float obstacle_avoidance_cost = obstacle_avoidance_weight * (1.0f / min_distance + 1e-3);
     //std::cout << "Obstacle avoidance cost: " << obstacle_avoidance_cost << std::endl;
     
     // goal seeking cost
@@ -197,7 +197,7 @@ float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const t
     float dy = goal_point.y - ego_future_position.position.y;
 
     float dist_to_goal = std::sqrt(std::pow(dx,2) + std::pow(dy, 2));
-    float goal_seeking_cost = goal_seeling_weight * dist_to_goal; 
+    float goal_seeking_cost = goal_seeking_wright * dist_to_goal; 
     //std::cout << "goal seeking cost: " << goal_seeking_cost << std::endl;
 
     // smoothness cost

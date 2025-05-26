@@ -4,13 +4,16 @@
 #include "drone_controller.hpp" // DroneController class
 #include "road_visualization.hpp" // RoadVisualization class
 #include "velocity_visualization.hpp" // VelocityVisualization class
-#include "vo_visualization.hpp" // VOVisualization class
-#include "velocity_obstacle.hpp" // VelocityObstacle class
-#include "raceline_visualization.hpp" // RacelineVisualization class
+#include "vo_visualization.hpp" // VOVisualizbstacle class
+#include "raceline_visualization.hpp" // Raceliation class
+#include "velocity_obstacle.hpp" // VelocityOneVisualization class
 #include "global_variables.hpp" // Global variables
 #include "nlvo/nlvo.hpp" // NLVO class
 #include "nao/nao.hpp" // NAO class
 #include "purepursuit.hpp" // PurePursuitController
+#include "nlvo/nlvo_visualization.hpp"
+#include "pscav/pscav.hpp"
+
 
 #include <geometry_msgs/msg/pose_stamped.hpp> // PoseStamped message type
 #include <geometry_msgs/msg/twist_stamped.hpp> // TwistStamped message type
@@ -28,6 +31,7 @@
 VelocityObstacle vo;
 NLVO nlvo;
 NAO nao;
+PSCAV pscav;
 
 // Global variables
 float time_horizon = 7.0f;
@@ -49,9 +53,9 @@ class CarSimulationNode : public rclcpp::Node {
 public:
     CarSimulationNode()
     : Node("car_simulation_node"),
-      road_(3, 5.0, 200.0, 20.0), // 3 lanes, 3 meters wide, 100 meters long, radius 20 meters
-      controller_(road_),
-      purepursuit_controller_(base_lookahead, min_lookahead, max_lookahead, max_angular_z)
+     road_(3, 5.0, 200.0, 20.0), // 3 lanes, 3 meters wide, 100 meters long, radius 20 meters
+     controller_(road_),
+     purepursuit_controller_(base_lookahead, min_lookahead, max_lookahead, max_angular_z)
     {
         RCLCPP_INFO(this->get_logger(), "Starting car simulation...");
 
@@ -80,6 +84,11 @@ public:
         cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("vel_cmd", 10);
         cmd_accel_pub_ = this->create_publisher<geometry_msgs::msg::Accel>("accel_cmd", 10);
         pp_cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("pp_cmd_vel", 10);
+        nlvo_marker_pub_ = this->create_publisher<vis_marker_arr>("nlvo_marker_array", 10);
+        
+        // subscribers
+        ego_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&egoVelCallback,this, _1));
+        ego_pos_sub_ = this->create_subscription<geometry_msgs::msg::Pose>("/ego_pose",10,std::bind(&egoPosCallback,this, _1));
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -119,7 +128,7 @@ public:
 
     void dronePoseCallback(geometry_msgs::msg::PoseArray::SharedPtr msg) {
         // Handle the incoming drone pose array message
-        RCLCPP_INFO(this->get_logger(), "Received drone pose array with %zu drones", msg->poses.size());
+        // RCLCPP_INFO(this->get_logger(), "Received drone pose array with %zu drones", msg->poses.size());
 
         // Update the drones with the received poses
         for (size_t i = 0; i < msg->poses.size() && i < drones_.size(); ++i) {
@@ -218,54 +227,52 @@ public:
         }
     }
 
-point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
-{
-    int lookahead_step = 5;
-    point_msg point;
+    point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose) {
+        int lookahead_step = 5;
+        point_msg point;
 
-    // fallback if raceline is empty
-    if (raceline.empty())
-    {
-        //std::cout<<"Raceline is empty"<<std::endl;
-        point.x = ego_pose.position.x;
-        point.y = ego_pose.position.y;
-        point.z = ego_pose.position.z;
-        return point;
+        // fallback if raceline is empty
+        if (raceline.empty())
+            {
+                //std::cout<<"Raceline is empty"<<std::endl;
+                point.x = ego_pose.position.x;
+                point.y = ego_pose.position.y;
+                point.z = ego_pose.position.z;
+                return point;
 
-    }
+            }
 
-    // Find closest point that is in front of ego
-    int closest_index = 0;
-    double min_dist_squared = std::numeric_limits<double>::max();
+        // Find closest point that is in front of ego
+        int closest_index = 0;
+        double min_dist_squared = std::numeric_limits<double>::max();
 
-    // Iterate through the raceline points
-    for (size_t i = 0; i < raceline.size(); ++i)
-    {
-        const auto& raceline_point = raceline[i];
-        double dx = ego_pose.position.x - raceline_point.x;
-        double dy = ego_pose.position.y - raceline_point.y;
+        // Iterate through the raceline points
+        for (size_t i = 0; i < raceline.size(); ++i)
+            {
+                const auto& raceline_point = raceline[i];
+                double dx = ego_pose.position.x - raceline_point.x;
+                double dy = ego_pose.position.y - raceline_point.y;
 
-        double squar_dist = dx * dx + dy * dy;
+                double squar_dist = dx * dx + dy * dy;
 
-        if (squar_dist < min_dist_squared)
-        {
-            min_dist_squared = squar_dist;
-            closest_index = static_cast<int>(i);
-        }
-    }
+                if (squar_dist < min_dist_squared)
+                    {
+                        min_dist_squared = squar_dist;
+                        closest_index = static_cast<int>(i);
+                    }
+            }
 
-    // Compute the lookahead distance
-    int lookahead_index = closest_index + lookahead_step;
+        // Compute the lookahead distance
+        int lookahead_index = closest_index + lookahead_step;
 
-    // Clamp to raceline size
-    if (lookahead_index >= static_cast<int>(raceline.size()))
-    {
-        lookahead_index = static_cast<int>(raceline.size()) - 1;
-    }
+        // Clamp to raceline size
+        if (lookahead_index >= static_cast<int>(raceline.size()))
+            {
+                lookahead_index = static_cast<int>(raceline.size()) - 1;
+            }
 
-    return raceline[lookahead_index];
-}
-
+        return raceline[lookahead_index];
+    }   
 private:
     Road road_;
     DroneController controller_;
@@ -284,6 +291,7 @@ private:
     rclcpp::Publisher<vis_marker_arr>::SharedPtr marker_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<vis_marker_arr>::SharedPtr vo_marker_pub_;
+    rclcpp::Publisher<vis_marker_arr>::SharedPtr nlvo_marker_pub_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pp_cmd_vel_pub_;
 
     rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr drone_pose_sub_;
@@ -292,6 +300,7 @@ private:
 
     // ROS subscribers
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr ego_vel_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr ego_pos_sub_;
     rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr drone_vel_sub_;
     
 
@@ -312,11 +321,17 @@ private:
         return vel;
     }
 
-    // void egoVelCallback(const shared_ptr msg)
-    // {
-    //     controlled_car_->setVelocity(*msg);
-    //     RCLCPP_INFO(this->get_logger(), "Ego car velocity set to: (%f, %f)", msg->linear.x, msg->linear.y);
-    // }
+    void egoVelCallback(const shared_ptr msg)
+    {
+        controlled_car_->setVelocity(*msg);
+        // RCLCPP_INFO(this->get_logger(), "Ego car velocity set to: (%f, %f)", msg->linear.x, msg->linear.y);
+    }
+
+    void egoPosCallback(const pose_msg msg)
+    {
+        controlled_car_->setPose(msg);
+        //RCLCPP_INFO(this->get_logger(), "Ego car velocity set to: (%f, %f)", msg->linear.x, msg->linear.y);
+    }
 
     void purepursuitUpdate(){
         // — Pure pursuit for pp_car_ —
@@ -395,9 +410,10 @@ private:
 
         // Update drones
         for (size_t i = 0; i < drones_.size(); ++i) {
-           // controller_.control(*drones_[i], static_cast<int>(i));
-            publishPose(*drones_[i]);
-            publishTF(*drones_[i], "map", drones_[i]->getId());
+        //    controller_.control(*drones_[i], static_cast<int>(i));
+            // publishPose(*drones_[i]);
+            // publishTF(*drones_[i], "map", drones_[i]->getId());
+            drones_[i]->update(dt);
             obstacle_poses.push_back(drones_[i]->getPose());
             obstacle_velocities.push_back(drones_[i]->getVelocity());
             // check
@@ -434,6 +450,7 @@ private:
         tf2::Quaternion q;
         q.setRPY(0, 0, yaw);
         controlled_car_->setOrientation(q);
+        //RCLCPP_INFO(this->get_logger(), "Ego car orientation set to: %f", yaw);
 
         // Update ego car's position based on the new velocity
         controlled_car_->update(dt);
@@ -444,6 +461,7 @@ private:
 
         publishMarkers();
         publishVOMarkers();
+        publishNLVOMarkers();
     }
 
     void publishPose(const Car& car) {
@@ -568,6 +586,8 @@ private:
         marker.ns = "cars";
         marker.id = id;
         marker.type = vis_marker::CUBE;
+        // marker.type= vis_marker::MESH_RESOURCE;
+        // marker.mesh_resource = "package://car_description/meshes/obstacle.STL";
         marker.action = vis_marker::ADD;
         // Set the pose of the marker to the car's pose
         marker.pose = car.getPose();
@@ -657,7 +677,60 @@ private:
         vo_marker_pub_->publish(marker_array);
         //RCLCPP_INFO(this->get_logger(), "Published %zu markers", marker_array.markers.size());
     }
+
+    void publishNLVOMarkers()
+    {
+       vis_marker_arr marker_array;
+
+       int id = 0;  // Marker ID counter
+       auto ego_pose = controlled_car_->getPose();
+       auto ego_vel = controlled_car_->getVelocity();
+       float r_total = calculateTotalRadius();
+
+       for (const auto& drone : drones_) {
+           auto obstacle_pose = drone->getPose();
+           auto obstacle_vel = drone->getVelocity();
+
+
+        // Compute the NLVO disks
+        float time_horizon = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, obstacle_pose, obstacle_vel, r_total, nlvo.control_set) + 2.0f;
+        std::vector<VelDisk> disks = nlvo.generateNLVODisks(ego_pose, obstacle_pose, obstacle_vel, r_total, time_horizon);  
+
+        
+        for (auto &disk : disks) {
+        
+    }
+
+        // Visualize each disk
+        for (auto &disk : disks)
+        {
+            // Shift NLVO disk centers to base_link frame (ego-relative velocity space)
+            disk.cx = disk.cx - ego_vel.linear.x;
+            disk.cy = disk.cy - ego_vel.linear.y;
+            
+            // Visualize
+            vis_marker disk_marker;
+            setNLVODiskMarker(disk_marker, disk, id++);
+            marker_array.markers.push_back(disk_marker);
+        }
+    }
+
+    marker_pub_->publish(marker_array);
+    }
+    
+    geometry_msgs::msg::Twist convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Pose ego_pos){
+    geometry_msgs::msg::Twist vel_cmd;
+    float k_heading=0.9;
+    float theta= atan2(vel.linear.y,vel.linear.x);
+    double vx_local = cos(theta) * vel.linear.x + sin(theta) * vel.linear.y;
+    vel_cmd.linear.x = vx_local;
+    double heading_error = theta- ego_pos.orientation.z;
+    vel_cmd.angular.z = k_heading * heading_error;
+    return vel_cmd;
+    }
 };
+
+
 
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);

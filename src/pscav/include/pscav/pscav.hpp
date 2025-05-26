@@ -2,17 +2,11 @@
 
 #include "common/settings.hpp"
 
-struct VelDisk{
-    float cx; // center of the disk in velocity space
-    float cy;
-    float radius; // r_total / th
-};
-
-class NLVO
+class PSCAV
 {
     public:
     // Constructor
-    NLVO();
+    PSCAV();
 
     // Global variables
     const float control_limit_x = 2.5f; // |u_x| <= control_limit_x
@@ -33,28 +27,18 @@ class NLVO
     // Function to select the best velocity
     twist_msg selectBestVelocity(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<pose_msg>& obstacles_poses, const std::vector<twist_msg>& obstacle_vels, const point_msg &goal_point, float r_total);
 
-    // Function to generate candidate velocities
-    std::vector<twist_msg> generateACV(const twist_msg& ego_vel);
+    private:
 
     // Function to generate candidate velocities (improved version)
     std::vector<twist_msg> generateCandidateVelocities(const twist_msg& ego_vel);
+
+    // Function to check if a candidate velocity is in the truncated PSCAV
+    bool isVelocityInTruncatedPSCAV(const twist_msg& candidate_vel, const pose_msg& ego_pose, const twist_msg& ego_vel, const pose_msg& obstacle_pose, const twist_msg& obstacle_vel, float r_total, float time_horizon);
 
     // Function to calculate cost for a candidate velocity
     float calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<pose_msg>obstacle_poses, const std::vector<twist_msg>obstacle_vels, const twist_msg& candidate_velocity, const point_msg& goal_point, float r_total, float time_horizon);
 
     // Function to compute the minimum time horizon
     float computeMinimumTimeHorizon(const pose_msg& ego_pose, const twist_msg& ego_vel, const pose_msg& obstacle_pose, const twist_msg& obstacle_vel, float r_total, std::vector<std::pair<double, double>> control_set);
-
-    // Function to generate NLVO disks
-    std::vector<VelDisk> generateNLVODisks(const pose_msg& ego_pose, const pose_msg& obstacle_pose, const twist_msg& obstacle_vel, float r_total, float time_horizon);
-
-
-    private:
-
-    // Function to check if a candidate velocity is in the truncated NLVO
-    bool isVelocityInNLVO(const twist_msg& candidate_vel, const std::vector<VelDisk>& disks);
-
-    // Function to normalize angle
-    float NLVO::normalizeAngle(float angle);
 
 };

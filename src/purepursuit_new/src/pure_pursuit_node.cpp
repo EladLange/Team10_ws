@@ -55,10 +55,10 @@ public:
             auto path = loadPathFromCSV(path_file);
             if (!path.first.empty() && !path.second.empty()) {
                 paths_.push_back(path);
-                RCLCPP_INFO(this->get_logger(), "Loaded path from %s with %zu points",
-                           path_file.c_str(), path.first.size());
+             //   RCLCPP_INFO(this->get_logger(), "Loaded path from %s with %zu points",
+               //            path_file.c_str(), path.first.size());
             } else {
-                RCLCPP_WARN(this->get_logger(), "Failed to load path from %s", path_file.c_str());
+               // RCLCPP_WARN(this->get_logger(), "Failed to load path from %s", path_file.c_str());
             }
         }
 
