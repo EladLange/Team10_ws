@@ -27,6 +27,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/vo)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${common_INCLUDE_DIRS})
 include_directories(${nao_INCLUDE_DIRS})
+include_directories(${pscav_INCLUDE_DIRS})
+
 
 # Add executable and link libraries
 add_executable(vo_simulation_node
@@ -52,7 +54,9 @@ ament_target_dependencies(
   tf2
   tf2_geometry_msgs
   nlvo
+  nao
   common
+  pscav
 )
 
 # Install executable and other files
