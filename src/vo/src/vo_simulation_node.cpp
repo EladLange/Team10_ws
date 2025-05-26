@@ -99,11 +99,11 @@ public:
         drone1->setVelocity(makeVel(1.0, 0.0));
         drones_.push_back(drone1);
 
-        // Third obstacle
-        auto drone2 = std::make_shared<Car>("drone_2", false);
-        drone2->setPose(makePose(15.0,0.0));
-        drone2->setVelocity(makeVel(0.0,0.0));
-        drones_.push_back(drone2);
+        // // Third obstacle
+        // auto drone2 = std::make_shared<Car>("drone_2", false);
+        // drone2->setPose(makePose(15.0,0.0));
+        // drone2->setVelocity(makeVel(0.0,0.0));
+        // drones_.push_back(drone2);
 
         // Fourth obstacle
         auto drone3 = std::make_shared<Car>("drone_3", false);

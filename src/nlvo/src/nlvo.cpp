@@ -22,7 +22,7 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
         min_time_horizon = std::min(min_time_horizon, time_horizon);
     }
 
-    min_time_horizon += 2.0f;
+    min_time_horizon += 3.0f;
 
     std::vector<VelDisk> all_disks;
     
@@ -242,7 +242,7 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
 
     float cost = 0.0f;
     // cost function constant
-    float obstacle_avoidance_weight = 100.0f;
+    float obstacle_avoidance_weight = 120.0f;
     float goal_seeking_weight = 150.0f;
     float smoothness_weight = 50.0f;
     float time_step = 1.0f;
