@@ -41,4 +41,7 @@ private:
     pose_msg pose_;
     //Car linear & angular velocity
     twist_msg velocity_;
+
+    // Car's raceline
+    std::vector<point_msg> raceline_;
 };

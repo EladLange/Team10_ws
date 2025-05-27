@@ -64,3 +64,11 @@ void Car::update(double dt) {
     // }
     pose_.orientation.z+=velocity_.angular.z * dt;
 }
+
+void Car::setRaceline(const std::vector<point_msg>& raceline) {
+    raceline_ = raceline;
+}
+
+std::vector<point_msg> Car::getRaceline() const {
+    return raceline_;
+}

@@ -11,6 +11,7 @@
 #include "nlvo/nlvo.hpp"
 #include "nlvo/nlvo_visualization.hpp"
 #include "pscav/pscav.hpp"
+#include "common/settings.hpp"
 
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -22,6 +23,7 @@
 VelocityObstacle vo;
 NLVO nlvo;
 PSCAV pscav;
+std::vector<Obstacle> obstacles; 
 
 // Global variables
 float time_horizon = 7.0f;
@@ -79,8 +81,20 @@ public:
     //     }
     // }
 
+    
+    
     void initialize_cars()
     {
+        std::vector<point_msg> obs_raceline;
+        for (int i = 0; i < 300; ++i)
+        {
+            point_msg point;
+            point.x = 10.0 + i * 1.0;
+            point.y = 0.0 ;
+            point.z = 0.2;
+            obs_raceline.push_back(point);
+        }
+
         // Initialize cars
         controlled_car_ = std::make_shared<Car>("ego", true);
         controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
@@ -92,30 +106,36 @@ public:
         drone0->setPose(makePose(30.0, 0.0));
         drone0->setVelocity(makeVel(2.0, 0.0));
         drones_.push_back(drone0);
+        drone0->setRaceline(obs_raceline);
+
 
         // Second obstacle
         auto drone1 = std::make_shared<Car>("drone_1", false);
         drone1->setPose(makePose(20.0,0.0));
         drone1->setVelocity(makeVel(1.0, 0.0));
         drones_.push_back(drone1);
+        drone1->setRaceline(obs_raceline);
 
         // // Third obstacle
         // auto drone2 = std::make_shared<Car>("drone_2", false);
         // drone2->setPose(makePose(15.0,0.0));
         // drone2->setVelocity(makeVel(0.0,0.0));
         // drones_.push_back(drone2);
+        // drone2->setRaceline(obs_raceline);
 
         // Fourth obstacle
         auto drone3 = std::make_shared<Car>("drone_3", false);
         drone3->setPose(makePose(40.0,0.0));
         drone3->setVelocity(makeVel(-1.0, 0.0));
         drones_.push_back(drone3);
+        drone3->setRaceline(obs_raceline);
 
         // Fifth obstacle
         auto drone4 = std::make_shared<Car>("drone_4", false);
         drone4->setPose(makePose(65.0,15.0));
         drone4->setVelocity(makeVel(0.0, 0.0));
         drones_.push_back(drone4);
+        drone4->setRaceline(obs_raceline);
     }
 
 
@@ -172,6 +192,9 @@ private:
     DroneController controller_;
     std::shared_ptr<Car> controlled_car_;
     std::vector<std::shared_ptr<Car>> drones_;
+    std::vector<Obstacle> obstacles_;
+
+    
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
     // ROS publishers
@@ -220,8 +243,7 @@ private:
 
     void update() {
         double dt = 0.1;  // 100 ms
-        std::vector<pose_msg> obstacle_poses;
-        std::vector<twist_msg> obstacle_velocities;
+        std::vector<Obstacle> obstacles; 
 
         // Update drones
         for (size_t i = 0; i < drones_.size(); ++i) {
@@ -229,10 +251,15 @@ private:
             // publishPose(*drones_[i]);
             // publishTF(*drones_[i], "map", drones_[i]->getId());
             drones_[i]->update(dt);
-            obstacle_poses.push_back(drones_[i]->getPose());
-            obstacle_velocities.push_back(drones_[i]->getVelocity());
-        }
 
+            // Create obstacle struct for this drone
+            Obstacle obstacle;
+            obstacle.id = drones_[i]->getId(); 
+            obstacle.pose = drones_[i]->getPose();
+            obstacle.velocity = drones_[i]->getVelocity();
+            obstacle.raceline = drones_[i]->getRaceline(); // need to set the raceline first!
+            obstacles.push_back(obstacle);
+        }
 
         // Get ego car's current pose and velocity
         auto ego_pose = controlled_car_->getPose();
@@ -243,7 +270,7 @@ private:
         float r_total = calculateTotalRadius();
         
         // twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
-        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
+        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacles, goal_point, r_total);
         // twist_msg new_ego_velocity = pscav.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
 
         // Set the new velocity for the ego car
@@ -395,9 +422,9 @@ private:
         //RCLCPP_INFO(this->get_logger(), "Total radius: %f", r_total);
 
 
-        for (const auto& drone : drones_) {
-            auto obstacle_pose = drone->getPose();
-            auto obstacle_vel = drone->getVelocity();
+        for (const auto& obstacle : obstacles_) {
+            auto obstacle_pose = obstacle.pose;
+            auto obstacle_vel = obstacle.velocity;
             // check - maybe not needed
             //float dist = vo.distance(ego_pose, obstacle_pose);
             //RCLCPP_INFO(this->get_logger(), "Distance to drone: %f", dist);
@@ -434,30 +461,31 @@ private:
        auto ego_vel = controlled_car_->getVelocity();
        float r_total = calculateTotalRadius();
 
-       for (const auto& drone : drones_) {
-           auto obstacle_pose = drone->getPose();
-           auto obstacle_vel = drone->getVelocity();
+       for (const auto& obstacle : obstacles_) {
+            auto obstacle_pose = obstacle.pose;
+            auto obstacle_vel = obstacle.velocity;
 
+            float time_horizon = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, obstacle, r_total, nlvo.control_set) + 2.0f;
 
-        // Compute the NLVO disks
-        float time_horizon = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, obstacle_pose, obstacle_vel, r_total, nlvo.control_set) + 2.0f;
-        std::vector<VelDisk> disks = nlvo.generateNLVODisks(ego_pose, obstacle_pose, obstacle_vel, r_total, time_horizon);  
+            int trajectory_index = nlvo.findTrajectoryIndex(obstacle);
+            std::vector<VelDisk> disks = nlvo.generateNLVODisks(ego_pose, obstacle, trajectory_index, r_total, time_horizon);  
 
-        // Visualize each disk
-        for (auto &disk : disks)
-        {
-            // Shift NLVO disk centers to base_link frame (ego-relative velocity space)
-            disk.cx = disk.cx - ego_vel.linear.x;
-            disk.cy = disk.cy - ego_vel.linear.y;
-            
-            // Visualize
-            vis_marker disk_marker;
-            setNLVODiskMarker(disk_marker, disk, id++);
-            marker_array.markers.push_back(disk_marker);
-        }
+            // Visualize each disk
+            for (auto &disk : disks)
+            {
+                // Shift NLVO disk centers to base_link frame (ego-relative velocity space)
+                disk.cx = disk.cx - ego_vel.linear.x;
+                disk.cy = disk.cy - ego_vel.linear.y;
+                
+                // Visualize
+                vis_marker disk_marker;
+                setNLVODiskMarker(disk_marker, disk, id++);
+                marker_array.markers.push_back(disk_marker);
+            }
 
         setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), "ego", 0);
-    }
+           
+       }
 
     marker_pub_->publish(marker_array);
     }
