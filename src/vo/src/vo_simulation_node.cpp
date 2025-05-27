@@ -403,34 +403,40 @@ private:
         return new_ego_velocity;
     }
 
+    void droneUpdate(std::vector<pose_msg> obstacle_poses, std::vector<twist_msg> obstacle_velocities)
+    {
+        // Update drones
+        for (size_t i = 0; i < drones_.size(); ++i) {
+            //    controller_.control(*drones_[i], static_cast<int>(i));
+                // publishPose(*drones_[i]);
+                // publishTF(*drones_[i], "map", drones_[i]->getId());
+                drones_[i]->update(dt);
+                obstacle_poses.push_back(drones_[i]->getPose());
+                obstacle_velocities.push_back(drones_[i]->getVelocity());
+                // check
+                std::cout << "Drone " << i << " velocity: " << obstacle_velocities[i].linear.x << ", " << obstacle_velocities[i].linear.y << std::endl;
+            }
+    }
+
     void update() {
         //double dt = 0.1;  // 100 ms
         std::vector<pose_msg> obstacle_poses;
         std::vector<twist_msg> obstacle_velocities;
 
-        // Update drones
-        for (size_t i = 0; i < drones_.size(); ++i) {
-        //    controller_.control(*drones_[i], static_cast<int>(i));
-            // publishPose(*drones_[i]);
-            // publishTF(*drones_[i], "map", drones_[i]->getId());
-            drones_[i]->update(dt);
-            obstacle_poses.push_back(drones_[i]->getPose());
-            obstacle_velocities.push_back(drones_[i]->getVelocity());
-            // check
-            std::cout << "Drone " << i << " velocity: " << obstacle_velocities[i].linear.x << ", " << obstacle_velocities[i].linear.y << std::endl;
-        }
-
-
         // Get ego car's current pose and velocity
         auto ego_pose = controlled_car_->getPose();
         auto ego_vel = controlled_car_->getVelocity();
 
-        std::vector<point_msg> raceline = setRaceline();
-        point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
-        float r_total = calculateTotalRadius();
+        // std::vector<point_msg> raceline = setRaceline();
+        // point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
+        // float r_total = calculateTotalRadius();
         
         twist_msg new_ego_velocity;
 
+        // Update drones
+        droneUpdate(obstacle_poses, obstacle_velocities);
+
+        // Select the best velocity based on the control mode
         if (control_mode_ == "VO") {
             new_ego_velocity = voUpdate(obstacle_poses, obstacle_velocities, ego_pose, ego_vel);
         }
