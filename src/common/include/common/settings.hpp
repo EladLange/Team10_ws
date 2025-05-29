@@ -1,5 +1,6 @@
 #pragma once
 
+#include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <geometry_msgs/msg/accel.hpp>
@@ -7,7 +8,7 @@
 #include "visualization_msgs/msg/marker_array.hpp"
 
 #include <geometry_msgs/msg/point.hpp>
-#include <rclcpp/rclcpp.hpp>
+
 #include <visualization_msgs/msg/marker.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
@@ -32,4 +33,5 @@ struct Obstacle
     pose_msg pose;
     twist_msg velocity;
     std::vector<point_msg> raceline;
+    std::vector<point_msg> s_values;
 };

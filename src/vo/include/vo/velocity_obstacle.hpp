@@ -22,7 +22,7 @@ class VelocityObstacle
     float normalizeAngle(float angle);
 
     // Compute the VO-based cost for a velocity sample
-    float calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<pose_msg>obstacle_poses,const std::vector<twist_msg>obstacle_vels, const twist_msg& candidate_velocity, const point_msg& goal_point);    
+    float calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<Obstacle>obstacles, const twist_msg& candidate_velocity, const point_msg& goal_point);    
 
     public:
     // Constructor
@@ -47,6 +47,6 @@ class VelocityObstacle
     bool checkCollision(const pose_msg& ego_pose, const pose_msg& obstacle_pose, const twist_msg& v_ego, const twist_msg& v_obstacle, float r_total);
 
     // Select best velocity sample by evaluating all samples over all obstacles
-    twist_msg selectBestVelocity(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<pose_msg>& obstacles_poses, const std::vector<twist_msg>& obstacle_vels, const point_msg& foal_point, float r_total);
+    twist_msg selectBestVelocity(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<Obstacle>& obstacles_, const point_msg& foal_point, float r_total);
 
 };

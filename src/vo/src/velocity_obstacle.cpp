@@ -145,7 +145,7 @@ std::vector<twist_msg> VelocityObstacle::generateCandidateVelocities(const twist
     return candidate_velocities;
 }
 
-float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<pose_msg>obstacle_poses,const std::vector<twist_msg>obstacle_vels, const twist_msg& candidate_velocity, const point_msg& goal_point)
+float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<Obstacle>obstacles, const twist_msg& candidate_velocity, const point_msg& goal_point)
 {
     // std::cout << "ego position: " << ego_pose.position.x << ", " << ego_pose.position.y << std::endl;
     // std::cout << "ego velocity: " << ego_velocity.linear.x << ", " << ego_velocity.linear.y << std::endl;
@@ -176,11 +176,11 @@ float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const t
     pose_msg obstacle_future_pose; 
     
     float min_distance = std::numeric_limits<float>::max();
-    for (size_t i = 0; i < obstacle_poses.size(); i++)
+    for (size_t i = 0; i < obstacles.size(); i++)
     {
-        obstacle_future_pose.position.x = obstacle_poses[i].position.x + obstacle_vels[i].linear.x * time_step;
-        obstacle_future_pose.position.y = obstacle_poses[i].position.y + obstacle_vels[i].linear.y * time_step;
-        obstacle_future_pose.position.z = obstacle_poses[i].position.z;
+        obstacle_future_pose.position.x = obstacles[i].pose.position.x + obstacles[i].velocity.linear.x * time_step;
+        obstacle_future_pose.position.y = obstacles[i].pose.position.y + obstacles[i].velocity.linear.y * time_step;
+        obstacle_future_pose.position.z = obstacles[i].pose.position.z;
 
         float dist = distance(ego_future_position, obstacle_future_pose);
         if (dist < min_distance)
@@ -213,7 +213,7 @@ float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const t
     return cost;
 }
 
-twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<pose_msg>& obstacle_poses, const std::vector<twist_msg>& obstacle_vels, const point_msg& goal_point, float r_total) 
+twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<Obstacle>& obstacles, const point_msg& goal_point, float r_total) 
 {
     std::vector<twist_msg> candidates = generateCandidateVelocities(ego_vel); // Generate candidate velocities
     // std::cout << "Goal point: (" << goal_point.x << ", " << goal_point.y << ")" << std::endl;
@@ -230,9 +230,9 @@ twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const t
         // std::cout << std::endl;
         bool candidate_collision = false;
 
-        for(size_t i = 0; i < obstacle_poses.size(); i++)
+        for(size_t i = 0; i < obstacles.size(); i++)
         {
-            if (checkCollision(ego_pose, obstacle_poses[i], candidate, obstacle_vels[i], r_total)) 
+            if (checkCollision(ego_pose, obstacles[i].pose, candidate, obstacles[i].velocity, r_total)) 
             {
                 candidate_collision = true;
                 // std::cout << "Candidate velocity collides with obstacle: " << i << std::endl;
@@ -244,7 +244,7 @@ twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const t
         if (!candidate_collision) // the current candidate is not collide
         {
             //std::cout << "Candidate velocity is safe. Continuing.\n";
-            float cost = calculateCandidateCost(ego_pose, ego_vel, obstacle_poses, obstacle_vels, candidate, goal_point);
+            float cost = calculateCandidateCost(ego_pose, ego_vel, obstacles, candidate, goal_point);
             // std::cout << "Candidate " << candidate.linear.x << ", " << candidate.linear.y << " has " << cost << "" << std::endl;
             // Check if the cost is lower than the best cost
             if (cost < best_cost)

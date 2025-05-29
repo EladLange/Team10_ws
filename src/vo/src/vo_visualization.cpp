@@ -101,7 +101,7 @@ void setVOConeMarker(vis_marker &cone_marker, const pose_msg& ego_pos, const pos
 
 void setCandidateMarker(vis_marker &candidate_marker, const pose_msg& ego_pos, const twist_msg& candidate_velocity, float r_total, float dt)
 {
-    candidate_marker.header.frame_id = "map";
+    candidate_marker.header.frame_id = "ego";//debug-should be "map"
     candidate_marker.header.stamp = rclcpp::Clock().now();
     candidate_marker.ns = "candidate";
     candidate_marker.id = 0;
@@ -114,7 +114,7 @@ void setCandidateMarker(vis_marker &candidate_marker, const pose_msg& ego_pos, c
     candidate_marker.color.g = 0.44;
     candidate_marker.color.b = 0.0;
     candidate_marker.color.a = 1.0;
-
+    /*
     point_msg car_point;
     car_point.x = ego_pos.position.x;
     car_point.y = ego_pos.position.y;
@@ -123,6 +123,17 @@ void setCandidateMarker(vis_marker &candidate_marker, const pose_msg& ego_pos, c
     point_msg candidate_end_point;
     candidate_end_point.x = car_point.x + candidate_velocity.linear.x * dt;
     candidate_end_point.y = car_point.y + candidate_velocity.linear.y * dt;
+    candidate_end_point.z = car_point.z;
+    */
+
+    point_msg car_point;
+    car_point.x = 0.0;
+    car_point.y = 0.0;
+    car_point.z = 0.0;
+
+    point_msg candidate_end_point;
+    candidate_end_point.x = candidate_velocity.linear.x * dt;
+    candidate_end_point.y = candidate_velocity.linear.y * dt;
     candidate_end_point.z = car_point.z;
 
     candidate_marker.points.push_back(car_point);

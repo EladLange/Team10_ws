@@ -13,6 +13,9 @@
 #include "pscav/pscav.hpp"
 #include "common/settings.hpp"
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -49,7 +52,7 @@ public:
         marker_pub_ = this->create_publisher<vis_marker_arr>("visualization_marker_array", 10);
         vo_marker_pub_ = this ->create_publisher<vis_marker_arr>("vo_marker_array", 10);
         cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("vel_cmd", 10);
-        // nlvo_marker_pub_ = this->create_publisher<vis_marker_arr>("nlvo_marker_array", 10);
+        nlvo_marker_pub_ = this->create_publisher<vis_marker_arr>("nlvo_marker_array", 10);
     
         // subscribers
         // ego_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&CarSimulationNode::egoVelCallback,this, _1));
@@ -85,57 +88,89 @@ public:
     
     void initialize_cars()
     {
-        std::vector<point_msg> obs_raceline;
-        for (int i = 0; i < 300; ++i)
-        {
-            point_msg point;
-            point.x = 10.0 + i * 1.0;
-            point.y = 0.0 ;
-            point.z = 0.2;
-            obs_raceline.push_back(point);
+        std::vector<point_msg> obs_xyz;
+        std::vector<point_msg> obs_s;
+
+        std::string filename ="/home/zvi/Desktop/Team10_ws/src/vo/src/track_points - Copy.csv";
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            std::cerr << "Error opening raceline file." << std::endl;
         }
+        std::string line;   // Skip the first line (header)
+        std::getline(file , line);
+        while (std::getline(file, line)) {
+            std::istringstream iss(line);
+            point_msg point;
+            point_msg s_point;
+            std::string token;
+            // Read x, y, z, s values from the line
+            std::getline(iss, token, ',');
+            point.x = std::stod(token);
+            std::getline(iss, token, ',');
+            point.y = std::stod(token);
+            std::getline(iss, token, ',');
+            point.z =0.0; //std::stod(token);
+            std::getline(iss, token, ',');
+            s_point.x = std::stod(token);
+            obs_xyz.push_back(point);
+            obs_s.push_back(s_point);
+        }
+        file.close();
+
+        // print the raceline
+        // for (int i = 0; i < obs_xyz.size(); ++i)
+        // {
+        //     std::cout<<"obs_xyz: "<<obs_xyz[i].x<<", "<<obs_xyz[i].y<<", "<<obs_xyz[i].z<<std::endl;
+        //     std::cout<<"obs_s: "<<obs_s[i].x<<std::endl;
+        // }
 
         // Initialize cars
         controlled_car_ = std::make_shared<Car>("ego", true);
         controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
-        controlled_car_->setVelocity(makeVel(0.0, 0.0));
+        controlled_car_->setVelocity(makeVel(1.0, 0.0));
+        controlled_car_->setRaceline(obs_xyz);
+        controlled_car_->setSValues(obs_s);
 
         
         //First obstacle
         auto drone0 = std::make_shared<Car>("drone_0", false);
-        drone0->setPose(makePose(30.0, 0.0));
-        drone0->setVelocity(makeVel(2.0, 0.0));
+        drone0->setPose(makePose(90.0, 0.0));
+        drone0->setVelocity(makeVel(1.0, 0.0));
         drones_.push_back(drone0);
-        drone0->setRaceline(obs_raceline);
+        drone0->setRaceline(obs_xyz);
+        drone0->setSValues(obs_s);
 
 
-        // Second obstacle
-        auto drone1 = std::make_shared<Car>("drone_1", false);
-        drone1->setPose(makePose(20.0,0.0));
-        drone1->setVelocity(makeVel(1.0, 0.0));
-        drones_.push_back(drone1);
-        drone1->setRaceline(obs_raceline);
+        // // Second obstacle
+        // auto drone1 = std::make_shared<Car>("drone_1", false);
+        // drone1->setPose(makePose(20.0,4.5));
+        // drone1->setVelocity(makeVel(1.0, 0.0));
+        // drones_.push_back(drone1);
+        // drone1->setRaceline(obs_xyz);
+        // drone1->setSValues(obs_s);
 
-        // // Third obstacle
-        // auto drone2 = std::make_shared<Car>("drone_2", false);
-        // drone2->setPose(makePose(15.0,0.0));
-        // drone2->setVelocity(makeVel(0.0,0.0));
-        // drones_.push_back(drone2);
-        // drone2->setRaceline(obs_raceline);
+        // // // Third obstacle
+        // // auto drone2 = std::make_shared<Car>("drone_2", false);
+        // // drone2->setPose(makePose(15.0,0.0));
+        // // drone2->setVelocity(makeVel(0.0,0.0));
+        // // drones_.push_back(drone2);
+        // // drone2->setRaceline(obs_xyz);
 
-        // Fourth obstacle
-        auto drone3 = std::make_shared<Car>("drone_3", false);
-        drone3->setPose(makePose(40.0,0.0));
-        drone3->setVelocity(makeVel(-1.0, 0.0));
-        drones_.push_back(drone3);
-        drone3->setRaceline(obs_raceline);
+        // // Fourth obstacle
+        // auto drone3 = std::make_shared<Car>("drone_3", false);
+        // drone3->setPose(makePose(40.0,-4.5));
+        // drone3->setVelocity(makeVel(1.0, 0.0));
+        // drones_.push_back(drone3);
+        // drone3->setRaceline(obs_xyz);
+        // drone3->setSValues(obs_s);
 
-        // Fifth obstacle
-        auto drone4 = std::make_shared<Car>("drone_4", false);
-        drone4->setPose(makePose(65.0,15.0));
-        drone4->setVelocity(makeVel(0.0, 0.0));
-        drones_.push_back(drone4);
-        drone4->setRaceline(obs_raceline);
+        // // Fifth obstacle
+        // auto drone4 = std::make_shared<Car>("drone_4", false);
+        // drone4->setPose(makePose(50.0,0.0));
+        // drone4->setVelocity(makeVel(1.0, 0.0));
+        // drones_.push_back(drone4);
+        // drone4->setRaceline(obs_xyz);
+        // drone4->setSValues(obs_s);
     }
 
 
@@ -202,7 +237,7 @@ private:
     rclcpp::Publisher<vis_marker_arr>::SharedPtr marker_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<vis_marker_arr>::SharedPtr vo_marker_pub_;
-    // rclcpp::Publisher<vis_marker_arr>::SharedPtr nlvo_marker_pub_;
+    rclcpp::Publisher<vis_marker_arr>::SharedPtr nlvo_marker_pub_;
 
     rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr drone_pose_sub_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
@@ -243,7 +278,7 @@ private:
 
     void update() {
         double dt = 0.1;  // 100 ms
-        std::vector<Obstacle> obstacles; 
+        obstacles_.clear();
 
         // Update drones
         for (size_t i = 0; i < drones_.size(); ++i) {
@@ -257,8 +292,9 @@ private:
             obstacle.id = drones_[i]->getId(); 
             obstacle.pose = drones_[i]->getPose();
             obstacle.velocity = drones_[i]->getVelocity();
-            obstacle.raceline = drones_[i]->getRaceline(); // need to set the raceline first!
-            obstacles.push_back(obstacle);
+            obstacle.raceline = drones_[i]->getRaceline(); 
+            obstacle.s_values = drones_[i]->getSValues();
+            obstacles_.push_back(obstacle);
         }
 
         // Get ego car's current pose and velocity
@@ -268,15 +304,13 @@ private:
         std::vector<point_msg> raceline = setRaceline();
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
-        
-        // twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
-        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacles, goal_point, r_total);
+        // twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
+        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
         // twist_msg new_ego_velocity = pscav.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
-
         // Set the new velocity for the ego car
         controlled_car_->setVelocity(new_ego_velocity);
         // Publish the new velocity
-        // new_ego_velocity = convertCmdVector(new_ego_velocity, ego_pose);
+        
         // cmd_vel_pub_->publish(new_ego_velocity);
 
         // Update ego car's orientation based on the new velocity
@@ -293,7 +327,7 @@ private:
 
 
         publishMarkers();
-        publishVOMarkers();
+        // publishVOMarkers();
         publishNLVOMarkers();
     }
 
@@ -390,8 +424,6 @@ private:
         marker.pose = car.getPose();
         // Set the size of the marker to the car's size
         marker.scale = getCarScale();
-        // calculate r_total for the car and obstacle - maybe not needed
-        //float r_total = calculateTotalRadius();
 
         if (car.isControlled()) {
             marker.color.r = 0.91;
@@ -419,23 +451,18 @@ private:
         // check: maybe not needed
         //auto scale = getCarScale();
         float r_total = calculateTotalRadius();
-        //RCLCPP_INFO(this->get_logger(), "Total radius: %f", r_total);
-
 
         for (const auto& obstacle : obstacles_) {
             auto obstacle_pose = obstacle.pose;
             auto obstacle_vel = obstacle.velocity;
             // check - maybe not needed
             //float dist = vo.distance(ego_pose, obstacle_pose);
-            //RCLCPP_INFO(this->get_logger(), "Distance to drone: %f", dist);
-
 
             vis_marker cone_marker;
             // Set the properties of the cone marker
             setVOConeMarker(cone_marker, ego_pose, obstacle_pose, ego_vel, obstacle_vel, r_total);
             cone_marker.id = id++;
             marker_array.markers.push_back(cone_marker);
-           // RCLCPP_INFO(this->get_logger(), "Number of points in cone marker: %zu", cone_marker.points.size());
         }
 
         // for debugging: show the candidate velocities
@@ -449,7 +476,6 @@ private:
         }
 
         vo_marker_pub_->publish(marker_array);
-        //RCLCPP_INFO(this->get_logger(), "Published %zu markers", marker_array.markers.size());
     }
 
     void publishNLVOMarkers()
@@ -460,12 +486,8 @@ private:
        auto ego_pose = controlled_car_->getPose();
        auto ego_vel = controlled_car_->getVelocity();
        float r_total = calculateTotalRadius();
-
        for (const auto& obstacle : obstacles_) {
-            auto obstacle_pose = obstacle.pose;
-            auto obstacle_vel = obstacle.velocity;
-
-            float time_horizon = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, obstacle, r_total, nlvo.control_set) + 2.0f;
+            float time_horizon = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, obstacle, r_total, nlvo.control_set) + 0.0f;
 
             int trajectory_index = nlvo.findTrajectoryIndex(obstacle);
             std::vector<VelDisk> disks = nlvo.generateNLVODisks(ego_pose, obstacle, trajectory_index, r_total, time_horizon);  
@@ -484,10 +506,19 @@ private:
             }
 
         setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), "ego", 0);
-           
        }
 
-    marker_pub_->publish(marker_array);
+        // for debugging: show the candidate velocities
+        std::vector<twist_msg> candidate_velocities = nlvo.generateCandidateVelocities(ego_vel);
+        for (const auto& candidate_velocity : candidate_velocities) {
+            vis_marker candidate_marker;
+            // Set the properties of the candidate marker
+            setCandidateMarker(candidate_marker, ego_pose, candidate_velocity, r_total, 5.0);
+            candidate_marker.id = id++;
+            marker_array.markers.push_back(candidate_marker);
+        }
+
+    nlvo_marker_pub_->publish(marker_array);
     }
     
     geometry_msgs::msg::Twist convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Pose ego_pos){

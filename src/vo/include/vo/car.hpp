@@ -14,7 +14,7 @@ public:
 
     //Set car velocity manually
     void setVelocity(const twist_msg& vel);
-    
+
     //Get car position manually
     const pose_msg& getPose() const;
 
@@ -33,6 +33,16 @@ public:
     //Optional- true if car is ego vehicle
     bool isControlled() const;
 
+    //  Set Cars raceline
+    void setRaceline(const std::vector<point_msg>& raceline);
+
+    void setSValues(const std::vector<point_msg>& s_values);
+
+    //  Get Cars raceline
+    std::vector<point_msg> getRaceline() const;
+
+    std::vector<point_msg> getSValues() const;
+
 private:
     //Car ID
     std::string id_;
@@ -44,4 +54,5 @@ private:
 
     // Car's raceline
     std::vector<point_msg> raceline_;
+    std::vector<point_msg> s_values_;
 };

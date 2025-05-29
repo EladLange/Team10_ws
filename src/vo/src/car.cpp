@@ -69,6 +69,14 @@ void Car::setRaceline(const std::vector<point_msg>& raceline) {
     raceline_ = raceline;
 }
 
+void Car::setSValues(const std::vector<point_msg>& s_values) {
+    s_values_ = s_values;
+}
+
 std::vector<point_msg> Car::getRaceline() const {
     return raceline_;
+}
+
+std::vector<point_msg> Car::getSValues() const {
+    return s_values_;
 }

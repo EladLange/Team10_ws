@@ -15,12 +15,12 @@ class NLVO
     NLVO();
 
     // Global variables
-    const float control_limit_x = 2.5f; // |u_x| <= control_limit_x
-    const float control_limit_y = 2.5f; // |u_y| <= control_limit_y
+    const float control_limit_x = 10.0f; // |u_x| <= control_limit_x
+    const float control_limit_y = 10.0f; // |u_y| <= control_limit_y
     const float dt = 0.1f; // time step
     const float max_time = 10.0f; // maximum time horizon
-    const float max_acceleration = 2.0f; // maximum acceleration
-    const float max_speed = 5.0f; // maximum speed
+    const float max_acceleration = 5.0f; // maximum acceleration
+    const float max_speed = 50.0f; // maximum speed
 
     // Create a set of control limits (bang-bang corners of control set)
     std::vector<std::pair<double, double>> control_set = {
@@ -61,5 +61,8 @@ class NLVO
 
     // Function to calculate distance between two points
     float distance (const point_msg& s1, const point_msg& s2);
+
+    // function to find the closest s value to the future s index
+    int nextSIndex(const Obstacle &obstacle, float s);
 
 };
