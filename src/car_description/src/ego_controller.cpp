@@ -45,7 +45,7 @@ void EgoController::msgCallback(const geometry_msgs::msg::Twist & msg)
 
 geometry_msgs::msg::Twist EgoController::convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Twist ego_vel){
     geometry_msgs::msg::Twist vel_cmd;
-    float k_heading=1.0;
+    float k_heading=1.4;
     float theta= atan2(vel.linear.y,vel.linear.x);
     double yaw=atan2(ego_vel.linear.y,ego_vel.linear.x);
     double heading_error;

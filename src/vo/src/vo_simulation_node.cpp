@@ -85,8 +85,8 @@ public:
                 
                 //First obstacle
                 auto drone0 = std::make_shared<Car>("drone_0", false);
-                drone0->setPose(makePose(100.0, 0.0));
-                drone0->setVelocity(makeVel(1.0, 0.0));
+                drone0->setPose(makePose(50.0, 0.0));
+                drone0->setVelocity(makeVel(0.0, 0.0));
                 drones_.push_back(drone0);
 
                 // // Second obstacle
