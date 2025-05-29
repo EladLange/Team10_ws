@@ -92,16 +92,12 @@ public:
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
-        drone_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseArray>(
-            "drone_pose", 10,
-            [this](geometry_msgs::msg::PoseArray::SharedPtr msg) {
+        drone_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseArray>("drone_pose", 10,[this](geometry_msgs::msg::PoseArray::SharedPtr msg) {
                 this->dronePoseCallback(msg);
             }
         );
 
-        drone_vel_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-            "drone_vel", 10,
-            [this](geometry_msgs::msg::TwistStamped::SharedPtr msg) {
+        drone_vel_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>("drone_vel", 10,[this](geometry_msgs::msg::TwistStamped::SharedPtr msg) {
                 this->droneVelCallback(msg);
             }
         );
