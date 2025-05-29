@@ -20,7 +20,7 @@ public:
 
 private:
     void msgCallback(const geometry_msgs::msg::Twist & msg);
-    geometry_msgs::msg::Twist convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Pose ego_pos);
+    geometry_msgs::msg::Twist convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Twist ego_vel);
     void poseCallback(const geometry_msgs::msg::Pose & msg);
     void velCallback(const geometry_msgs::msg::Twist & msg);
 

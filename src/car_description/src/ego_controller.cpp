@@ -29,7 +29,7 @@ void EgoController::velCallback(const geometry_msgs::msg::Twist & msg)
 
 void EgoController::msgCallback(const geometry_msgs::msg::Twist & msg)
 {
-    geometry_msgs::msg::Twist des_vel=convertCmdVector(msg,ego_pos);
+    geometry_msgs::msg::Twist des_vel=convertCmdVector(msg,ego_vel);
     float temp_vel=des_vel.linear.x;
     geometry_msgs::msg::TwistStamped ackermann_msg;
     temp_vel=temp_vel/wheels_radius;//linear velocity/wheel radius
@@ -43,21 +43,22 @@ void EgoController::msgCallback(const geometry_msgs::msg::Twist & msg)
     ackermann_pub_-> publish(ackermann_msg);
 }
 
-geometry_msgs::msg::Twist EgoController::convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Pose ego_pos){
+geometry_msgs::msg::Twist EgoController::convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Twist ego_vel){
     geometry_msgs::msg::Twist vel_cmd;
 
-    float k_heading=1.5;
+    float k_heading=1.0;
     float theta= atan2(vel.linear.y,vel.linear.x);
 
-    // Extract yaw from quaternion
-    tf2::Quaternion q(
-        ego_pos.orientation.x,
-        ego_pos.orientation.y,
-        ego_pos.orientation.z,
-        ego_pos.orientation.w);
-    tf2::Matrix3x3 m(q);
-    double roll, pitch, yaw;
-    m.getRPY(roll, pitch, yaw);
+    // // Extract yaw from quaternion
+    // tf2::Quaternion q(
+    //     ego_pos.orientation.x,
+    //     ego_pos.orientation.y,
+    //     ego_pos.orientation.z,
+    //     ego_pos.orientation.w);
+    // tf2::Matrix3x3 m(q);
+    // double roll, pitch, yaw;
+    // m.getRPY(roll, pitch, yaw);
+    double yaw=atan2(ego_vel.linear.y,ego_vel.linear.x);
 
     double abs_yaw=yaw;
     double abs_theta=theta;
@@ -69,8 +70,8 @@ geometry_msgs::msg::Twist EgoController::convertCmdVector(const geometry_msgs::m
     // }
     double heading_error;
     heading_error=abs_theta-abs_yaw;
-    heading_error=std::clamp(heading_error, (-M_PI/5), (M_PI/5));
-    RCLCPP_INFO(this->get_logger(), "theat: %f, yaw: %f,heading_error: %f", abs_theta, abs_yaw, heading_error);
+    heading_error=std::clamp(heading_error, (-M_PI/8), (M_PI/8));
+    RCLCPP_INFO(this->get_logger(), "theta: %f, yaw: %f,heading_error: %f", abs_theta, abs_yaw, heading_error);
     float vel_size= sqrt(pow(vel.linear.x,2)+pow(vel.linear.y,2));
     double vx_local = (sin(heading_error) +cos(heading_error)) * vel_size;
     vel_cmd.linear.x = vx_local;
