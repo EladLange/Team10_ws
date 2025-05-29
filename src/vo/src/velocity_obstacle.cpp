@@ -166,7 +166,7 @@ float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const t
     // cost function constant
     float obstacle_avoidance_weight = 100.0f;
     float goal_seeling_weight = 250.0f;
-    float smoothness_weight = 50.0f;
+    float smoothness_weight = 150.0f;
     
     // Obstacle avoidance 
     pose_msg ego_future_position;

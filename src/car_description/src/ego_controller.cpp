@@ -45,33 +45,13 @@ void EgoController::msgCallback(const geometry_msgs::msg::Twist & msg)
 
 geometry_msgs::msg::Twist EgoController::convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Twist ego_vel){
     geometry_msgs::msg::Twist vel_cmd;
-
     float k_heading=1.0;
     float theta= atan2(vel.linear.y,vel.linear.x);
-
-    // // Extract yaw from quaternion
-    // tf2::Quaternion q(
-    //     ego_pos.orientation.x,
-    //     ego_pos.orientation.y,
-    //     ego_pos.orientation.z,
-    //     ego_pos.orientation.w);
-    // tf2::Matrix3x3 m(q);
-    // double roll, pitch, yaw;
-    // m.getRPY(roll, pitch, yaw);
     double yaw=atan2(ego_vel.linear.y,ego_vel.linear.x);
-
-    double abs_yaw=yaw;
-    double abs_theta=theta;
-    // if (yaw<0){
-    //     abs_yaw=yaw+2*M_PI;
-    // }
-    // if (theta<0){
-    //     abs_theta = theta+2*M_PI;
-    // }
     double heading_error;
-    heading_error=abs_theta-abs_yaw;
+    heading_error=normalizeAngle(theta-yaw);
     heading_error=std::clamp(heading_error, (-M_PI/8), (M_PI/8));
-    RCLCPP_INFO(this->get_logger(), "theta: %f, yaw: %f,heading_error: %f", abs_theta, abs_yaw, heading_error);
+    // RCLCPP_INFO(this->get_logger(), "theta: %f, yaw: %f,heading_error: %f", theta, yaw, heading_error);
     float vel_size= sqrt(pow(vel.linear.x,2)+pow(vel.linear.y,2));
     double vx_local = (sin(heading_error) +cos(heading_error)) * vel_size;
     vel_cmd.linear.x = vx_local;
@@ -79,6 +59,15 @@ geometry_msgs::msg::Twist EgoController::convertCmdVector(const geometry_msgs::m
     vel_cmd.angular.z = k_heading * heading_error;
     return vel_cmd;
 }
+
+double EgoController::normalizeAngle(double angle){
+    while (angle>M_PI) 
+        angle-=2.0 *M_PI;
+    while (angle<-M_PI) 
+        angle+=2.0 *M_PI;
+    return angle;
+}
+
 
 int main (int argc, char* argv[])
 {

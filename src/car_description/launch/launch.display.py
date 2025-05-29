@@ -33,7 +33,7 @@ def generate_launch_description():
         executable="rviz2",
         name="rviz2",
         output="screen",
-        arguments=["-d",os.path.join(get_package_share_directory("car_description"), "rviz", "tempdisplay.rviz")]
+        arguments=["-d",os.path.join(get_package_share_directory("car_description"), "rviz", "display.rviz")]
     )
 
     return LaunchDescription([

@@ -16,17 +16,17 @@
     <link name="base_link">
     <inertial>
         <origin
-            xyz="0.0 0 0.0"
+            xyz="0.0 0 -0.15"
             rpy="1.5708 0.0 -1.5708" />
         <mass
-            value="1000" />
+            value="1500" />
         <inertia
-            ixx="240.64229"
-            ixy="4.1988E-07"
-            ixz="0.000000122981"
-            iyy="269.7121064"
-            iyz="-5.2226398"
-            izz="77.018987" />
+            ixx="1250"
+            ixy="0"
+            ixz="0"
+            iyy="1400"
+            iyz="0"
+            izz="500" />
         </inertial>      
         <visual>
             <origin rpy="1.57 0 -1.57" xyz= "1.5 0.917885 -0.5"/>

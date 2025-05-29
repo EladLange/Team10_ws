@@ -166,13 +166,13 @@ def generate_launch_description():
     ego_controller,
     ros_gz_bridge,
     odom_publisher,
-    # delay(0.5),
+    delay(0.5),
     control_node,
     joint_state_pub,
     ackermann_steering_controller,
     velocity_controller,
-    delay(0.5),
     rviz_node,
+    delay(0.5),
     vo_node#,
     # pure_pursuit_node
     ])

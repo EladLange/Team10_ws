@@ -23,6 +23,7 @@ private:
     geometry_msgs::msg::Twist convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Twist ego_vel);
     void poseCallback(const geometry_msgs::msg::Pose & msg);
     void velCallback(const geometry_msgs::msg::Twist & msg);
+    double normalizeAngle (double angle);
 
     rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr ego_pose_sub_;
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr ego_vel_sub_;
