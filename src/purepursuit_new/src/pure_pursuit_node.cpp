@@ -89,8 +89,8 @@ public:
             for (int j=0; j<drones_per_path; ++j){
 
                 State initial_state("drone_" + std::to_string(i),
-                               paths_[i].first[0]+10*j,  // x
-                               paths_[i].second[0], // y
+                               paths_[i].first[0]+10*j,  // x (staggered start positions)
+                               paths_[i].second[0], // y (start at the same y position)
                                0.2,       // z (staggered heights)
                                0.0);                // yaw
             // Create the drone with its assigned path
@@ -195,8 +195,8 @@ private:
         // Update each drone and collect visualization data
         for (size_t i = 0; i < drones_.size(); ++i) {
             // Update drone state using pure pursuit control
-            double new_velocity = 5.0 + i;
-            drones_[i]->update(dt, new_velocity);
+            double new_velocity = 5.0 + i; // velocity for each drone
+            drones_[i]->update(dt, new_velocity); // Update drone state
 
             // Get current drone state
             const State& state = drones_[i]->getState();
