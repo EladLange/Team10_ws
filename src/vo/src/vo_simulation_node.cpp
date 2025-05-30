@@ -27,6 +27,8 @@ float min_acceleration = -3.0f;
 float time_step = 1.0f;
 float delta_t = 0.1f;
 
+bool road_init=true;
+
 class CarSimulationNode : public rclcpp::Node {
 public:
     CarSimulationNode()
@@ -313,12 +315,13 @@ private:
         road_marker.header.frame_id = "map";
         road_marker.header.stamp = this->now();   
         road_marker.ns="Road";
+        road_marker.id=0;
         road_marker.type= vis_marker::MESH_RESOURCE;
         road_marker.mesh_resource = "package://vo/meshes/track.STL";
         road_marker.action = vis_marker::ADD;
-        road_marker.scale.x=10.0;
-        road_marker.scale.y=10.0;
-        road_marker.scale.z=10.0;
+        road_marker.scale.x=1.0;
+        road_marker.scale.y=1.0;
+        road_marker.scale.z=1.0;
         road_marker.color.r=0.0;
         road_marker.color.g=0.0;
         road_marker.color.b=0.0;
@@ -326,7 +329,6 @@ private:
         road_marker.pose.position.x=road_marker.pose.position.y=road_marker.pose.position.z=0.0;
         road_marker.pose.orientation.x=road_marker.pose.orientation.y=road_marker.pose.orientation.z=0.0;
         road_marker.pose.orientation.w=1.0;
-
         // setRoadMarker(road_marker, road_, now);
         marker_array.markers.push_back(road_marker);
         
