@@ -7,6 +7,8 @@ from ament_index_python.packages import get_package_share_directory
 from launch_ros.parameter_descriptions import ParameterValue
 from launch.substitutions import Command, LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import TimerAction
+from launch.actions import OpaqueFunction
 
 
 def generate_launch_description():
@@ -145,6 +147,14 @@ def generate_launch_description():
         executable="pure_pursuit_node"
     )
 
+    def delay(seconds: float):
+        return TimerAction(
+        period=seconds,
+        actions=[
+            OpaqueFunction(function=lambda context: [])
+        ]
+    )
+
 
     return LaunchDescription([
     model_arg,
@@ -156,11 +166,13 @@ def generate_launch_description():
     ego_controller,
     ros_gz_bridge,
     odom_publisher,
+    delay(0.5),
     control_node,
     joint_state_pub,
     ackermann_steering_controller,
     velocity_controller,
     rviz_node,
-    vo_node,
-    pure_pursuit_node
+    delay(0.5),
+    vo_node#,
+    # pure_pursuit_node
     ])

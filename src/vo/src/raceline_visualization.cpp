@@ -10,9 +10,9 @@ std::vector<point_msg> setRaceline()
     for (int i = 0; i < 300; ++i)
     {
         point_msg point;
-        point.x = 10.0 + i * 1.0;
-        point.y = 0.0 ;
-        point.z = 0.2;
+        point.x =10.0 + i * 1.0;
+        point.y = 0.0;
+        point.z = 0.0;
         raceline.push_back(point);
     }
 

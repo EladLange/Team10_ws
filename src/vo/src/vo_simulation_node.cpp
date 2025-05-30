@@ -30,10 +30,12 @@ std::vector<Obstacle> obstacles;
 
 // Global variables
 float time_horizon = 7.0f;
-float max_acceleration = 1.0f;
+float max_acceleration = 10.0f;
 float min_acceleration = -3.0f;
 float time_step = 1.0f;
 float delta_t = 0.1f;
+
+bool road_init=true;
 
 class CarSimulationNode : public rclcpp::Node {
 public:
@@ -176,7 +178,7 @@ public:
 
 point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
 {
-    int lookahead_step = 5;
+    int lookahead_step = 10;
     point_msg point;
 
     // fallback if raceline is empty
@@ -217,8 +219,9 @@ point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_m
     if (lookahead_index >= static_cast<int>(raceline.size()))
     {
         lookahead_index = static_cast<int>(raceline.size()) - 1;
+        // RCLCPP_INFO(get_logger(), "Lookahead index is out of bounds");
     }
-
+    // RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
     return raceline[lookahead_index];
 }
 
@@ -283,8 +286,8 @@ private:
         // Update drones
         for (size_t i = 0; i < drones_.size(); ++i) {
         //    controller_.control(*drones_[i], static_cast<int>(i));
-            // publishPose(*drones_[i]);
-            // publishTF(*drones_[i], "map", drones_[i]->getId());
+            publishPose(*drones_[i]);
+            publishTF(*drones_[i], "map", drones_[i]->getId());
             drones_[i]->update(dt);
 
             // Create obstacle struct for this drone
@@ -310,7 +313,7 @@ private:
         // Set the new velocity for the ego car
         controlled_car_->setVelocity(new_ego_velocity);
         // Publish the new velocity
-        
+        // RCLCPP_INFO(this->get_logger(), "New ego car velocity set to: (%f, %f)", new_ego_velocity.linear.x, new_ego_velocity.linear.y);
         // cmd_vel_pub_->publish(new_ego_velocity);
 
         // Update ego car's orientation based on the new velocity
@@ -375,11 +378,29 @@ private:
         setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), "map" , 0);
         setVelocityTextMarker(marker_array, *controlled_car_, this->now());
 
-        // // Road
-        // rclcpp::Time now = this->now();
-        // vis_marker road_marker;
+        // Road
+        //rclcpp::Time now = this->now();
+        vis_marker road_marker;
+        road_marker.header.frame_id = "map";
+        road_marker.header.stamp = this->now();   
+        road_marker.ns="Road";
+        road_marker.id=0;
+        road_marker.type= vis_marker::MESH_RESOURCE;
+        road_marker.mesh_resource = "package://vo/meshes/track.STL";
+        road_marker.action = vis_marker::ADD;
+        road_marker.scale.x=1.0;
+        road_marker.scale.y=1.0;
+        road_marker.scale.z=1.0;
+        road_marker.color.r=0.0;
+        road_marker.color.g=0.0;
+        road_marker.color.b=0.0;
+        road_marker.color.a=1.0;
+        road_marker.pose.position.x=road_marker.pose.position.y=road_marker.pose.position.z=0.0;
+        road_marker.pose.orientation.x=road_marker.pose.orientation.y=road_marker.pose.orientation.z=0.0;
+        road_marker.pose.orientation.w=1.0;
         // setRoadMarker(road_marker, road_, now);
-        // marker_array.markers.push_back(road_marker);
+        marker_array.markers.push_back(road_marker);
+        
 
 
         // lane lines
@@ -396,9 +417,9 @@ private:
     geometry_msgs::msg::Vector3 getCarScale()
     {
         geometry_msgs::msg::Vector3 scale;
-        scale.x = 3.0; // length
-        scale.y = 1.5; // width
-        scale.z = 1.0; // height
+        scale.x =3.0; // length
+        scale.y =1.5; // width
+        scale.z =1.0; // height
         return scale;
     }
 
@@ -416,14 +437,19 @@ private:
         marker.header.stamp = now();
         marker.ns = "cars";
         marker.id = id;
-        marker.type = vis_marker::CUBE;
-        // marker.type= vis_marker::MESH_RESOURCE;
-        // marker.mesh_resource = "package://car_description/meshes/obstacle.STL";
+        // marker.type = vis_marker::CUBE;
+        marker.type= vis_marker::MESH_RESOURCE;
+        marker.mesh_resource = "package://vo/meshes/obstacle.STL";
         marker.action = vis_marker::ADD;
         // Set the pose of the marker to the car's pose
         marker.pose = car.getPose();
         // Set the size of the marker to the car's size
-        marker.scale = getCarScale();
+        // marker.scale = getCarScale();
+        marker.scale.x =1.0;
+        marker.scale.y =1.0;
+        marker.scale.z =1.0;      
+        // calculate r_total for the car and obstacle - maybe not needed
+        //float r_total = calculateTotalRadius();
 
         if (car.isControlled()) {
             marker.color.r = 0.91;
@@ -519,17 +545,6 @@ private:
         }
 
     nlvo_marker_pub_->publish(marker_array);
-    }
-    
-    geometry_msgs::msg::Twist convertCmdVector(const geometry_msgs::msg::Twist &vel, const geometry_msgs::msg::Pose ego_pos){
-    geometry_msgs::msg::Twist vel_cmd;
-    float k_heading=0.9;
-    float theta= atan2(vel.linear.y,vel.linear.x);
-    double vx_local = cos(theta) * vel.linear.x + sin(theta) * vel.linear.y;
-    vel_cmd.linear.x = vx_local;
-    double heading_error = theta- ego_pos.orientation.z;
-    vel_cmd.angular.z = k_heading * heading_error;
-    return vel_cmd;
     }
 };
 
