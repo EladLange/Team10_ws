@@ -41,6 +41,6 @@ def generate_launch_description():
     return LaunchDescription([
     rviz_node,
     rviz_nlvo,
-    vo_node#,
+    #vo_node#,
     # pure_pursuit_node
     ])

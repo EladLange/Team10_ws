@@ -132,8 +132,8 @@ void setCandidateMarker(vis_marker &candidate_marker, const pose_msg& ego_pos, c
     car_point.z = 0.0;
 
     point_msg candidate_end_point;
-    candidate_end_point.x = candidate_velocity.linear.x * dt;
-    candidate_end_point.y = candidate_velocity.linear.y * dt;
+    candidate_end_point.x = candidate_velocity.linear.x;// * dt;
+    candidate_end_point.y = candidate_velocity.linear.y;// * dt;
     candidate_end_point.z = car_point.z;
 
     candidate_marker.points.push_back(car_point);

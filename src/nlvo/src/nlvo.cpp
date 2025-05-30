@@ -34,7 +34,6 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
 
     // Generate candidate velocities
     std::vector<twist_msg> candidate_velocities = generateCandidateVelocities(ego_vel);
-    std::cout<<"number of candidate velocities: "<<candidate_velocities.size()<<std::endl;
     twist_msg best_velocity = ego_vel; // Default to current velocity
 
     // Check if candidate velocities are in the truncated NLVO
@@ -43,13 +42,18 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
     {  
         if (!isVelocityInNLVO(candidate_vel, all_disks))
         {
+            std::cout<<"candidate velocity: ("<< candidate_vel.linear.x<<","<< candidate_vel.linear.y << ") is safe"<<std::endl;
             safe_vels.push_back(candidate_vel);
+        }
+        else{
+        std::cout<<"candidate velocity: ("<< candidate_vel.linear.x<<","<< candidate_vel.linear.y << ") is NOT SAFE" << std::endl;
         }
     }
 
     // If no safe velocities found, generate emergency velocities
     if (safe_vels.empty())
     {
+        std::cout<<"NO SAFE VELS"<<std::endl;
         best_velocity.linear.x = 0.0f;
         best_velocity.linear.y = 0.0f;
         return best_velocity;
@@ -303,7 +307,6 @@ std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Obs
     for (t = dt; t <= time_horizon; t += dt)
     {
         disk_count++;
-        std::cout<<"disk counter:"<<disk_count<<std::endl<<"time horizon= "<<time_horizon<<"  t= "<<t<<std::endl;
         float future_s = obstacle.s_values[s_index].x + speed * t;
         
         // find the wanted s value
@@ -328,7 +331,7 @@ std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Obs
         VelDisk disk;
         disk.cx = relative_pose.position.x / t;
         disk.cy = relative_pose.position.y / t;
-        disk.radius = r_total / t;
+        disk.radius = r_total / (t);
 
         disks.push_back(disk);
     }
@@ -394,8 +397,7 @@ bool NLVO::isVelocityInNLVO(const twist_msg &candidate_vel, const std::vector<Ve
             return true; // Candidate velocity is in the NLVO
         }
     }
-
-    return false; // Candidate velocity is not in the NLVO
+    return false;
 }
 
 int NLVO::nextSIndex(const Obstacle &obstacle, float s)

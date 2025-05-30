@@ -136,7 +136,7 @@ public:
         
         //First obstacle
         auto drone0 = std::make_shared<Car>("drone_0", false);
-        drone0->setPose(makePose(90.0, 0.0));
+        drone0->setPose(makePose(30.0, 0.0));
         drone0->setVelocity(makeVel(1.0, 0.0));
         drones_.push_back(drone0);
         drone0->setRaceline(obs_xyz);
@@ -304,7 +304,7 @@ private:
         auto ego_pose = controlled_car_->getPose();
         auto ego_vel = controlled_car_->getVelocity();
 
-        std::vector<point_msg> raceline = setRaceline();
+        std::vector<point_msg> raceline = buildRaceline();
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
         // twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
@@ -362,7 +362,7 @@ private:
         vis_marker_arr marker_array;
 
         //raceline
-        std::vector<point_msg> raceline = setRaceline();
+        std::vector<point_msg> raceline = buildRaceline();
         visualizeRaceline(raceline, marker_array, this->now());
 
         // Drones

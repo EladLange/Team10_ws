@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 
-std::vector<point_msg> setRaceline()
+std::vector<point_msg> buildRaceline()
 {
     std::vector<point_msg> raceline;
     // create a raceline with 100 straight points
