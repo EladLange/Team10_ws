@@ -466,7 +466,7 @@ private:
         }
 
         // for debugging: show the candidate velocities
-        std::vector<twist_msg> candidate_velocities = nlvo.generateACV(ego_vel);
+        std::vector<twist_msg> candidate_velocities = nlvo.generateCandidateVelocities(ego_vel);
         for (const auto& candidate_velocity : candidate_velocities) {
             vis_marker candidate_marker;
             // Set the properties of the candidate marker
