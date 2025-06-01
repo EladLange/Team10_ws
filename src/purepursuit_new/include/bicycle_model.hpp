@@ -20,8 +20,6 @@ public:
 
     geometry_msgs::msg::Pose updatePose(const geometry_msgs::msg::Pose &pose, double delta, double velocity, double dt) const;
     
-    geometry_msgs::msg::Pose robotPose(const geometry_msgs::msg::Pose &pose);
-
 private:
     double L_;  // Wheelbase of the vehicle, affects turning radius
 };
