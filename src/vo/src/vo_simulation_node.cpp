@@ -159,34 +159,35 @@ public:
 
         // Second obstacle
         auto drone1 = std::make_shared<Car>("drone_1", false);
-        drone1->setPose(makePose(20.0,1.0));
+        drone1->setPose(makePose(20.0,0.0));
         drone1->setVelocity(makeVel(1.0, 0.0));
         drones_.push_back(drone1);
         drone1->setRaceline(obs_xyz);
         drone1->setSValues(obs_s);
 
-        // // Third obstacle
-        // auto drone2 = std::make_shared<Car>("drone_2", false);
-        // drone2->setPose(makePose(15.0,0.0));
-        // drone2->setVelocity(makeVel(0.0,0.0));
-        // drones_.push_back(drone2);
-        // drone2->setRaceline(obs_xyz);
+        // Third obstacle
+        auto drone2 = std::make_shared<Car>("drone_2", false);
+        drone2->setPose(makePose(50.0,0.0));
+        drone2->setVelocity(makeVel(0.0,0.0));
+        drones_.push_back(drone2);
+        drone2->setRaceline(obs_xyz);
+        drone2->setSValues(obs_s);
 
-        // // Fourth obstacle
-        // auto drone3 = std::make_shared<Car>("drone_3", false);
-        // drone3->setPose(makePose(40.0,-4.5));
-        // drone3->setVelocity(makeVel(1.0, 0.0));
-        // drones_.push_back(drone3);
-        // drone3->setRaceline(obs_xyz);
-        // drone3->setSValues(obs_s);
+        // Fourth obstacle
+        auto drone3 = std::make_shared<Car>("drone_3", false);
+        drone3->setPose(makePose(40.0,-4.5));
+        drone3->setVelocity(makeVel(1.0, 0.0));
+        drones_.push_back(drone3);
+        drone3->setRaceline(obs_xyz);
+        drone3->setSValues(obs_s);
 
-        // // Fifth obstacle
-        // auto drone4 = std::make_shared<Car>("drone_4", false);
-        // drone4->setPose(makePose(50.0,0.0));
-        // drone4->setVelocity(makeVel(1.0, 0.0));
-        // drones_.push_back(drone4);
-        // drone4->setRaceline(obs_xyz);
-        // drone4->setSValues(obs_s);
+        // Fifth obstacle
+        auto drone4 = std::make_shared<Car>("drone_4", false);
+        drone4->setPose(makePose(50.0,0.0));
+        drone4->setVelocity(makeVel(1.0, 0.0));
+        drones_.push_back(drone4);
+        drone4->setRaceline(obs_xyz);
+        drone4->setSValues(obs_s);
     }
 
 
