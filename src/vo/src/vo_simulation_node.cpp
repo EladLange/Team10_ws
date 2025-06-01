@@ -57,8 +57,8 @@ public:
         nlvo_marker_pub_ = this->create_publisher<vis_marker_arr>("nlvo_marker_array", 10);
     
         // subscribers
-        // ego_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&CarSimulationNode::egoVelCallback,this, _1));
-        // ego_pos_sub_ = this->create_subscription<geometry_msgs::msg::Pose>("/ego_pose",10,std::bind(&CarSimulationNode::egoPosCallback,this, _1));
+        ego_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&CarSimulationNode::egoVelCallback,this, _1));
+        ego_pos_sub_ = this->create_subscription<geometry_msgs::msg::Pose>("/ego_pose",10,std::bind(&CarSimulationNode::egoPosCallback,this, _1));
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -142,58 +142,58 @@ public:
 
         // Initialize cars
         controlled_car_ = std::make_shared<Car>("ego", true);
-        controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
+        controlled_car_->setPose(makePose(0.0, 0.0));  // Center of first lane
         controlled_car_->setVelocity(makeVel(0.0, 0.0));
         controlled_car_->setRaceline(obs_xyz);
         controlled_car_->setSValues(obs_s);
 
         
-        //First obstacle
-        auto drone0 = std::make_shared<Car>("drone_0", false);
-        drone0->setPose(makePose(35.0, 0.0));
-        drone0->setVelocity(makeVel(1.0, 0.0));
-        drones_.push_back(drone0);
-        drone0->setRaceline(obs_xyz);
-        drone0->setSValues(obs_s);
+        // //First obstacle
+        // auto drone0 = std::make_shared<Car>("drone_0", false);
+        // drone0->setPose(makePose(35.0, 0.0));
+        // drone0->setVelocity(makeVel(1.0, 0.0));
+        // drones_.push_back(drone0);
+        // drone0->setRaceline(obs_xyz);
+        // drone0->setSValues(obs_s);
 
 
-        // Second obstacle
-        auto drone1 = std::make_shared<Car>("drone_1", false);
-        drone1->setPose(makePose(20.0,0.0));
-        drone1->setVelocity(makeVel(1.0, 0.0));
-        drones_.push_back(drone1);
-        drone1->setRaceline(obs_xyz);
-        drone1->setSValues(obs_s);
+        // // Second obstacle
+        // auto drone1 = std::make_shared<Car>("drone_1", false);
+        // drone1->setPose(makePose(20.0,0.0));
+        // drone1->setVelocity(makeVel(1.0, 0.0));
+        // drones_.push_back(drone1);
+        // drone1->setRaceline(obs_xyz);
+        // drone1->setSValues(obs_s);
 
-        // Third obstacle
-        auto drone2 = std::make_shared<Car>("drone_2", false);
-        drone2->setPose(makePose(50.0,0.0));
-        drone2->setVelocity(makeVel(0.0,0.0));
-        drones_.push_back(drone2);
-        drone2->setRaceline(obs_xyz);
-        drone2->setSValues(obs_s);
+        // // Third obstacle
+        // auto drone2 = std::make_shared<Car>("drone_2", false);
+        // drone2->setPose(makePose(50.0,0.0));
+        // drone2->setVelocity(makeVel(0.0,0.0));
+        // drones_.push_back(drone2);
+        // drone2->setRaceline(obs_xyz);
+        // drone2->setSValues(obs_s);
 
-        // Fourth obstacle
-        auto drone3 = std::make_shared<Car>("drone_3", false);
-        drone3->setPose(makePose(40.0,-4.5));
-        drone3->setVelocity(makeVel(1.0, 0.0));
-        drones_.push_back(drone3);
-        drone3->setRaceline(obs_xyz);
-        drone3->setSValues(obs_s);
+        // // Fourth obstacle
+        // auto drone3 = std::make_shared<Car>("drone_3", false);
+        // drone3->setPose(makePose(40.0,-4.5));
+        // drone3->setVelocity(makeVel(1.0, 0.0));
+        // drones_.push_back(drone3);
+        // drone3->setRaceline(obs_xyz);
+        // drone3->setSValues(obs_s);
 
-        // Fifth obstacle
-        auto drone4 = std::make_shared<Car>("drone_4", false);
-        drone4->setPose(makePose(50.0,0.0));
-        drone4->setVelocity(makeVel(1.0, 0.0));
-        drones_.push_back(drone4);
-        drone4->setRaceline(obs_xyz);
-        drone4->setSValues(obs_s);
+        // // Fifth obstacle
+        // auto drone4 = std::make_shared<Car>("drone_4", false);
+        // drone4->setPose(makePose(50.0,0.0));
+        // drone4->setVelocity(makeVel(1.0, 0.0));
+        // drones_.push_back(drone4);
+        // drone4->setRaceline(obs_xyz);
+        // drone4->setSValues(obs_s);
     }
 
 
 point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
 {
-    int lookahead_step = 10;
+    int lookahead_step = 5;
     point_msg point;
 
     // fallback if raceline is empty
@@ -326,22 +326,22 @@ private:
         twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
         // twist_msg new_ego_velocity = pscav.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         // Set the new velocity for the ego car
-        controlled_car_->setVelocity(new_ego_velocity);
+        // controlled_car_->setVelocity(new_ego_velocity);
         // Publish the new velocity
         // RCLCPP_INFO(this->get_logger(), "New ego car velocity set to: (%f, %f)", new_ego_velocity.linear.x, new_ego_velocity.linear.y);
-        // cmd_vel_pub_->publish(new_ego_velocity);
+        cmd_vel_pub_->publish(new_ego_velocity);
 
         // Update ego car's orientation based on the new velocity
-        double yaw = std::atan2(new_ego_velocity.linear.y, new_ego_velocity.linear.x);
-        tf2::Quaternion q;
-        q.setRPY(0, 0, yaw);
-        controlled_car_->setOrientation(q);
+        // double yaw = std::atan2(new_ego_velocity.linear.y, new_ego_velocity.linear.x);
+        // tf2::Quaternion q;
+        // q.setRPY(0, 0, yaw);
+        // controlled_car_->setOrientation(q);
         //RCLCPP_INFO(this->get_logger(), "Ego car orientation set to: %f", yaw);
 
         // Update ego car's position based on the new velocity
-        controlled_car_->update(dt);
-        publishPose(*controlled_car_);
-        publishTF(*controlled_car_, "map", controlled_car_->getId());
+        // controlled_car_->update(dt);
+        // publishPose(*controlled_car_);
+        // publishTF(*controlled_car_, "map", controlled_car_->getId());
 
 
         publishMarkers();
