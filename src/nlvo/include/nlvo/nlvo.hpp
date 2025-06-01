@@ -1,6 +1,8 @@
 #pragma once
 
 #include "common/settings.hpp"
+#include "common/car.hpp"
+
 
 struct VelDisk{
     float cx; // center of the disk in velocity space
@@ -31,7 +33,7 @@ class NLVO
     };
 
     // Function to select the best velocity
-    twist_msg selectBestVelocity(const pose_msg &ego_pose, const twist_msg &ego_vel, const std::vector<Obstacle> &obstacles, const point_msg &goal_point, float r_total);
+    twist_msg selectBestVelocity(const pose_msg &ego_pose, const twist_msg &ego_vel, const std::vector<Car> &obstacles, const point_msg &goal_point, float r_total);
 
     // Function to generate candidate velocities
     std::vector<twist_msg> generateACV(const twist_msg& ego_vel);
@@ -40,16 +42,16 @@ class NLVO
     std::vector<twist_msg> generateCandidateVelocities(const twist_msg& ego_vel);
 
     // Function to calculate cost for a candidate velocity
-    float calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<Obstacle>& obstacles, const twist_msg& candidate_velocity, const point_msg& goal_point, float r_total, float time_horizon);
+    float calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<Car>& obstacles, const twist_msg& candidate_velocity, const point_msg& goal_point, float r_total, float time_horizon);
 
     // Function to compute the minimum time horizon
-    float computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg &ego_vel, const Obstacle& obstacle, float r_total, std::vector<std::pair<double, double>> control_set);
+    float computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg &ego_vel, const Car& obstacle, float r_total, std::vector<std::pair<double, double>> control_set);
 
     // Function to generate NLVO disks
-    std::vector<VelDisk> generateNLVODisks(const pose_msg& ego_pose, const Obstacle& obstacle, int trajectory_index, float r_total, float time_horizon);
+    std::vector<VelDisk> generateNLVODisks(const pose_msg& ego_pose, const Car& obstacle, int trajectory_index, float r_total, float time_horizon);
 
     // Function to find the next goal point of the obstacle on his trajectory
-    int findTrajectoryIndex(const Obstacle& obstacle);
+    int findTrajectoryIndex(const Car& obstacle);
 
     private:
 
@@ -63,6 +65,6 @@ class NLVO
     float distance (const point_msg& s1, const point_msg& s2);
 
     // function to find the closest s value to the future s index
-    int nextSIndex(const Obstacle &obstacle, float s);
+    int nextSIndex(const Car &obstacle, float s);
 
 };

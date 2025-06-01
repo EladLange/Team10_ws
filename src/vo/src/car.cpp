@@ -1,4 +1,4 @@
-#include "car.hpp"
+#include "common/car.hpp"
 #include <cmath>
 #include <iostream>
 
@@ -15,6 +15,10 @@ Car::Car(const std::string& id, bool is_controlled)
 
     velocity_.linear.x = 0.0;
     velocity_.angular.z = 0.0;
+}
+
+void Car::setId(const std::string& string) {
+    id_ = string;
 }
 
 void Car::setPose(const pose_msg& pose) {

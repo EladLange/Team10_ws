@@ -9,7 +9,7 @@ NLVO::NLVO()
     // Empty constructor
 }
 
-twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &ego_vel, const std::vector<Obstacle> &obstacles, const point_msg &goal_point, float r_total)
+twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &ego_vel, const std::vector<Car> &obstacles, const point_msg &goal_point, float r_total)
 {
     
     // Find the minimum time horizon
@@ -74,7 +74,7 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
     return best_velocity; // Return the best velocity found among the candidates
 }
 
-float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg &ego_vel, const Obstacle& obstacle, float r_total, std::vector<std::pair<double, double>> control_set)
+float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg &ego_vel, const Car& obstacle, float r_total, std::vector<std::pair<double, double>> control_set)
 {
     // Old time horizon - delete if the new one is
     /*
@@ -125,8 +125,8 @@ float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg 
     
     // Calculate initial relative position
     pose_msg relative_pose;
-    relative_pose.position.x = obstacle.pose.position.x - ego_pose.position.x;
-    relative_pose.position.y = obstacle.pose.position.y - ego_pose.position.y;
+    relative_pose.position.x = obstacle.getPose().position.x - ego_pose.position.x;
+    relative_pose.position.y = obstacle.getPose().position.y - ego_pose.position.y;
     float d = std::sqrt(pow(relative_pose.position.x, 2) + pow(relative_pose.position.y, 2));
 
     if (d <= r_total) {
@@ -150,8 +150,8 @@ float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg 
 
             // Relative velocity
             twist_msg v_rel;
-            v_rel.linear.x = ego_future_vel.linear.x - obstacle.velocity.linear.x;
-            v_rel.linear.y = ego_future_vel.linear.y - obstacle.velocity.linear.y;
+            v_rel.linear.x = ego_future_vel.linear.x - obstacle.getVelocity().linear.x;
+            v_rel.linear.y = ego_future_vel.linear.y - obstacle.getVelocity().linear.y;
 
             // Check if relative velocity is within the VO cone
             float beta = atan2(v_rel.linear.y, v_rel.linear.x);
@@ -234,7 +234,7 @@ std::vector<twist_msg> NLVO::generateCandidateVelocities(const twist_msg& ego_ve
     return candidate_velocities;
 }
 
-float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<Obstacle>& obstacles, const twist_msg& candidate_velocity, const point_msg& goal_point, float r_total, float time_horizon)
+float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<Car>& obstacles, const twist_msg& candidate_velocity, const point_msg& goal_point, float r_total, float time_horizon)
 {
     float cost = 0.0f;
     // cost function constant
@@ -254,12 +254,12 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
     for (size_t i = 0; i < obstacles.size(); i++)
     {
         int traj_idx = findTrajectoryIndex(obstacles[i]);
-        float speed = std::sqrt(std::pow(obstacles[i].velocity.linear.x, 2) + std::pow(obstacles[i].velocity.linear.y, 2));
-        float obstacle_future_s_value = obstacles[i].s_values[traj_idx].x + speed * time_step;
+        float speed = std::sqrt(std::pow(obstacles[i].getVelocity().linear.x, 2) + std::pow(obstacles[i].getVelocity().linear.y, 2));
+        float obstacle_future_s_value = obstacles[i].getSValues()[traj_idx].x + speed * time_step;
 
         int obstacle_s_index = nextSIndex(obstacles[i], obstacle_future_s_value);
-        obstacle_future_pose.position.x = obstacles[i].raceline[obstacle_s_index].x;
-        obstacle_future_pose.position.y = obstacles[i].raceline[obstacle_s_index].y;
+        obstacle_future_pose.position.x = obstacles[i].getRaceline()[obstacle_s_index].x;
+        obstacle_future_pose.position.y = obstacles[i].getRaceline()[obstacle_s_index].y;
 
         float dist = std::sqrt(std::pow(ego_future_position.position.x - obstacle_future_pose.position.x, 2) + std::pow(ego_future_position.position.y - obstacle_future_pose.position.y, 2));
         if (dist < min_distance)
@@ -288,14 +288,14 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
     return cost;
 }
 
-std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Obstacle& obstacle, int trajectory_index, float r_total, float time_horizon)
+std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Car& obstacle, int trajectory_index, float r_total, float time_horizon)
 {
     std::vector<VelDisk> disks;
     float dt = 0.01f;
     float t = 0.0f;
     int obstacle_s_index = trajectory_index;
-    float obstacle_max_s_value = obstacle.s_values[obstacle.s_values.size()-1].x;
-    float speed = std::sqrt(std::pow(obstacle.velocity.linear.x, 2) + std::pow(obstacle.velocity.linear.y, 2));
+    float obstacle_max_s_value = obstacle.getSValues()[obstacle.getSValues().size()-1].x;
+    float speed = std::sqrt(std::pow(obstacle.getVelocity().linear.x, 2) + std::pow(obstacle.getVelocity().linear.y, 2));
     int disk_count = 0;
 
     std::cout<<"generateNLVODisks: " << std::endl;
@@ -303,9 +303,9 @@ std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Obs
     for (t = dt; t <= time_horizon; t += dt)
     {
         std::cout<<"    t: " << t << std::endl;
-        std::cout<<"        S obs: " << obstacle.s_values[obstacle_s_index].x << std::endl;
+        std::cout<<"        S obs: " << obstacle.getSValues()[obstacle_s_index].x << std::endl;
         disk_count++;
-        float obstacle_future_s_value = obstacle.s_values[obstacle_s_index].x + speed * dt;
+        float obstacle_future_s_value = obstacle.getSValues()[obstacle_s_index].x + speed * dt;
         // float obstacle_future_s_value = obstacle.s_values[trajectory_index].x + speed * t;
         
         // find the wanted s value
@@ -318,9 +318,9 @@ std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Obs
         std::cout<< "        obstacle_future_s_value: " << obstacle_future_s_value << std::endl;
 
         pose_msg relative_pose;
-        relative_pose.position.x = obstacle.raceline[obstacle_s_index].x - ego_pose.position.x;
-        relative_pose.position.y = obstacle.raceline[obstacle_s_index].y - ego_pose.position.y;
-        std::cout<<"        obstacle pose: " << obstacle.raceline[obstacle_s_index].x << ", " << obstacle.raceline[obstacle_s_index].y << std::endl;
+        relative_pose.position.x = obstacle.getRaceline()[obstacle_s_index].x - ego_pose.position.x;
+        relative_pose.position.y = obstacle.getRaceline()[obstacle_s_index].y - ego_pose.position.y;
+        std::cout<<"        obstacle pose: " << obstacle.getRaceline()[obstacle_s_index].x << ", " << obstacle.getRaceline()[obstacle_s_index].y << std::endl;
         std::cout<<"        relative pose: " << relative_pose.position.x << ", " << relative_pose.position.y << std::endl;
         
         // Center of the NLVO disk in velocity space
@@ -338,17 +338,17 @@ std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Obs
     return disks; 
 }
 
-int NLVO::findTrajectoryIndex(const Obstacle& obstacle)
+int NLVO::findTrajectoryIndex(const Car& obstacle)
 {
     point_msg point;
 
     // fallback if raceline is empty
-    if (obstacle.raceline.empty())
+    if (obstacle.getRaceline().empty())
     {
         //std::cout<<"Raceline is empty"<<std::endl;
-        point.x = obstacle.pose.position.x;
-        point.y = obstacle.pose.position.y;
-        point.z = obstacle.pose.position.z;
+        point.x = obstacle.getPose().position.x;
+        point.y = obstacle.getPose().position.y;
+        point.z = obstacle.getPose().position.z;
         return 0;
 
     }
@@ -358,11 +358,11 @@ int NLVO::findTrajectoryIndex(const Obstacle& obstacle)
     double min_dist_squared = std::numeric_limits<double>::max();
 
     // Iterate through the raceline points
-    for (size_t i = 0; i < obstacle.raceline.size(); ++i)
+    for (size_t i = 0; i < obstacle.getRaceline().size(); ++i)
     {
-        const auto& raceline_point = obstacle.raceline[i];
-        double dx = obstacle.pose.position.x - raceline_point.x;
-        double dy = obstacle.pose.position.y - raceline_point.y;
+        const auto& raceline_point = obstacle.getRaceline()[i];
+        double dx = obstacle.getPose().position.x - raceline_point.x;
+        double dy = obstacle.getPose().position.y - raceline_point.y;
 
         double squar_dist = dx * dx + dy * dy;
 
@@ -399,15 +399,15 @@ bool NLVO::isVelocityInNLVO(const twist_msg &candidate_vel, const std::vector<Ve
     return false;
 }
 
-int NLVO::nextSIndex(const Obstacle &obstacle, float s)
+int NLVO::nextSIndex(const Car &obstacle, float s)
 {
     float min_dist = std::numeric_limits<float>::max();
     int future_index = 0;
-    for (int i = 0; i < obstacle.s_values.size(); i++)
+    for (int i = 0; i < obstacle.getSValues().size(); i++)
     {
-        if (0 < std::abs(s - obstacle.s_values[i].x) < min_dist)
+        if (0 < std::abs(s - obstacle.getSValues()[i].x) < min_dist)
         {
-            min_dist = std::abs(s - obstacle.s_values[i].x);
+            min_dist = std::abs(s - obstacle.getSValues()[i].x);
             future_index = i;
         }
     }

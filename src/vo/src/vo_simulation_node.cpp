@@ -1,5 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
-#include "car.hpp"
+#include "common/car.hpp"
 #include "road.hpp"
 #include "drone_controller.hpp"
 #include "road_visualization.hpp"
@@ -26,7 +26,7 @@
 VelocityObstacle vo;
 NLVO nlvo;
 PSCAV pscav;
-std::vector<Obstacle> obstacles; 
+std::vector<Car> obstacles; 
 
 // Global variables
 float time_horizon = 7.0f;
@@ -281,7 +281,7 @@ private:
     DroneController controller_;
     std::shared_ptr<Car> controlled_car_;
     std::vector<std::shared_ptr<Car>> drones_;
-    std::vector<Obstacle> obstacles_;
+    std::vector<Car> obstacles_;
 
     
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
@@ -334,19 +334,15 @@ private:
      void obstaclePosCallback(const geometry_msgs::msg::PoseArray msg)
     {   
         for (size_t i=0; i<obstacles_.size();i++){
-        obstacles_[i].pose.position.x= msg.poses[i].position.x;
-        obstacles_[i].pose.position.y= msg.poses[i].position.y;
-        obstacles_[i].pose.position.z= msg.poses[i].position.z;
-        obstacles_[i].pose.orientation = msg.poses[i].orientation;
+        obstacles_[i].setPose(msg.poses[i]);
         }
     }
 
     void obstacleVelCallback(const geometry_msgs::msg::PoseArray msg)
     {   
         for (size_t i=0; i<obstacles_.size();i++){
-        obstacles_[i].velocity.linear.x= msg.poses[i].position.x;
-        obstacles_[i].velocity.linear.y= msg.poses[i].position.y;
-        obstacles_[i].velocity.linear.z= msg.poses[i].position.z;
+        geometry_msgs::msg::Pose pose = msg.poses[i];
+        obstacles_[i].setVelocity(makeVel(pose.position.x,pose.position.y));
         }
     }
 
@@ -361,14 +357,14 @@ private:
             publishTF(*drones_[i], "map", drones_[i]->getId());
             drones_[i]->update(dt);
 
-            // Create obstacle struct for this drone
-            Obstacle obstacle;
-            obstacle.id = drones_[i]->getId(); 
-            obstacle.pose = drones_[i]->getPose();
-            obstacle.velocity = drones_[i]->getVelocity();
-            obstacle.raceline = drones_[i]->getRaceline(); 
-            obstacle.s_values = drones_[i]->getSValues();
-            obstacles_.push_back(obstacle);
+            // // Create obstacle struct for this drone
+            // Car obstacle;
+            // obstacle.id = drones_[i]->getId(); 
+            // obstacle.pose = drones_[i]->getPose();
+            // obstacle.velocity = drones_[i]->getVelocity();
+            // obstacle.raceline = drones_[i]->getRaceline(); 
+            // obstacle.s_values = drones_[i]->getSValues();
+            // obstacles_.push_back(obstacle);
         }
 
         // Get ego car's current pose and velocity
@@ -550,8 +546,8 @@ private:
         float r_total = calculateTotalRadius();
 
         for (const auto& obstacle : obstacles_) {
-            auto obstacle_pose = obstacle.pose;
-            auto obstacle_vel = obstacle.velocity;
+            auto obstacle_pose = obstacle.getPose();
+            auto obstacle_vel = obstacle.getVelocity();
             // check - maybe not needed
             //float dist = vo.distance(ego_pose, obstacle_pose);
 
