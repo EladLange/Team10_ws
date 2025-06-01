@@ -25,7 +25,7 @@ def generate_launch_description():
         executable="rviz2",
         name="rviz2",
         output="screen",
-        arguments=["-d",os.path.join(car_description_dir, "RVIZ", "nlvo_vis.rviz")]
+        arguments=["-d",os.path.join(car_description_dir, "RVIZ", "nlvo_viz.rviz")]
     )
 
     vo_node= Node(
