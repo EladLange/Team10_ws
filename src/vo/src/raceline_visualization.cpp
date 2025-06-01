@@ -6,43 +6,42 @@
 std::vector<point_msg> buildRaceline()
 {
     std::vector<point_msg> raceline;
-    // create a raceline with 100 straight points
-    for (int i = 0; i < 300; ++i)
-    {
+    // // create a raceline with 100 straight points
+    // for (int i = 0; i < 300; ++i)
+    // {
+    //     point_msg point;
+    //     point.x =10.0 + i * 1.0;
+    //     point.y = 0.0;
+    //     point.z = 0.3;
+    //     raceline.push_back(point);
+    // }
+
+    // return raceline;
+
+    std::string filename ="/home/zvi/Desktop/Team10_ws/src/vo/src/track_points - Copy.csv";
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error opening raceline file." << std::endl;
+        return raceline;
+    }
+    std::string line;   // Skip the first line (header)
+    std::getline(file , line);
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
         point_msg point;
-        point.x =10.0 + i * 1.0;
-        point.y = 0.0;
-        point.z = 0.0;
+        std::string token;
+        // Read x, y, z, s values from the line
+        std::getline(iss, token, ',');
+        point.x = std::stod(token);
+        std::getline(iss, token, ',');
+        point.y = std::stod(token);
+        std::getline(iss, token, ',');
+        point.z =0.0; //std::stod(token);
+        std::getline(iss, token, ',');
         raceline.push_back(point);
     }
-
+    file.close();
     return raceline;
-
-//     std::string filename ="/home/zvi/Desktop/Team10_ws/src/vo/src/track_points - Copy.csv";
-//     std::ifstream file(filename);
-//     if (!file.is_open()) {
-//         std::cerr << "Error opening raceline file." << std::endl;
-//         return raceline;
-//     }
-//     std::string line;   // Skip the first line (header)
-//     std::getline(file , line);
-//     while (std::getline(file, line)) {
-//         std::istringstream iss(line);
-//         point_msg point;
-//         std::string token;
-//         // Read x, y, z, s values from the line
-//         std::getline(iss, token, ',');
-//         point.x = std::stod(token);
-//         std::getline(iss, token, ',');
-//         point.y = std::stod(token);
-//         std::getline(iss, token, ',');
-//         point.z =0.0; //std::stod(token);
-//         std::getline(iss, token, ',');
-//         point.s = std::stod(token);
-//         raceline.push_back(point);
-//     }
-//     file.close();
-//     return raceline;
 }
 
 void visualizeRaceline(const std::vector<point_msg>& raceline, vis_marker_arr& marker_array, const rclcpp::Time& now)

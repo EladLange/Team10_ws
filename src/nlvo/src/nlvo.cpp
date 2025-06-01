@@ -14,21 +14,23 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
     
     // Find the minimum time horizon
     float min_time_horizon = max_time;
-
-    // for (size_t i = 0; i < obstacles.size(); i++)
-    // {
-    //     float time_horizon = computeMinimumTimeHorizon(ego_pose, ego_vel, obstacles[i], r_total, control_set);
-    //     std::cout<<"time horizon for obstacle "<<i<<": "<<time_horizon<<std::endl;
-    //     min_time_horizon = std::min(min_time_horizon, time_horizon);
-    // }
-    // std::cout<<"min time horizon: "<<min_time_horizon<<std::endl;
-    min_time_horizon = 2.0f;
+    std::cout<<"selectBestVelocity: " << std::endl;
+    
+    for (size_t i = 0; i < obstacles.size(); i++)
+    {
+        float time_horizon = computeMinimumTimeHorizon(ego_pose, ego_vel, obstacles[i], r_total, control_set);
+        min_time_horizon = std::min(min_time_horizon, time_horizon);
+    }
+    min_time_horizon += 2.0f;
+    std::cout<<"    ego_vel: " << ego_vel.linear.x << ", " << ego_vel.linear.y << std::endl;
+    std::cout<<"    min_time_horizon: " << min_time_horizon << std::endl;
 
     std::vector<VelDisk> all_disks;
     
     for (size_t i = 0; i < obstacles.size(); i++)
     {
-        std::vector<VelDisk> disks = generateNLVODisks(ego_pose, obstacles[i], findTrajectoryIndex(obstacles[i]), r_total, min_time_horizon);
+        int trajectory_index = findTrajectoryIndex(obstacles[i]);
+        std::vector<VelDisk> disks = generateNLVODisks(ego_pose, obstacles[i], trajectory_index, r_total, min_time_horizon);
         all_disks.insert(all_disks.end(), disks.begin(), disks.end());
     }
 
@@ -42,18 +44,14 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
     {  
         if (!isVelocityInNLVO(candidate_vel, all_disks))
         {
-            std::cout<<"candidate velocity: ("<< candidate_vel.linear.x<<","<< candidate_vel.linear.y << ") is safe"<<std::endl;
             safe_vels.push_back(candidate_vel);
-        }
-        else{
-        std::cout<<"candidate velocity: ("<< candidate_vel.linear.x<<","<< candidate_vel.linear.y << ") is NOT SAFE" << std::endl;
         }
     }
 
     // If no safe velocities found, generate emergency velocities
     if (safe_vels.empty())
     {
-        std::cout<<"NO SAFE VELS"<<std::endl;
+        std::cout<<"    No safe velocities found, returning emergency velocity."<<std::endl;
         best_velocity.linear.x = 0.0f;
         best_velocity.linear.y = 0.0f;
         return best_velocity;
@@ -70,6 +68,9 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
             best_velocity = candidate_vel;
         }
     }
+
+    std::cout<<std::endl;
+    std::cout<<std::endl;
     return best_velocity; // Return the best velocity found among the candidates
 }
 
@@ -166,7 +167,6 @@ float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg 
         // Choose the shortest time among all controls
         min_collision_time = std::min(min_collision_time, first_safe_time);
     }
-    min_collision_time=1.0;//DEBUGGING
 
     return min_collision_time;
 }
@@ -236,12 +236,11 @@ std::vector<twist_msg> NLVO::generateCandidateVelocities(const twist_msg& ego_ve
 
 float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_velocity, const std::vector<Obstacle>& obstacles, const twist_msg& candidate_velocity, const point_msg& goal_point, float r_total, float time_horizon)
 {
-
     float cost = 0.0f;
     // cost function constant
     float obstacle_avoidance_weight = 30.0f;
-    float goal_seeking_weight = 70.0f;
-    float smoothness_weight = 10.0f;
+    float goal_seeking_weight = 100.0f;
+    float smoothness_weight = 20.0f;
     float time_step = 1.0f;
     
     // Obstacle avoidance 
@@ -254,9 +253,13 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
     float min_distance = std::numeric_limits<float>::max();
     for (size_t i = 0; i < obstacles.size(); i++)
     {
-        obstacle_future_pose.position.x = obstacles[i].pose.position.x + obstacles[i].velocity.linear.x * time_step;
-        obstacle_future_pose.position.y = obstacles[i].pose.position.y + obstacles[i].velocity.linear.y * time_step;
-        obstacle_future_pose.position.z = obstacles[i].pose.position.z;
+        int traj_idx = findTrajectoryIndex(obstacles[i]);
+        float speed = std::sqrt(std::pow(obstacles[i].velocity.linear.x, 2) + std::pow(obstacles[i].velocity.linear.y, 2));
+        float obstacle_future_s_value = obstacles[i].s_values[traj_idx].x + speed * time_step;
+
+        int obstacle_s_index = nextSIndex(obstacles[i], obstacle_future_s_value);
+        obstacle_future_pose.position.x = obstacles[i].raceline[obstacle_s_index].x;
+        obstacle_future_pose.position.y = obstacles[i].raceline[obstacle_s_index].y;
 
         float dist = std::sqrt(std::pow(ego_future_position.position.x - obstacle_future_pose.position.x, 2) + std::pow(ego_future_position.position.y - obstacle_future_pose.position.y, 2));
         if (dist < min_distance)
@@ -264,9 +267,7 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
             min_distance = dist;  
         }  
     }
-    //std::cout << "Minimum distance to obstacle: " << min_distance << std::endl;
-    float obstacle_avoidance_cost = obstacle_avoidance_weight * (1.0f / min_distance + 1e-3);
-    //std::cout << "Obstacle avoidance cost: " << obstacle_avoidance_cost << std::endl;
+    float obstacle_avoidance_cost = obstacle_avoidance_weight * (1.0f / (min_distance + 1e-3));
     
     // goal seeking cost
     float dx = goal_point.x - ego_future_position.position.x;
@@ -274,24 +275,15 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
 
     float dist_to_goal = std::sqrt(std::pow(dx,2) + std::pow(dy, 2));
     float goal_seeking_cost = goal_seeking_weight * dist_to_goal; 
-    //std::cout << "goal seeking cost: " << goal_seeking_cost << std::endl;
 
     // smoothness cost
     float dx_candidate_vel = candidate_velocity.linear.x - ego_velocity.linear.x;
     float dy_candidate_vel = candidate_velocity.linear.y - ego_velocity.linear.y;
     float dist_candidate_vel = std::sqrt(std::pow(dx_candidate_vel, 2) + std::pow(dy_candidate_vel, 2));
     float smoothness_cost = smoothness_weight * dist_candidate_vel;
-    //std::cout << "smoothness cost: " << smoothness_cost << std::endl;
     
     // Combine costs
     cost = obstacle_avoidance_cost + goal_seeking_cost + smoothness_cost;
-
-    return cost;
-
-    // std::cout << "Cost for velocity (" << candidate_velocity.linear.x << "," << candidate_velocity.linear.y << "): " << cost << std::endl;
-    // std::cout << "Obstacle avoidance cost: " << obstacle_avoidance_cost << std::endl;
-    // std::cout << "Goal seeking cost: " << goal_seeking_cost << std::endl;
-    // std::cout << "Smoothness cost: " << smoothness_cost << std::endl;
 
     return cost;
 }
@@ -301,39 +293,45 @@ std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Obs
     std::vector<VelDisk> disks;
     float dt = 0.01f;
     float t = 0.0f;
-    int s_index=trajectory_index;
+    int obstacle_s_index = trajectory_index;
+    float obstacle_max_s_value = obstacle.s_values[obstacle.s_values.size()-1].x;
     float speed = std::sqrt(std::pow(obstacle.velocity.linear.x, 2) + std::pow(obstacle.velocity.linear.y, 2));
-    int disk_count=0;
+    int disk_count = 0;
+
+    std::cout<<"generateNLVODisks: " << std::endl;
+    std::cout<<"    ego pose: " << ego_pose.position.x << ", " << ego_pose.position.y << std::endl;
     for (t = dt; t <= time_horizon; t += dt)
     {
+        std::cout<<"    t: " << t << std::endl;
+        std::cout<<"        S obs: " << obstacle.s_values[obstacle_s_index].x << std::endl;
         disk_count++;
-        float future_s = obstacle.s_values[s_index].x + speed * t;
+        float obstacle_future_s_value = obstacle.s_values[obstacle_s_index].x + speed * dt;
+        // float obstacle_future_s_value = obstacle.s_values[trajectory_index].x + speed * t;
         
         // find the wanted s value
-        float max_s = obstacle.s_values[obstacle.s_values.size()-1].x;
-        if (future_s > max_s)
+        if (obstacle_future_s_value > obstacle_max_s_value)
         {
-            // std::cout<<"future s is greater than max s"<<std::endl;
-            future_s = future_s - max_s;
+            obstacle_future_s_value = obstacle_future_s_value - obstacle_max_s_value;
         }
 
-        // std::cout<<"future_s: "<<future_s<<std::endl;
-
-
-        // find the closest s index to the given s value
-        s_index = nextSIndex(obstacle, future_s);
+        std::cout<< "        obstacle_s_index: " << obstacle_s_index << std::endl;
+        std::cout<< "        obstacle_future_s_value: " << obstacle_future_s_value << std::endl;
 
         pose_msg relative_pose;
-        relative_pose.position.x = obstacle.raceline[s_index].x - ego_pose.position.x;
-        relative_pose.position.y = obstacle.raceline[s_index].y - ego_pose.position.y;
-
+        relative_pose.position.x = obstacle.raceline[obstacle_s_index].x - ego_pose.position.x;
+        relative_pose.position.y = obstacle.raceline[obstacle_s_index].y - ego_pose.position.y;
+        std::cout<<"        obstacle pose: " << obstacle.raceline[obstacle_s_index].x << ", " << obstacle.raceline[obstacle_s_index].y << std::endl;
+        std::cout<<"        relative pose: " << relative_pose.position.x << ", " << relative_pose.position.y << std::endl;
+        
         // Center of the NLVO disk in velocity space
         VelDisk disk;
         disk.cx = relative_pose.position.x / t;
         disk.cy = relative_pose.position.y / t;
-        disk.radius = r_total / (t);
-
+        disk.radius = r_total / t;
         disks.push_back(disk);
+
+        // find the closest s index to the given s value
+        obstacle_s_index = nextSIndex(obstacle, obstacle_future_s_value);
     }
 
     
@@ -390,8 +388,9 @@ bool NLVO::isVelocityInNLVO(const twist_msg &candidate_vel, const std::vector<Ve
     {
         float dx = candidate_vel.linear.x - disk.cx;
         float dy = candidate_vel.linear.y - disk.cy;
+        // std::cout<<"relative velocity: " << dx << ", " << dy << std::endl;
+        
         float dist = std::sqrt(dx * dx + dy * dy);
-
         if (dist <= disk.radius)
         {
             return true; // Candidate velocity is in the NLVO
@@ -406,7 +405,7 @@ int NLVO::nextSIndex(const Obstacle &obstacle, float s)
     int future_index = 0;
     for (int i = 0; i < obstacle.s_values.size(); i++)
     {
-        if (std::abs(s - obstacle.s_values[i].x) < min_dist)
+        if (0 < std::abs(s - obstacle.s_values[i].x) < min_dist)
         {
             min_dist = std::abs(s - obstacle.s_values[i].x);
             future_index = i;

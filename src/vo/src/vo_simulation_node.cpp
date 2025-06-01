@@ -119,6 +119,20 @@ public:
         }
         file.close();
 
+        // create temp raceline for the obstacles
+        // float di = 0.05f;
+        // for (float i =0; i<300; i+=di)
+        // {
+        //     point_msg point;
+        //     point_msg s_point;
+        //     point.x = 10.0f + i;
+        //     point.y = 0.0f;
+        //     point.z = 0.5f;
+        //     s_point.x = point.x;
+        //     obs_xyz.push_back(point);
+        //     obs_s.push_back(s_point);
+        // }
+
         // print the raceline
         // for (int i = 0; i < obs_xyz.size(); ++i)
         // {
@@ -129,34 +143,34 @@ public:
         // Initialize cars
         controlled_car_ = std::make_shared<Car>("ego", true);
         controlled_car_->setPose(makePose(10.0, 0.0));  // Center of first lane
-        controlled_car_->setVelocity(makeVel(1.0, 0.0));
+        controlled_car_->setVelocity(makeVel(0.0, 0.0));
         controlled_car_->setRaceline(obs_xyz);
         controlled_car_->setSValues(obs_s);
 
         
         //First obstacle
         auto drone0 = std::make_shared<Car>("drone_0", false);
-        drone0->setPose(makePose(30.0, 0.0));
+        drone0->setPose(makePose(35.0, 0.0));
         drone0->setVelocity(makeVel(1.0, 0.0));
         drones_.push_back(drone0);
         drone0->setRaceline(obs_xyz);
         drone0->setSValues(obs_s);
 
 
-        // // Second obstacle
-        // auto drone1 = std::make_shared<Car>("drone_1", false);
-        // drone1->setPose(makePose(20.0,4.5));
-        // drone1->setVelocity(makeVel(1.0, 0.0));
-        // drones_.push_back(drone1);
-        // drone1->setRaceline(obs_xyz);
-        // drone1->setSValues(obs_s);
+        // Second obstacle
+        auto drone1 = std::make_shared<Car>("drone_1", false);
+        drone1->setPose(makePose(20.0,1.0));
+        drone1->setVelocity(makeVel(1.0, 0.0));
+        drones_.push_back(drone1);
+        drone1->setRaceline(obs_xyz);
+        drone1->setSValues(obs_s);
 
-        // // // Third obstacle
-        // // auto drone2 = std::make_shared<Car>("drone_2", false);
-        // // drone2->setPose(makePose(15.0,0.0));
-        // // drone2->setVelocity(makeVel(0.0,0.0));
-        // // drones_.push_back(drone2);
-        // // drone2->setRaceline(obs_xyz);
+        // // Third obstacle
+        // auto drone2 = std::make_shared<Car>("drone_2", false);
+        // drone2->setPose(makePose(15.0,0.0));
+        // drone2->setVelocity(makeVel(0.0,0.0));
+        // drones_.push_back(drone2);
+        // drone2->setRaceline(obs_xyz);
 
         // // Fourth obstacle
         // auto drone3 = std::make_shared<Car>("drone_3", false);
