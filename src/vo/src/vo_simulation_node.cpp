@@ -59,6 +59,9 @@ public:
         // subscribers
         ego_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&CarSimulationNode::egoVelCallback,this, _1));
         ego_pos_sub_ = this->create_subscription<geometry_msgs::msg::Pose>("/ego_pose",10,std::bind(&CarSimulationNode::egoPosCallback,this, _1));
+        obstacles_pos_sub_ = this->create_subscription<geometry_msgs::msg::PoseArray>("/obstacles_poses",10,std::bind(&CarSimulationNode::obstaclePosCallback,this, _1));
+        obstacles_vel_sub_ = this->create_subscription<geometry_msgs::msg::PoseArray>("/obstacles_vels",10,std::bind(&CarSimulationNode::obstacleVelCallback,this, _1));
+
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -148,46 +151,79 @@ public:
         controlled_car_->setSValues(obs_s);
 
         
-        // //First obstacle
-        // auto drone0 = std::make_shared<Car>("drone_0", false);
-        // drone0->setPose(makePose(35.0, 0.0));
-        // drone0->setVelocity(makeVel(1.0, 0.0));
-        // drones_.push_back(drone0);
-        // drone0->setRaceline(obs_xyz);
-        // drone0->setSValues(obs_s);
+        //First obstacle
+        auto drone0 = std::make_shared<Car>("drone_0", false);
+        drone0->setPose(makePose(35.0, 0.0));
+        drone0->setVelocity(makeVel(1.0, 0.0));
+        drones_.push_back(drone0);
+        drone0->setRaceline(obs_xyz);
+        drone0->setSValues(obs_s);
 
 
-        // // Second obstacle
-        // auto drone1 = std::make_shared<Car>("drone_1", false);
-        // drone1->setPose(makePose(20.0,0.0));
-        // drone1->setVelocity(makeVel(1.0, 0.0));
-        // drones_.push_back(drone1);
-        // drone1->setRaceline(obs_xyz);
-        // drone1->setSValues(obs_s);
+        // Second obstacle
+        auto drone1 = std::make_shared<Car>("drone_1", false);
+        drone1->setPose(makePose(20.0,0.0));
+        drone1->setVelocity(makeVel(1.0, 0.0));
+        drones_.push_back(drone1);
+        drone1->setRaceline(obs_xyz);
+        drone1->setSValues(obs_s);
 
-        // // Third obstacle
-        // auto drone2 = std::make_shared<Car>("drone_2", false);
-        // drone2->setPose(makePose(50.0,0.0));
-        // drone2->setVelocity(makeVel(0.0,0.0));
-        // drones_.push_back(drone2);
-        // drone2->setRaceline(obs_xyz);
-        // drone2->setSValues(obs_s);
+        // Third obstacle
+        auto drone2 = std::make_shared<Car>("drone_2", false);
+        drone2->setPose(makePose(50.0,0.0));
+        drone2->setVelocity(makeVel(0.0,0.0));
+        drones_.push_back(drone2);
+        drone2->setRaceline(obs_xyz);
+        drone2->setSValues(obs_s);
 
-        // // Fourth obstacle
-        // auto drone3 = std::make_shared<Car>("drone_3", false);
-        // drone3->setPose(makePose(40.0,-4.5));
-        // drone3->setVelocity(makeVel(1.0, 0.0));
-        // drones_.push_back(drone3);
-        // drone3->setRaceline(obs_xyz);
-        // drone3->setSValues(obs_s);
+        // Fourth obstacle
+        auto drone3 = std::make_shared<Car>("drone_3", false);
+        drone3->setPose(makePose(40.0,-4.5));
+        drone3->setVelocity(makeVel(1.0, 0.0));
+        drones_.push_back(drone3);
+        drone3->setRaceline(obs_xyz);
+        drone3->setSValues(obs_s);
 
-        // // Fifth obstacle
-        // auto drone4 = std::make_shared<Car>("drone_4", false);
-        // drone4->setPose(makePose(50.0,0.0));
-        // drone4->setVelocity(makeVel(1.0, 0.0));
-        // drones_.push_back(drone4);
-        // drone4->setRaceline(obs_xyz);
-        // drone4->setSValues(obs_s);
+        // Fifth obstacle
+        auto drone4 = std::make_shared<Car>("drone_4", false);
+        drone4->setPose(makePose(50.0,0.0));
+        drone4->setVelocity(makeVel(1.0, 0.0));
+        drones_.push_back(drone4);
+        drone4->setRaceline(obs_xyz);
+        drone4->setSValues(obs_s);
+
+        // Sixth obstacle
+        auto drone5 = std::make_shared<Car>("drone_5", false);
+        drone5->setPose(makePose(50.0,0.0));
+        drone5->setVelocity(makeVel(1.0, 0.0));
+        drones_.push_back(drone5);
+        drone5->setRaceline(obs_xyz);
+        drone5->setSValues(obs_s);
+
+        // Fifth obstacle
+        auto drone6 = std::make_shared<Car>("drone_6", false);
+        drone6->setPose(makePose(70.0,0.0));
+        drone6->setVelocity(makeVel(1.0, 0.0));
+        drones_.push_back(drone6);
+        drone6->setRaceline(obs_xyz);
+        drone6->setSValues(obs_s);
+
+        // Fifth obstacle
+        auto drone7 = std::make_shared<Car>("drone_7", false);
+        drone7->setPose(makePose(60.0,0.0));
+        drone7->setVelocity(makeVel(1.0, 0.0));
+        drones_.push_back(drone7);
+        drone7->setRaceline(obs_xyz);
+        drone7->setSValues(obs_s);
+
+        //Eighth obstacle
+        auto drone8 = std::make_shared<Car>("drone_8", false);
+        drone8->setPose(makePose(80.0,0.0));
+        drone8->setVelocity(makeVel(1.0, 0.0));
+        drones_.push_back(drone8);
+        drone8->setRaceline(obs_xyz);
+        drone8->setSValues(obs_s);
+
     }
 
 
@@ -263,6 +299,8 @@ private:
     // ROS subscribers
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr ego_vel_sub_;
     rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr ego_pos_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr obstacles_pos_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr obstacles_vel_sub_;
 
 
     pose_msg makePose(double x, double y, double z = 0.5) {
@@ -293,6 +331,24 @@ private:
         //RCLCPP_INFO(this->get_logger(), "Ego car velocity set to: (%f, %f)", msg->linear.x, msg->linear.y);
     }
 
+     void obstaclePosCallback(const geometry_msgs::msg::PoseArray msg)
+    {   
+        for (size_t i=0; i<obstacles_.size();i++){
+        obstacles_[i].pose.position.x= msg.poses[i].position.x;
+        obstacles_[i].pose.position.y= msg.poses[i].position.y;
+        obstacles_[i].pose.position.z= msg.poses[i].position.z;
+        obstacles_[i].pose.orientation = msg.poses[i].orientation;
+        }
+    }
+
+    void obstacleVelCallback(const geometry_msgs::msg::PoseArray msg)
+    {   
+        for (size_t i=0; i<obstacles_.size();i++){
+        obstacles_[i].velocity.linear.x= msg.poses[i].position.x;
+        obstacles_[i].velocity.linear.y= msg.poses[i].position.y;
+        obstacles_[i].velocity.linear.z= msg.poses[i].position.z;
+        }
+    }
 
     void update() {
         double dt = 0.1;  // 100 ms

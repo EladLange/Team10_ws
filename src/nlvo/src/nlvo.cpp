@@ -239,7 +239,7 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
     float cost = 0.0f;
     // cost function constant
     float obstacle_avoidance_weight = 30.0f;
-    float goal_seeking_weight = 300.0f;
+    float goal_seeking_weight = 100.0f;
     float smoothness_weight = 20.0f;
     float time_step = 1.0f;
     

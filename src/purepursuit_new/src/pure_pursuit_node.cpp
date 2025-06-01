@@ -8,13 +8,13 @@
 #include "rclcpp/rclcpp.hpp"  // Core ROS2 client library
 #include "geometry_msgs/msg/pose_stamped.hpp"  // Message type for robot pose
 #include "geometry_msgs/msg/pose_array.hpp"  // Message type for robot pose
+#include <geometry_msgs/msg/twist_stamped.hpp> // Message type for velocity commands
 #include "nav_msgs/msg/path.hpp"  // Message type for paths
 #include "visualization_msgs/msg/marker.hpp"  // Message type for RViz visualization markers
 #include "visualization_msgs/msg/marker_array.hpp"  // Message type for RViz visualization marker arrays
 #include "tf2/LinearMath/Quaternion.h"  // For quaternion math (yaw to quaternion)
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"  // Conversion between TF2 and geometry_msgs
 #include "tf2_ros/transform_broadcaster.h"  // For publishing dynamic transforms
-#include "geometry_msgs/msg/twist.hpp"
 
 // Include custom headers for vehicle state and model
 #include "types.hpp"  // Defines struct State (x, y, yaw)
@@ -35,23 +35,19 @@
 
 using namespace std::chrono_literals;  // Allow writing 10ms, 1s etc. as time literals
 
-using std::placeholders::_1;
-
 // ========== NODE CLASS DEFINITION ==========
 class PurePursuitNode : public rclcpp::Node {
 public:
     // Constructor – Initializes publishers, timer, paths and drones
     PurePursuitNode() : Node("pure_pursuit_node") {
-        // Create a shared bicycle kinematic model with wheelbase 2.5 meters
-        vehicle_model_ = std::make_shared<BicycleModel>(2.5);
-        
-
+        // Create a shared bicycle kinematic model with wheelbase 1.55 meters
+        vehicle_model_ = std::make_shared<BicycleModel>(1.55);
 
         // Define paths to load
         std::array<std::string, 3> path_files = {
-            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane0.csv",
-            "/home/zvi/Desktop/Team10_ws/src/vo/src/track_points.csv",
-            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/Oval_path_lane2.csv"
+            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/clothoid_inner_lane.csv",
+            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/clothoid_center_lane.csv",
+            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/clothoid_outer_lane.csv"
         };
 
         // Load all paths
@@ -75,64 +71,58 @@ public:
 
         // Create publishers
         path_pub_ = this->create_publisher<nav_msgs::msg::Path>("trajectory", 10);
-        drone_poses_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("drone_pose", 10); // Changed to "drone_pose" to match VO package
+        obs_poses_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("/obstacles_poses", 10); // Changed to "drone_pose" to match VO package
         drone_paths_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("drone_paths", 10);
+        obs_vel_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("/obs_vels", 10);
         vehicle_markers_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("vehicle_markers", 10);
-        vel_cmd_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("vel_cmd", 10);
-        robot_pose_sub_ = this->create_subscription<geometry_msgs::msg::Pose>("/ego_pose", 10, std::bind(&PurePursuitNode::robotPoseCallback, this, _1));
 
         // Create a broadcaster to publish transforms for visualization
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
-        // Create drones (one for each path or up to max_drones)
-        const int max_drones = 3; // Maximum number of drones to create
-        const int num_drones = std::min(static_cast<int>(paths_.size()), max_drones);
+        // Create drones (one for each path or up to drones_per_path)
+        const int drones_per_path = 3; // number of drones per path
+        const int num_drones = std::min(static_cast<int>(paths_.size()), drones_per_path);
 
         for (int i = 0; i < num_drones; ++i) {
             // Create initial state for the drone
             // Position each drone at the start of its path with some z-offset to avoid collisions
-            State initial_state("drone_" + std::to_string(i),
-                               paths_[i].first[0],  // x
-                               paths_[i].second[0], // y
+            for (int j=0; j<drones_per_path; ++j){
+
+                State initial_state("drone_" + std::to_string(i),
+                               paths_[i].first[0]+10*j,  // x (staggered start positions)
+                               paths_[i].second[0], // y (start at the same y position)
                                0.2,       // z (staggered heights)
                                0.0);                // yaw
-
             // Create the drone with its assigned path
-            auto drone = std::make_shared<Drone>(
-                "drone_" + std::to_string(i),
-                vehicle_model_,
-                paths_[i].first,   // x coordinates
-                paths_[i].second,  // y coordinates
-                initial_state
-            );
-
-            drones_.push_back(drone);
-            // RCLCPP_INFO(this->get_logger(), "Created drone %d at position (%f, %f, %f)",
-                    //    i, initial_state.x, initial_state.y, initial_state.z);
+                auto drone = std::make_shared<Drone>(
+                    "drone_" + std::to_string(i),
+                    vehicle_model_,
+                    paths_[i].first,   // x coordinates
+                    paths_[i].second,  // y coordinates
+                    initial_state
+                );
+        
+                drones_.push_back(drone);
+                RCLCPP_INFO(this->get_logger(), "Created drone %d at position (%f, %f, %f)",
+                        i, initial_state.x, initial_state.y, initial_state.z);
+            }
         }
 
         // Create a periodic timer that triggers control loop every 10 milliseconds
         timer_ = this->create_wall_timer(10ms, std::bind(&PurePursuitNode::onTimer, this));
     }
 
-    void robotPoseCallback(const geometry_msgs::msg::Pose &msg) {
-        EgoPose = msg;
-    }
-
 private:
     // ========== PRIVATE MEMBER VARIABLES ==========
     std::shared_ptr<VehicleModelBase> vehicle_model_;  // Shared vehicle model for all drones
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;  // Publisher for trajectory visualization
-    rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr drone_poses_pub_;  // Publisher for all drone poses
+    rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr obs_poses_pub_;  // Publisher for all drone poses
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr drone_paths_pub_;  // Publisher for all drone paths
+    rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr obs_vel_pub_;  // Publisher for velocity commands
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr vehicle_markers_pub_;  // Publisher for vehicle markers
-    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr vel_cmd_pub_;
     rclcpp::TimerBase::SharedPtr timer_;  // Timer object for periodic updates
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;  // Transform broadcaster for TF visualization
 
-    rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr robot_pose_sub_;
-
-    geometry_msgs::msg::Pose EgoPose;
     // Vector of paths, each path is a pair of vectors (x coordinates, y coordinates)
     std::vector<std::pair<std::vector<double>, std::vector<double>>> paths_;
 
@@ -171,14 +161,15 @@ private:
         return {path_x, path_y};
     }
 
-    geometry_msgs::msg::Twist velToTwist(double velocity, double yaw){
-
-        geometry_msgs::msg::Twist vel_cmd;
-        vel_cmd.linear.x = velocity * std::cos(yaw);
-        vel_cmd.linear.y = velocity * std::sin(yaw);
-        return vel_cmd;
+    // ========== VELOCITY TO TWIST ==========
+    // Converts a velocity to a twist message based on the drone's orientation (yaw)
+    geometry_msgs::msg::Pose velocityToTwist(double velocity, double yaw,const std_msgs::msg::Header & header)
+    {
+      geometry_msgs::msg::Pose vel;
+      vel.position.x  = velocity * std::cos(yaw);
+      vel.position.y  = velocity * std::sin(yaw);
+      return vel;
     }
-
     // ========== TIMER CALLBACK ==========
     // Called every 10ms: updates all drone states and publishes visualization
     void onTimer() {
@@ -190,6 +181,10 @@ private:
         drone_poses.header.stamp = now();
         drone_poses.header.frame_id = "map";
 
+        geometry_msgs::msg::PoseArray obs_vels;
+        drone_poses.header.stamp = now();
+        drone_poses.header.frame_id = "map";
+
         // Create marker array for drone paths
         visualization_msgs::msg::MarkerArray path_markers;
 
@@ -197,36 +192,30 @@ private:
         visualization_msgs::msg::MarkerArray vehicle_markers;
 
         // Update each drone and collect visualization data
-        for (size_t i = 0; i < 1; ++i) {
+        for (size_t i = 0; i < drones_.size(); ++i) {
             // Update drone state using pure pursuit control
-            drones_[i]->update(dt, velocity-2);
+            double new_velocity = 5.0 + i; // velocity for each drone
+            drones_[i]->update(dt, new_velocity); // Update drone state
+
             // Get current drone state
             const State& state = drones_[i]->getState();
 
+            // now publish the twist for this drone:
+            auto vel = velocityToTwist(new_velocity, state.yaw, drone_poses.header);
+            obs_vels.poses.push_back(vel);
             
+
 
             // Create pose for this drone
             geometry_msgs::msg::Pose drone_pose;
-            drone_pose.position.x = EgoPose.position.x;
-            drone_pose.position.y = EgoPose.position.y;
-            drone_pose.position.z = EgoPose.position.z;
+            drone_pose.position.x = state.x;
+            drone_pose.position.y = state.y;
+            drone_pose.position.z = state.z;
 
-            // // Convert yaw to quaternion
-            // tf2::Quaternion q;
-            // q.setRPY(0, 0, state.yaw);
-            // drone_pose.orientation = tf2::toMsg(q);
-
-            tf2::Quaternion q(
-            EgoPose.orientation.x,
-            EgoPose.orientation.y,
-            EgoPose.orientation.z,
-            EgoPose.orientation.w);
-            tf2::Matrix3x3 m(q);
-            double roll, pitch, yaw;
-            m.getRPY(roll, pitch, yaw);
-
-            geometry_msgs::msg::Twist vel_cmd = velToTwist(velocity, yaw);
-            // vel_cmd_pub_->publish(vel_cmd);
+            // Convert yaw to quaternion
+            tf2::Quaternion q;
+            q.setRPY(0, 0, state.yaw);
+            drone_pose.orientation = tf2::toMsg(q);
 
             // Add to pose array
             drone_poses.poses.push_back(drone_pose);
@@ -245,18 +234,48 @@ private:
             vehicle_marker.scale.z = 0.5;  // Height
 
             // Set color based on drone index (different color for each drone)
-            switch (i % 3) {
+            switch (i % 9) {
                 case 0:
                     vehicle_marker.color.r = 1.0f;
                     vehicle_marker.color.g = 0.0f;
                     vehicle_marker.color.b = 0.0f;
                     break;
                 case 1:
+                    vehicle_marker.color.r = 1.0f;
+                    vehicle_marker.color.g = 0.0f;
+                    vehicle_marker.color.b = 0.0f;
+                break;
+                case 2:
+                    vehicle_marker.color.r = 1.0f;
+                    vehicle_marker.color.g = 0.0f;
+                    vehicle_marker.color.b = 0.0f;
+                break;
+                case 3:
                     vehicle_marker.color.r = 0.0f;
                     vehicle_marker.color.g = 1.0f;
                     vehicle_marker.color.b = 0.0f;
                     break;
-                case 2:
+                case 4:
+                    vehicle_marker.color.r = 0.0f;
+                    vehicle_marker.color.g = 1.0f;
+                    vehicle_marker.color.b = 0.0f;
+                    break;
+                case 5:
+                    vehicle_marker.color.r = 0.0f;
+                    vehicle_marker.color.g = 1.0f;
+                    vehicle_marker.color.b = 0.0f;
+                    break;
+                case 6:
+                    vehicle_marker.color.r = 0.0f;
+                    vehicle_marker.color.g = 0.0f;
+                    vehicle_marker.color.b = 1.0f;
+                    break;
+                case 7:
+                    vehicle_marker.color.r = 0.0f;
+                    vehicle_marker.color.g = 0.0f;
+                    vehicle_marker.color.b = 1.0f;
+                    break;
+                case 8:
                     vehicle_marker.color.r = 0.0f;
                     vehicle_marker.color.g = 0.0f;
                     vehicle_marker.color.b = 1.0f;
@@ -312,7 +331,8 @@ private:
         }
 
         // Publish all visualization messages
-        drone_poses_pub_->publish(drone_poses);
+        obs_poses_pub_->publish(drone_poses);
+        obs_vel_pub_->publish(obs_vels);
         vehicle_markers_pub_->publish(vehicle_markers);
         drone_paths_pub_->publish(path_markers);
     }

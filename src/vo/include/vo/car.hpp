@@ -48,9 +48,14 @@ private:
     std::string id_;
     bool controlled_;
     //Car position & orientation
-    pose_msg pose_;
+    pose_msg pose;
     //Car linear & angular velocity
-    twist_msg velocity_;
+    twist_msg velocity;
+
+    //obstacles tangent speed
+    float speed_;
+    //lane number
+    int lane_number_;
 
     // Car's raceline
     std::vector<point_msg> raceline_;
