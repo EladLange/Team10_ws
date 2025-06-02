@@ -14,7 +14,7 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
     
     // Find the minimum time horizon
     float min_time_horizon = max_time;
-    std::cout<<"selectBestVelocity: " << std::endl;
+    // std::cout<<"selectBestVelocity: " << std::endl;
     
     for (size_t i = 0; i < obstacles.size(); i++)
     {
@@ -22,8 +22,8 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
         min_time_horizon = std::min(min_time_horizon, time_horizon);
     }
     min_time_horizon += 2.0f;
-    std::cout<<"    ego_vel: " << ego_vel.linear.x << ", " << ego_vel.linear.y << std::endl;
-    std::cout<<"    min_time_horizon: " << min_time_horizon << std::endl;
+    // std::cout<<"    ego_vel: " << ego_vel.linear.x << ", " << ego_vel.linear.y << std::endl;
+    //std::cout<<"    min_time_horizon: " << min_time_horizon << std::endl;
 
     std::vector<VelDisk> all_disks;
     
@@ -51,7 +51,7 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
     // If no safe velocities found, generate emergency velocities
     if (safe_vels.empty())
     {
-        std::cout<<"    No safe velocities found, returning emergency velocity."<<std::endl;
+        //std::cout<<"    No safe velocities found, returning emergency velocity."<<std::endl;
         best_velocity.linear.x = 0.0f;
         best_velocity.linear.y = 0.0f;
         return best_velocity;
@@ -298,12 +298,12 @@ std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Car
     float speed = std::sqrt(std::pow(obstacle.getVelocity().linear.x, 2) + std::pow(obstacle.getVelocity().linear.y, 2));
     int disk_count = 0;
 
-    std::cout<<"generateNLVODisks: " << std::endl;
-    std::cout<<"    ego pose: " << ego_pose.position.x << ", " << ego_pose.position.y << std::endl;
+    // std::cout<<"generateNLVODisks: " << std::endl;
+    // std::cout<<"    ego pose: " << ego_pose.position.x << ", " << ego_pose.position.y << std::endl;
     for (t = dt; t <= time_horizon; t += dt)
     {
-        std::cout<<"    t: " << t << std::endl;
-        std::cout<<"        S obs: " << obstacle.getSValues()[obstacle_s_index].x << std::endl;
+        // std::cout<<"    t: " << t << std::endl;
+        // std::cout<<"        S obs: " << obstacle.getSValues()[obstacle_s_index].x << std::endl;
         disk_count++;
         float obstacle_future_s_value = obstacle.getSValues()[obstacle_s_index].x + speed * dt;
         // float obstacle_future_s_value = obstacle.s_values[trajectory_index].x + speed * t;
@@ -314,14 +314,14 @@ std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Car
             obstacle_future_s_value = obstacle_future_s_value - obstacle_max_s_value;
         }
 
-        std::cout<< "        obstacle_s_index: " << obstacle_s_index << std::endl;
-        std::cout<< "        obstacle_future_s_value: " << obstacle_future_s_value << std::endl;
+        // std::cout<< "        obstacle_s_index: " << obstacle_s_index << std::endl;
+        // std::cout<< "        obstacle_future_s_value: " << obstacle_future_s_value << std::endl;
 
         pose_msg relative_pose;
         relative_pose.position.x = obstacle.getRaceline()[obstacle_s_index].x - ego_pose.position.x;
         relative_pose.position.y = obstacle.getRaceline()[obstacle_s_index].y - ego_pose.position.y;
-        std::cout<<"        obstacle pose: " << obstacle.getRaceline()[obstacle_s_index].x << ", " << obstacle.getRaceline()[obstacle_s_index].y << std::endl;
-        std::cout<<"        relative pose: " << relative_pose.position.x << ", " << relative_pose.position.y << std::endl;
+        // std::cout<<"        obstacle pose: " << obstacle.getRaceline()[obstacle_s_index].x << ", " << obstacle.getRaceline()[obstacle_s_index].y << std::endl;
+        // std::cout<<"        relative pose: " << relative_pose.position.x << ", " << relative_pose.position.y << std::endl;
         
         // Center of the NLVO disk in velocity space
         VelDisk disk;

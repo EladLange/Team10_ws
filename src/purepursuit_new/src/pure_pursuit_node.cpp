@@ -73,7 +73,7 @@ public:
         path_pub_ = this->create_publisher<nav_msgs::msg::Path>("trajectory", 10);
         obs_poses_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("/obstacles_poses", 10); // Changed to "drone_pose" to match VO package
         drone_paths_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("drone_paths", 10);
-        obs_vel_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("/obs_vels", 10);
+        obs_vel_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("/obstacles_vels", 10);
         vehicle_markers_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("vehicle_markers", 10);
 
         // Create a broadcaster to publish transforms for visualization

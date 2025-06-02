@@ -26,8 +26,8 @@
 VelocityObstacle vo;
 NLVO nlvo;
 PSCAV pscav;
-std::vector<Car> obstacles; 
-std::vector<Car> egos;
+// std::vector<Car> obstacles; 
+// std::vector<Car> egos;
 
 // Global variables
 float time_horizon = 7.0f;
@@ -151,21 +151,20 @@ public:
 
         
         //First obstacle
-        auto drone0 = std::make_shared<Car>("drone_0", false);
-        drone0->setPose(makePose(35.0, 0.0));
-        drone0->setVelocity(makeVel(1.0, 0.0));
-        drones_.push_back(drone0);
-        drone0->setRaceline(obs_xyz);
-        drone0->setSValues(obs_s);
+        auto obs_0 = std::make_shared<Car>("obs_0", false);
+        obs_0->setPose(makePose(35.0, 0.0));
+        obs_0->setVelocity(makeVel(10.0, 0.0));
+        obs_0->setRaceline(obs_xyz);
+        obs_0->setSValues(obs_s);
+        obstacles_.push_back(obs_0);
 
+        auto obs_1 = std::make_shared<Car>("obs_1", false);
+        obs_1->setPose(makePose(20.0, 0.0));
+        obs_1->setVelocity(makeVel(10.0, 0.0));
+        obs_1->setRaceline(obs_xyz);
+        obs_1->setSValues(obs_s);
+        obstacles_.push_back(obs_1);
 
-        // Second obstacle
-        auto drone1 = std::make_shared<Car>("drone_1", false);
-        drone1->setPose(makePose(20.0,0.0));
-        drone1->setVelocity(makeVel(1.0, 0.0));
-        drones_.push_back(drone1);
-        drone1->setRaceline(obs_xyz);
-        drone1->setSValues(obs_s);
 
         // // Third obstacle
         // auto drone2 = std::make_shared<Car>("drone_2", false);
@@ -279,8 +278,8 @@ private:
     Road road_;
     DroneController controller_;
     std::shared_ptr<Car> controlled_car_;
-    std::vector<std::shared_ptr<Car>> drones_;
-    std::vector<Car> obstacles_;
+    // std::vector<std::shared_ptr<Car>> drones_;
+    std::vector<std::shared_ptr<Car>> obstacles_;
 
     
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
@@ -333,7 +332,7 @@ private:
     void obstaclePosCallback(const geometry_msgs::msg::PoseArray msg)
     {   
         for (size_t i=0; i<obstacles_.size();i++){
-        obstacles_[i].setPose(msg.poses[i]);
+        obstacles_[i]->setPose(msg.poses[i]);
         }
     }
 
@@ -341,20 +340,25 @@ private:
     {   
         for (size_t i=0; i<obstacles_.size();i++){
         geometry_msgs::msg::Pose pose = msg.poses[i];
-        obstacles_[i].setVelocity(makeVel(pose.position.x,pose.position.y));
+        obstacles_[i]->setVelocity(makeVel(pose.position.x,pose.position.y));
         }
     }
 
     void update() {
         double dt = 0.1;  // 100 ms
-        obstacles_.clear();
+        // obstacles_.clear();
 
         // Update drones
-        for (size_t i = 0; i < drones_.size(); ++i) {
+        for (size_t i = 0; i < obstacles_.size(); ++i) {
         //    controller_.control(*drones_[i], static_cast<int>(i));
-            publishPose(*drones_[i]);
-            publishTF(*drones_[i], "map", drones_[i]->getId());
-            drones_[i]->update(dt);
+            publishPose(*obstacles_[i]);
+            publishTF(*obstacles_[i], "map", obstacles_[i]->getId());
+            // obstacles_[i]->update(dt);
+            // RCLCPP_INFO(this->get_logger(), "Drone %s updated to pose: (%f, %f, %f)",
+            //             obstacles_[i].getId().c_str(),
+            //             obstacles_[i].getPose().position.x,
+            //             obstacles_[i].getPose().position.y,
+            //             obstacles_[i].getPose().position.z);
 
             // // Create obstacle struct for this drone
             // Car obstacle;
@@ -374,7 +378,7 @@ private:
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
         // twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
-        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
+        twist_msg new_ego_velocity =makeVel(5.0,0.0); //nlvo.selectBestVelocity(ego_pose, ego_vel, *obstacles_, goal_point, r_total);
         // twist_msg new_ego_velocity = pscav.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         // Set the new velocity for the ego car
         // controlled_car_->setVelocity(new_ego_velocity);
@@ -431,7 +435,7 @@ private:
 
         // Drones
         int id = 0;
-        for (const auto& car : drones_) {
+        for (const auto& car : obstacles_) {
             marker_array.markers.push_back(makeCarMarker(*car, id++));
             setVelocityArrowMarker(marker_array, *car, this->now(), "map",id);
         }
@@ -541,7 +545,7 @@ private:
 
             vis_marker cone_marker;
             // Set the properties of the cone marker
-            setVOConeMarker(cone_marker, ego_pose, obstacle, r_total);
+            setVOConeMarker(cone_marker, ego_pose, *obstacle, r_total);
             cone_marker.id = id++;
             marker_array.markers.push_back(cone_marker);
         }
@@ -568,10 +572,10 @@ private:
        auto ego_vel = controlled_car_->getVelocity();
        float r_total = calculateTotalRadius();
        for (const auto& obstacle : obstacles_) {
-            float time_horizon = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, obstacle, r_total, nlvo.control_set) + 0.0f;
+            float time_horizon = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, *obstacle, r_total, nlvo.control_set) + 0.0f;
 
-            int trajectory_index = nlvo.findTrajectoryIndex(obstacle);
-            std::vector<VelDisk> disks = nlvo.generateNLVODisks(ego_pose, obstacle, trajectory_index, r_total, time_horizon);  
+            int trajectory_index = nlvo.findTrajectoryIndex(*obstacle);
+            std::vector<VelDisk> disks = nlvo.generateNLVODisks(ego_pose, *obstacle, trajectory_index, r_total, time_horizon);  
 
             // Visualize each disk
             for (auto &disk : disks)
