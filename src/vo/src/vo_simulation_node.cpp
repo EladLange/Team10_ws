@@ -27,6 +27,7 @@ VelocityObstacle vo;
 NLVO nlvo;
 PSCAV pscav;
 std::vector<Car> obstacles; 
+std::vector<Car> egos;
 
 // Global variables
 float time_horizon = 7.0f;
@@ -89,8 +90,6 @@ public:
     //     }
     // }
 
-    
-    
     void initialize_cars()
     {
         std::vector<point_msg> obs_xyz;
@@ -168,113 +167,113 @@ public:
         drone1->setRaceline(obs_xyz);
         drone1->setSValues(obs_s);
 
-        // Third obstacle
-        auto drone2 = std::make_shared<Car>("drone_2", false);
-        drone2->setPose(makePose(50.0,0.0));
-        drone2->setVelocity(makeVel(0.0,0.0));
-        drones_.push_back(drone2);
-        drone2->setRaceline(obs_xyz);
-        drone2->setSValues(obs_s);
+        // // Third obstacle
+        // auto drone2 = std::make_shared<Car>("drone_2", false);
+        // drone2->setPose(makePose(50.0,0.0));
+        // drone2->setVelocity(makeVel(0.0,0.0));
+        // drones_.push_back(drone2);
+        // drone2->setRaceline(obs_xyz);
+        // drone2->setSValues(obs_s);
 
-        // Fourth obstacle
-        auto drone3 = std::make_shared<Car>("drone_3", false);
-        drone3->setPose(makePose(40.0,-4.5));
-        drone3->setVelocity(makeVel(1.0, 0.0));
-        drones_.push_back(drone3);
-        drone3->setRaceline(obs_xyz);
-        drone3->setSValues(obs_s);
+        // // Fourth obstacle
+        // auto drone3 = std::make_shared<Car>("drone_3", false);
+        // drone3->setPose(makePose(40.0,-4.5));
+        // drone3->setVelocity(makeVel(1.0, 0.0));
+        // drones_.push_back(drone3);
+        // drone3->setRaceline(obs_xyz);
+        // drone3->setSValues(obs_s);
 
-        // Fifth obstacle
-        auto drone4 = std::make_shared<Car>("drone_4", false);
-        drone4->setPose(makePose(50.0,0.0));
-        drone4->setVelocity(makeVel(1.0, 0.0));
-        drones_.push_back(drone4);
-        drone4->setRaceline(obs_xyz);
-        drone4->setSValues(obs_s);
+        // // Fifth obstacle
+        // auto drone4 = std::make_shared<Car>("drone_4", false);
+        // drone4->setPose(makePose(50.0,0.0));
+        // drone4->setVelocity(makeVel(1.0, 0.0));
+        // drones_.push_back(drone4);
+        // drone4->setRaceline(obs_xyz);
+        // drone4->setSValues(obs_s);
 
-        // Sixth obstacle
-        auto drone5 = std::make_shared<Car>("drone_5", false);
-        drone5->setPose(makePose(50.0,0.0));
-        drone5->setVelocity(makeVel(1.0, 0.0));
-        drones_.push_back(drone5);
-        drone5->setRaceline(obs_xyz);
-        drone5->setSValues(obs_s);
+        // // Sixth obstacle
+        // auto drone5 = std::make_shared<Car>("drone_5", false);
+        // drone5->setPose(makePose(50.0,0.0));
+        // drone5->setVelocity(makeVel(1.0, 0.0));
+        // drones_.push_back(drone5);
+        // drone5->setRaceline(obs_xyz);
+        // drone5->setSValues(obs_s);
 
-        // Fifth obstacle
-        auto drone6 = std::make_shared<Car>("drone_6", false);
-        drone6->setPose(makePose(70.0,0.0));
-        drone6->setVelocity(makeVel(1.0, 0.0));
-        drones_.push_back(drone6);
-        drone6->setRaceline(obs_xyz);
-        drone6->setSValues(obs_s);
+        // // Fifth obstacle
+        // auto drone6 = std::make_shared<Car>("drone_6", false);
+        // drone6->setPose(makePose(70.0,0.0));
+        // drone6->setVelocity(makeVel(1.0, 0.0));
+        // drones_.push_back(drone6);
+        // drone6->setRaceline(obs_xyz);
+        // drone6->setSValues(obs_s);
 
-        // Fifth obstacle
-        auto drone7 = std::make_shared<Car>("drone_7", false);
-        drone7->setPose(makePose(60.0,0.0));
-        drone7->setVelocity(makeVel(1.0, 0.0));
-        drones_.push_back(drone7);
-        drone7->setRaceline(obs_xyz);
-        drone7->setSValues(obs_s);
+        // // Fifth obstacle
+        // auto drone7 = std::make_shared<Car>("drone_7", false);
+        // drone7->setPose(makePose(60.0,0.0));
+        // drone7->setVelocity(makeVel(1.0, 0.0));
+        // drones_.push_back(drone7);
+        // drone7->setRaceline(obs_xyz);
+        // drone7->setSValues(obs_s);
 
-        //Eighth obstacle
-        auto drone8 = std::make_shared<Car>("drone_8", false);
-        drone8->setPose(makePose(80.0,0.0));
-        drone8->setVelocity(makeVel(1.0, 0.0));
-        drones_.push_back(drone8);
-        drone8->setRaceline(obs_xyz);
-        drone8->setSValues(obs_s);
-
-    }
-
-
-point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
-{
-    int lookahead_step = 5;
-    point_msg point;
-
-    // fallback if raceline is empty
-    if (raceline.empty())
-    {
-        //std::cout<<"Raceline is empty"<<std::endl;
-        point.x = ego_pose.position.x;
-        point.y = ego_pose.position.y;
-        point.z = ego_pose.position.z;
-        return point;
+        // //Eighth obstacle
+        // auto drone8 = std::make_shared<Car>("drone_8", false);
+        // drone8->setPose(makePose(80.0,0.0));
+        // drone8->setVelocity(makeVel(1.0, 0.0));
+        // drones_.push_back(drone8);
+        // drone8->setRaceline(obs_xyz);
+        // drone8->setSValues(obs_s);
 
     }
 
-    // Find closest point that is in front of ego
-    int closest_index = 0;
-    double min_dist_squared = std::numeric_limits<double>::max();
 
-    // Iterate through the raceline points
-    for (size_t i = 0; i < raceline.size(); ++i)
+    point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
     {
-        const auto& raceline_point = raceline[i];
-        double dx = ego_pose.position.x - raceline_point.x;
-        double dy = ego_pose.position.y - raceline_point.y;
+        int lookahead_step = 5;
+        point_msg point;
 
-        double squar_dist = dx * dx + dy * dy;
-
-        if (squar_dist < min_dist_squared)
+        // fallback if raceline is empty
+        if (raceline.empty())
         {
-            min_dist_squared = squar_dist;
-            closest_index = static_cast<int>(i);
+            //std::cout<<"Raceline is empty"<<std::endl;
+            point.x = ego_pose.position.x;
+            point.y = ego_pose.position.y;
+            point.z = ego_pose.position.z;
+            return point;
+
         }
-    }
 
-    // Compute the lookahead distance
-    int lookahead_index = closest_index + lookahead_step;
+        // Find closest point that is in front of ego
+        int closest_index = 0;
+        double min_dist_squared = std::numeric_limits<double>::max();
 
-    // Clamp to raceline size
-    if (lookahead_index >= static_cast<int>(raceline.size()))
-    {
-        lookahead_index = static_cast<int>(raceline.size()) - 1;
-        // RCLCPP_INFO(get_logger(), "Lookahead index is out of bounds");
+        // Iterate through the raceline points
+        for (size_t i = 0; i < raceline.size(); ++i)
+        {
+            const auto& raceline_point = raceline[i];
+            double dx = ego_pose.position.x - raceline_point.x;
+            double dy = ego_pose.position.y - raceline_point.y;
+
+            double squar_dist = dx * dx + dy * dy;
+
+            if (squar_dist < min_dist_squared)
+            {
+                min_dist_squared = squar_dist;
+                closest_index = static_cast<int>(i);
+            }
+        }
+
+        // Compute the lookahead distance
+        int lookahead_index = closest_index + lookahead_step;
+
+        // Clamp to raceline size
+        if (lookahead_index >= static_cast<int>(raceline.size()))
+        {
+            lookahead_index = static_cast<int>(raceline.size()) - 1;
+            // RCLCPP_INFO(get_logger(), "Lookahead index is out of bounds");
+        }
+        // RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
+        return raceline[lookahead_index];
     }
-    // RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
-    return raceline[lookahead_index];
-}
 
 private:
     Road road_;
@@ -331,7 +330,7 @@ private:
         //RCLCPP_INFO(this->get_logger(), "Ego car velocity set to: (%f, %f)", msg->linear.x, msg->linear.y);
     }
 
-     void obstaclePosCallback(const geometry_msgs::msg::PoseArray msg)
+    void obstaclePosCallback(const geometry_msgs::msg::PoseArray msg)
     {   
         for (size_t i=0; i<obstacles_.size();i++){
         obstacles_[i].setPose(msg.poses[i]);
@@ -420,8 +419,6 @@ private:
         tf_msg.transform.translation.y = car.getPose().position.y;
         tf_msg.transform.translation.z = car.getPose().position.z;
         tf_msg.transform.rotation = car.getPose().orientation;
-
-
         tf_broadcaster_->sendTransform(tf_msg);
     }
 
@@ -468,8 +465,6 @@ private:
         // setRoadMarker(road_marker, road_, now);
         marker_array.markers.push_back(road_marker);
         
-
-
         // lane lines
         // for (int i = 1; i < road_.getNumLanes(); ++i) {
         //     vis_marker lane_marker;
@@ -540,30 +535,23 @@ private:
         int id = 0;  // Marker ID counter
         auto ego_pose = controlled_car_->getPose();
         auto ego_vel = controlled_car_->getVelocity();
-        // check: maybe not needed
-        // check: maybe not needed
-        //auto scale = getCarScale();
         float r_total = calculateTotalRadius();
 
         for (const auto& obstacle : obstacles_) {
-            auto obstacle_pose = obstacle.getPose();
-            auto obstacle_vel = obstacle.getVelocity();
-            // check - maybe not needed
-            //float dist = vo.distance(ego_pose, obstacle_pose);
 
             vis_marker cone_marker;
             // Set the properties of the cone marker
-            setVOConeMarker(cone_marker, ego_pose, obstacle_pose, ego_vel, obstacle_vel, r_total);
+            setVOConeMarker(cone_marker, ego_pose, obstacle, r_total);
             cone_marker.id = id++;
             marker_array.markers.push_back(cone_marker);
         }
 
         // for debugging: show the candidate velocities
-        std::vector<twist_msg> candidate_velocities = nlvo.generateCandidateVelocities(ego_vel);
+        std::vector<twist_msg> candidate_velocities = vo.generateCandidateVelocities(ego_vel);
         for (const auto& candidate_velocity : candidate_velocities) {
             vis_marker candidate_marker;
             // Set the properties of the candidate marker
-            setCandidateMarker(candidate_marker, ego_pose, candidate_velocity, r_total, 5.0);
+            setCandidateMarker(candidate_marker, candidate_velocity);
             candidate_marker.id = id++;
             marker_array.markers.push_back(candidate_marker);
         }
@@ -606,7 +594,7 @@ private:
         for (const auto& candidate_velocity : candidate_velocities) {
             vis_marker candidate_marker;
             // Set the properties of the candidate marker
-            setCandidateMarker(candidate_marker, ego_pose, candidate_velocity, r_total, 5.0);
+            setCandidateMarker(candidate_marker, candidate_velocity);
             candidate_marker.id = id++;
             marker_array.markers.push_back(candidate_marker);
         }
