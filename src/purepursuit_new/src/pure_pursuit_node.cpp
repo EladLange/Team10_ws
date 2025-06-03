@@ -109,7 +109,7 @@ public:
         }
 
         // Create a periodic timer that triggers control loop every 10 milliseconds
-        timer_ = this->create_wall_timer(10ms, std::bind(&PurePursuitNode::onTimer, this));
+        timer_ = this->create_wall_timer(17ms, std::bind(&PurePursuitNode::onTimer, this));
     }
 
 private:
@@ -174,7 +174,7 @@ private:
     // Called every 10ms: updates all drone states and publishes visualization
     void onTimer() {
         const double velocity = 5.0; // m/sec
-        const double dt = 0.01;      // sec
+        const double dt = 0.017;      // sec
 
         // Create pose array for all drones
         geometry_msgs::msg::PoseArray drone_poses;

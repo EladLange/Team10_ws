@@ -57,10 +57,10 @@ float VelocityObstacle::normalizeAngle(float angle)
     return angle;
 }
 
-bool VelocityObstacle::checkCollision(const pose_msg& ego_pose, const twist_msg& ego_vel, const Car& obstacle, float r_total)
+bool VelocityObstacle::checkCollision(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::shared_ptr<Car>& obstacle, float r_total)
 {
     // finding distance between ego pose and obstacle pose 
-    float d = VelocityObstacle::distance(ego_pose, obstacle.getPose());
+    float d = VelocityObstacle::distance(ego_pose, obstacle->getPose());
     //std::cout<<"d: "<<d<<std::endl;
 
     if (d <= r_total) {
@@ -73,11 +73,11 @@ bool VelocityObstacle::checkCollision(const pose_msg& ego_pose, const twist_msg&
     //std::cout<<"theta: "<<theta<<std::endl;
 
     // finding alpha angle
-    float alpha =  VelocityObstacle::getAngle(ego_pose, obstacle.getPose());
+    float alpha =  VelocityObstacle::getAngle(ego_pose, obstacle->getPose());
     //std::cout<<"alpha: "<<alpha<<std::endl;
 
     // finding v_relative
-    twist_msg v_relative = VelocityObstacle::getVrelative(ego_vel, obstacle.getVelocity());
+    twist_msg v_relative = VelocityObstacle::getVrelative(ego_vel, obstacle->getVelocity());
 
     // finding beta angle 
     float beta = VelocityObstacle::getBeta(v_relative);
@@ -145,7 +145,7 @@ std::vector<twist_msg> VelocityObstacle::generateCandidateVelocities(const twist
     return candidate_velocities;
 }
 
-float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<Car>& obstacles, const twist_msg& candidate_velocity, const point_msg& goal_point)
+float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<std::shared_ptr<Car>>& obstacles, const twist_msg& candidate_velocity, const point_msg& goal_point)
 {
     float cost = 0.0f;
     // cost function constant
@@ -165,9 +165,9 @@ float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const t
     float min_distance = std::numeric_limits<float>::max();
     for (size_t i = 0; i < obstacles.size(); i++)
     {
-        obstacle_future_pose.position.x = obstacles[i].getPose().position.x + obstacles[i].getVelocity().linear.x * time_step;
-        obstacle_future_pose.position.y = obstacles[i].getPose().position.y + obstacles[i].getVelocity().linear.y * time_step;
-        obstacle_future_pose.position.z = obstacles[i].getPose().position.z;
+        obstacle_future_pose.position.x = obstacles[i]->getPose().position.x + obstacles[i]->getVelocity().linear.x * time_step;
+        obstacle_future_pose.position.y = obstacles[i]->getPose().position.y + obstacles[i]->getVelocity().linear.y * time_step;
+        obstacle_future_pose.position.z = obstacles[i]->getPose().position.z;
 
         float dist = distance(ego_future_position, obstacle_future_pose);
         if (dist < min_distance)
@@ -201,7 +201,7 @@ float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const t
     return cost;
 }
 
-twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<Car>& obstacles, const point_msg& goal_point, float r_total) 
+twist_msg VelocityObstacle::selectBestVelocity(const pose_msg& ego_pose, const twist_msg& ego_vel, const std::vector<std::shared_ptr<Car>>& obstacles, const point_msg& goal_point, float r_total) 
 {
     std::vector<twist_msg> candidates = generateCandidateVelocities(ego_vel); // Generate candidate velocities
     float best_cost = std::numeric_limits<float>::max(); // Initialize cost with a large number

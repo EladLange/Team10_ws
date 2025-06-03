@@ -172,7 +172,7 @@ def generate_launch_description():
     ackermann_steering_controller,
     velocity_controller,
     rviz_node,
-    delay(0.5),
-    vo_node#,
-    # pure_pursuit_node
+    delay(0.7),
+    vo_node,
+    pure_pursuit_node
     ])

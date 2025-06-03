@@ -30,3 +30,19 @@ using accel_msg = geometry_msgs::msg::Accel;
 
 using std::placeholders::_1;
 
+struct Obstacle
+
+{
+
+    std::string id;
+
+    pose_msg pose;
+
+    twist_msg velocity;
+
+    std::vector<point_msg> raceline;
+
+    std::vector<point_msg> s_values;
+
+};
+
