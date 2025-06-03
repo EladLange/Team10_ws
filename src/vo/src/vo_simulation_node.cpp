@@ -157,68 +157,68 @@ public:
         obs_0->setRaceline(obs_xyz);
         obs_0->setSValues(obs_s);
         obstacles_.push_back(obs_0);
-
+        // Second obstacle
         auto obs_1 = std::make_shared<Car>("obs_1", false);
         obs_1->setPose(makePose(20.0, 0.0));
         obs_1->setVelocity(makeVel(10.0, 0.0));
         obs_1->setRaceline(obs_xyz);
         obs_1->setSValues(obs_s);
         obstacles_.push_back(obs_1);
-
-
-        // // Third obstacle
-        // auto drone2 = std::make_shared<Car>("drone_2", false);
-        // drone2->setPose(makePose(50.0,0.0));
-        // drone2->setVelocity(makeVel(0.0,0.0));
-        // drones_.push_back(drone2);
-        // drone2->setRaceline(obs_xyz);
-        // drone2->setSValues(obs_s);
-
-        // // Fourth obstacle
-        // auto drone3 = std::make_shared<Car>("drone_3", false);
-        // drone3->setPose(makePose(40.0,-4.5));
-        // drone3->setVelocity(makeVel(1.0, 0.0));
-        // drones_.push_back(drone3);
-        // drone3->setRaceline(obs_xyz);
-        // drone3->setSValues(obs_s);
-
-        // // Fifth obstacle
-        // auto drone4 = std::make_shared<Car>("drone_4", false);
-        // drone4->setPose(makePose(50.0,0.0));
-        // drone4->setVelocity(makeVel(1.0, 0.0));
-        // drones_.push_back(drone4);
-        // drone4->setRaceline(obs_xyz);
-        // drone4->setSValues(obs_s);
-
-        // // Sixth obstacle
-        // auto drone5 = std::make_shared<Car>("drone_5", false);
-        // drone5->setPose(makePose(50.0,0.0));
-        // drone5->setVelocity(makeVel(1.0, 0.0));
-        // drones_.push_back(drone5);
-        // drone5->setRaceline(obs_xyz);
-        // drone5->setSValues(obs_s);
-
-        // // Fifth obstacle
-        // auto drone6 = std::make_shared<Car>("drone_6", false);
-        // drone6->setPose(makePose(70.0,0.0));
-        // drone6->setVelocity(makeVel(1.0, 0.0));
-        // drones_.push_back(drone6);
-        // drone6->setRaceline(obs_xyz);
-        // drone6->setSValues(obs_s);
-
-        // // Fifth obstacle
-        // auto drone7 = std::make_shared<Car>("drone_7", false);
-        // drone7->setPose(makePose(60.0,0.0));
-        // drone7->setVelocity(makeVel(1.0, 0.0));
-        // drones_.push_back(drone7);
-        // drone7->setRaceline(obs_xyz);
-        // drone7->setSValues(obs_s);
-
+        // Third obstacle
+        auto obs_2 = std::make_shared<Car>("obs_2", false);
+        obs_2->setPose(makePose(20.0, 0.0));
+        obs_2->setVelocity(makeVel(10.0, 0.0));
+        obs_2->setRaceline(obs_xyz);
+        obs_2->setSValues(obs_s);
+        obstacles_.push_back(obs_2);
+        // Fourth obstacle
+        auto obs_3 = std::make_shared<Car>("obs_3", false);
+        obs_3->setPose(makePose(30.0, 0.0));
+        obs_3->setVelocity(makeVel(10.0, 0.0));
+        obs_3->setRaceline(obs_xyz);
+        obs_3->setSValues(obs_s);
+        obstacles_.push_back(obs_3);
+        // Fifth obstacle
+        auto obs_4 = std::make_shared<Car>("obs_4", false);
+        obs_4->setPose(makePose(30.0, 0.0));
+        obs_4->setVelocity(makeVel(10.0, 0.0));
+        obs_4->setRaceline(obs_xyz);
+        obs_4->setSValues(obs_s);
+        obstacles_.push_back(obs_4);
+        // Sixth obstacle
+        auto obs_5 = std::make_shared<Car>("obs_5", false);
+        obs_5->setPose(makePose(40.0, 0.0));
+        obs_5->setVelocity(makeVel(10.0, 0.0));
+        obs_5->setRaceline(obs_xyz);
+        obs_5->setSValues(obs_s);
+        obstacles_.push_back(obs_5);
+        // Seventh obstacle
+        auto obs_6 = std::make_shared<Car>("obs_6", false);
+        obs_6->setPose(makePose(40.0, 0.0));
+        obs_6->setVelocity(makeVel(10.0, 0.0));
+        obs_6->setRaceline(obs_xyz);
+        obs_6->setSValues(obs_s);
+        obstacles_.push_back(obs_6);
+        // Eighth obstacle
+        auto obs_7 = std::make_shared<Car>("obs_7", false);
+        obs_7->setPose(makePose(50.0, 0.0));
+        obs_7->setVelocity(makeVel(10.0, 0.0));
+        obs_7->setRaceline(obs_xyz);
+        obs_7->setSValues(obs_s);
+        obstacles_.push_back(obs_7);
+        // Ninth obstacle
+        auto obs_8 = std::make_shared<Car>("obs_8", false);
+        obs_8->setPose(makePose(50.0, 0.0));
+        obs_8->setVelocity(makeVel(10.0, 0.0));
+        obs_8->setRaceline(obs_xyz);
+        obs_8->setSValues(obs_s);
+        obstacles_.push_back(obs_8);
+        
         // //Eighth obstacle
         // auto drone8 = std::make_shared<Car>("drone_8", false);
         // drone8->setPose(makePose(80.0,0.0));
         // drone8->setVelocity(makeVel(1.0, 0.0));
-        // drones_.push_back(drone8);
+        // obstacles_.push_back(drone8);
         // drone8->setRaceline(obs_xyz);
         // drone8->setSValues(obs_s);
 
@@ -403,8 +403,8 @@ private:
 
 
         publishMarkers();
-        // publishVOMarkers();
-        publishNLVOMarkers();
+        publishVOMarkers();
+        // publishNLVOMarkers();
     }
 
     void publishPose(const Car& car) {

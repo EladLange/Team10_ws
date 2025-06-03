@@ -138,6 +138,15 @@ def generate_launch_description():
         arguments=["-d",os.path.join(car_description_dir, "RVIZ", "vo_display.rviz")]
     )
 
+    rviz_nlvo=  Node(
+        package="rviz2",
+        executable="rviz2",
+        name="rviz2",
+        output="screen",
+        arguments=["-d",os.path.join(car_description_dir, "RVIZ", "nlvo_viz.rviz")]
+    )
+
+
     vo_node= Node(
         package="vo",
         executable="vo_simulation_node"
@@ -172,6 +181,7 @@ def generate_launch_description():
     ackermann_steering_controller,
     velocity_controller,
     rviz_node,
+    rviz_nlvo,
     delay(0.7),
     vo_node,
     pure_pursuit_node
