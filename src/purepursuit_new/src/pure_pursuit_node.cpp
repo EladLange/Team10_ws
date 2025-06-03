@@ -198,7 +198,7 @@ private:
         // Update each drone and collect visualization data
         for (size_t i = 0; i < drones_.size(); ++i) {
             // Update drone state using pure pursuit control
-            double new_velocity = 5.0 - 0.1*i; // velocity for each drone
+            double new_velocity = 2.0 + 0.3*i; // velocity for each drone
             drones_[i]->update(dt, new_velocity); // Update drone state
 
             // Get current drone state
