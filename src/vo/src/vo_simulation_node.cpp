@@ -562,7 +562,8 @@ private:
             candidate_marker.id = id++;
             marker_array.markers.push_back(candidate_marker);
         }
-
+        
+        setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), "ego", 0);
         vo_marker_pub_->publish(marker_array);
     }
 
