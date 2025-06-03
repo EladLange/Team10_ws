@@ -146,6 +146,14 @@ def generate_launch_description():
         arguments=["-d",os.path.join(car_description_dir, "RVIZ", "vel_space.rviz")]
     )
 
+    rviz_ego_view=  Node(
+        package="rviz2",
+        executable="rviz2",
+        name="rviz2",
+        output="screen",
+        arguments=["-d",os.path.join(car_description_dir, "RVIZ", "mini_view.rviz")]
+    )
+
 
     vo_node= Node(
         package="vo",
@@ -182,6 +190,7 @@ def generate_launch_description():
     velocity_controller,
     rviz_node,
     rviz_nlvo,
+    rviz_ego_view,
     delay(0.7),
     vo_node,
     pure_pursuit_node

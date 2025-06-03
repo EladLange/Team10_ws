@@ -149,9 +149,9 @@ float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const t
 {
     float cost = 0.0f;
     // cost function constant
-    float obstacle_avoidance_weight = 300.0f;
-    float goal_seeking_wright = 350.0f;
-    float smoothness_weight = 20.0f;
+    float obstacle_avoidance_weight = 50.0f;
+    float goal_seeking_weight = 80.0f;
+    float smoothness_weight = 50.0f;
     
     // ========= OBSTACLE AVOIDANCE COST =========
     // Calculate the future position of the ego vehicle based on the candidate velocity
@@ -183,7 +183,7 @@ float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const t
     float dx = goal_point.x - ego_future_position.position.x;
     float dy = goal_point.y - ego_future_position.position.y;
     float dist_to_goal = std::sqrt(std::pow(dx,2) + std::pow(dy, 2));
-    float goal_seeking_cost = goal_seeking_wright * dist_to_goal; 
+    float goal_seeking_cost = goal_seeking_weight * dist_to_goal; 
 
 
     // ======== SMOOTHNESS COST =========

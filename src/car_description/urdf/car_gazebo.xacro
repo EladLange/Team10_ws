@@ -8,28 +8,28 @@
     -->
 
     <gazebo reference="FR_wheel">
-        <mu1>1.0</mu1>
-        <mu2>1.0</mu2>
+        <mu1>100.0</mu1>
+        <mu2>100.0</mu2>
         <kp>100000.0</kp>
         <kd>10.0</kd>
         <minDepth>0.001</minDepth>
         <maxVel>10</maxVel>
-        <fDir1>1 0 0</fDir1>
+        <fDir1>1 1 1</fDir1>
     </gazebo>
 
     <gazebo reference="FL_wheel">
-        <mu1>1.0</mu1>
-        <mu2>1.0</mu2>
+        <mu1>100.0</mu1>
+        <mu2>100.0</mu2>
         <kp>100000.0</kp>
         <kd>10.0</kd>
         <minDepth>0.001</minDepth>
         <maxVel>10</maxVel>
-        <fDir1>1 0 0</fDir1>
+        <fDir1>1 1 1</fDir1>
     </gazebo>
 
     <gazebo reference="RR_wheel">
-        <mu1>10.0</mu1>
-        <mu2>10.0</mu2>
+        <mu1>100.0</mu1>
+        <mu2>100.0</mu2>
         <kp>100000.0</kp>
         <kd>10.0</kd>
         <minDepth>0.001</minDepth>
@@ -47,8 +47,8 @@
     </gazebo>
 
     <gazebo reference="RL_wheel">
-        <mu1>10.0</mu1>
-        <mu2>10.0</mu2>
+        <mu1>100.0</mu1>
+        <mu2>100.0</mu2>
         <kp>100000.0</kp>
         <kd>10.0</kd>
         <minDepth>0.001</minDepth>

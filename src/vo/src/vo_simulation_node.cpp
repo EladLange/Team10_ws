@@ -30,11 +30,12 @@ PSCAV pscav;
 // std::vector<Car> egos;
 
 // Global variables
-float time_horizon = 7.0f;
-float max_acceleration = 10.0f;
-float min_acceleration = -3.0f;
+float time_horizon = 10.0f;
+float max_acceleration = 4.0f;
 float time_step = 1.0f;
-float delta_t = 0.1f;
+
+const int num_obstacles = 9*3; // Number of obstacles
+
 
 bool road_init=true;
 
@@ -148,71 +149,87 @@ public:
         controlled_car_->setVelocity(makeVel(0.0, 0.0));
         controlled_car_->setRaceline(obs_xyz);
         controlled_car_->setSValues(obs_s);
+        
+        for (int i=0; i < 3; ++i)
+        {   
+            // std::vector <point_msg> car_xyz;
+            // std::vector <point_msg> car_s;
+            for (int j=0;j<(num_obstacles/3);j++){
+                auto obs = std::make_shared<Car>("obs_"+std::to_string((i+1)*(j+1)), false);
+                obs->setPose(makePose(0.0, 0.0));
+                obs->setVelocity(makeVel(0.0, 0.0));
+                obs->setRaceline(obs_xyz);
+                obs->setSValues(obs_s);
+                obstacles_.push_back(obs);  
+
+            }
+      
+        }
 
         
         //First obstacle
-        auto obs_0 = std::make_shared<Car>("obs_0", false);
-        obs_0->setPose(makePose(35.0, 0.0));
-        obs_0->setVelocity(makeVel(10.0, 0.0));
-        obs_0->setRaceline(obs_xyz);
-        obs_0->setSValues(obs_s);
-        obstacles_.push_back(obs_0);
-        // Second obstacle
-        auto obs_1 = std::make_shared<Car>("obs_1", false);
-        obs_1->setPose(makePose(20.0, 0.0));
-        obs_1->setVelocity(makeVel(10.0, 0.0));
-        obs_1->setRaceline(obs_xyz);
-        obs_1->setSValues(obs_s);
-        obstacles_.push_back(obs_1);
-        // Third obstacle
-        auto obs_2 = std::make_shared<Car>("obs_2", false);
-        obs_2->setPose(makePose(20.0, 0.0));
-        obs_2->setVelocity(makeVel(10.0, 0.0));
-        obs_2->setRaceline(obs_xyz);
-        obs_2->setSValues(obs_s);
-        obstacles_.push_back(obs_2);
-        // Fourth obstacle
-        auto obs_3 = std::make_shared<Car>("obs_3", false);
-        obs_3->setPose(makePose(30.0, 0.0));
-        obs_3->setVelocity(makeVel(10.0, 0.0));
-        obs_3->setRaceline(obs_xyz);
-        obs_3->setSValues(obs_s);
-        obstacles_.push_back(obs_3);
-        // Fifth obstacle
-        auto obs_4 = std::make_shared<Car>("obs_4", false);
-        obs_4->setPose(makePose(30.0, 0.0));
-        obs_4->setVelocity(makeVel(10.0, 0.0));
-        obs_4->setRaceline(obs_xyz);
-        obs_4->setSValues(obs_s);
-        obstacles_.push_back(obs_4);
-        // Sixth obstacle
-        auto obs_5 = std::make_shared<Car>("obs_5", false);
-        obs_5->setPose(makePose(40.0, 0.0));
-        obs_5->setVelocity(makeVel(10.0, 0.0));
-        obs_5->setRaceline(obs_xyz);
-        obs_5->setSValues(obs_s);
-        obstacles_.push_back(obs_5);
-        // Seventh obstacle
-        auto obs_6 = std::make_shared<Car>("obs_6", false);
-        obs_6->setPose(makePose(40.0, 0.0));
-        obs_6->setVelocity(makeVel(10.0, 0.0));
-        obs_6->setRaceline(obs_xyz);
-        obs_6->setSValues(obs_s);
-        obstacles_.push_back(obs_6);
-        // Eighth obstacle
-        auto obs_7 = std::make_shared<Car>("obs_7", false);
-        obs_7->setPose(makePose(50.0, 0.0));
-        obs_7->setVelocity(makeVel(10.0, 0.0));
-        obs_7->setRaceline(obs_xyz);
-        obs_7->setSValues(obs_s);
-        obstacles_.push_back(obs_7);
-        // Ninth obstacle
-        auto obs_8 = std::make_shared<Car>("obs_8", false);
-        obs_8->setPose(makePose(50.0, 0.0));
-        obs_8->setVelocity(makeVel(10.0, 0.0));
-        obs_8->setRaceline(obs_xyz);
-        obs_8->setSValues(obs_s);
-        obstacles_.push_back(obs_8);
+        // auto obs_0 = std::make_shared<Car>("obs_0", false);
+        // obs_0->setPose(makePose(35.0, 0.0));
+        // obs_0->setVelocity(makeVel(10.0, 0.0));
+        // obs_0->setRaceline(obs_xyz);
+        // obs_0->setSValues(obs_s);
+        // obstacles_.push_back(obs_0);
+        // // Second obstacle
+        // auto obs_1 = std::make_shared<Car>("obs_1", false);
+        // obs_1->setPose(makePose(20.0, 0.0));
+        // obs_1->setVelocity(makeVel(10.0, 0.0));
+        // obs_1->setRaceline(obs_xyz);
+        // obs_1->setSValues(obs_s);
+        // obstacles_.push_back(obs_1);
+        // // Third obstacle
+        // auto obs_2 = std::make_shared<Car>("obs_2", false);
+        // obs_2->setPose(makePose(20.0, 0.0));
+        // obs_2->setVelocity(makeVel(10.0, 0.0));
+        // obs_2->setRaceline(obs_xyz);
+        // obs_2->setSValues(obs_s);
+        // obstacles_.push_back(obs_2);
+        // // Fourth obstacle
+        // auto obs_3 = std::make_shared<Car>("obs_3", false);
+        // obs_3->setPose(makePose(30.0, 0.0));
+        // obs_3->setVelocity(makeVel(10.0, 0.0));
+        // obs_3->setRaceline(obs_xyz);
+        // obs_3->setSValues(obs_s);
+        // obstacles_.push_back(obs_3);
+        // // Fifth obstacle
+        // auto obs_4 = std::make_shared<Car>("obs_4", false);
+        // obs_4->setPose(makePose(30.0, 0.0));
+        // obs_4->setVelocity(makeVel(10.0, 0.0));
+        // obs_4->setRaceline(obs_xyz);
+        // obs_4->setSValues(obs_s);
+        // obstacles_.push_back(obs_4);
+        // // Sixth obstacle
+        // auto obs_5 = std::make_shared<Car>("obs_5", false);
+        // obs_5->setPose(makePose(40.0, 0.0));
+        // obs_5->setVelocity(makeVel(10.0, 0.0));
+        // obs_5->setRaceline(obs_xyz);
+        // obs_5->setSValues(obs_s);
+        // obstacles_.push_back(obs_5);
+        // // Seventh obstacle
+        // auto obs_6 = std::make_shared<Car>("obs_6", false);
+        // obs_6->setPose(makePose(40.0, 0.0));
+        // obs_6->setVelocity(makeVel(10.0, 0.0));
+        // obs_6->setRaceline(obs_xyz);
+        // obs_6->setSValues(obs_s);
+        // obstacles_.push_back(obs_6);
+        // // Eighth obstacle
+        // auto obs_7 = std::make_shared<Car>("obs_7", false);
+        // obs_7->setPose(makePose(50.0, 0.0));
+        // obs_7->setVelocity(makeVel(10.0, 0.0));
+        // obs_7->setRaceline(obs_xyz);
+        // obs_7->setSValues(obs_s);
+        // obstacles_.push_back(obs_7);
+        // // Ninth obstacle
+        // auto obs_8 = std::make_shared<Car>("obs_8", false);
+        // obs_8->setPose(makePose(50.0, 0.0));
+        // obs_8->setVelocity(makeVel(10.0, 0.0));
+        // obs_8->setRaceline(obs_xyz);
+        // obs_8->setSValues(obs_s);
+        // obstacles_.push_back(obs_8);
         
         // //Eighth obstacle
         // auto drone8 = std::make_shared<Car>("drone_8", false);
@@ -553,16 +570,16 @@ private:
             marker_array.markers.push_back(cone_marker);
         }
 
-        // for debugging: show the candidate velocities
-        std::vector<twist_msg> candidate_velocities = vo.generateCandidateVelocities(ego_vel);
-        for (const auto& candidate_velocity : candidate_velocities) {
-            vis_marker candidate_marker;
-            // Set the properties of the candidate marker
-            setCandidateMarker(candidate_marker, candidate_velocity);
-            candidate_marker.id = id++;
-            marker_array.markers.push_back(candidate_marker);
-        }
-        
+        // // for debugging: show the candidate velocities
+        // std::vector<twist_msg> candidate_velocities = vo.generateCandidateVelocities(ego_vel);
+        // for (const auto& candidate_velocity : candidate_velocities) {
+        //     vis_marker candidate_marker;
+        //     // Set the properties of the candidate marker
+        //     setCandidateMarker(candidate_marker, candidate_velocity);
+        //     candidate_marker.id = id++;
+        //     marker_array.markers.push_back(candidate_marker);
+        // }
+
         setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), "ego", 0);
         vo_marker_pub_->publish(marker_array);
     }
