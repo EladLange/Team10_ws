@@ -379,8 +379,8 @@ private:
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
 
-        // twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
-        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obsVehicles, goal_point, r_total);
+        twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
+        // twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obsVehicles, goal_point, r_total);
         // twist_msg new_ego_velocity = pscav.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         // twist_msg new_ego_velocity = makeVel(5.0,0.0);
         // Set the new velocity for the ego car
