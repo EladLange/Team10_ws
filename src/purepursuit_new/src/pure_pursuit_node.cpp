@@ -36,7 +36,7 @@
 using namespace std::chrono_literals;  // Allow writing 10ms, 1s etc. as time literals
 
 const int num_paths = 3;  // Number of paths to load
-const int num_obstacles = 9*num_paths;  // Number of obstacles (drones) to simulate
+const int num_obstacles = 11*num_paths;  // Number of obstacles (drones) to simulate
 const int drones_per_path = num_obstacles / num_paths; // number of drones per path
 
 
@@ -50,9 +50,9 @@ public:
 
         // Define paths to load
         std::array<std::string, 3> path_files = {
-            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/clothoid_inner_lane.csv",
-            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/clothoid_center_lane.csv",
-            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/clothoid_outer_lane.csv"
+            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/clothoid_center_lane_baoundary0.csv",
+            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/clothoid_center_lane_baoundary1.csv",
+            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/clothoid_center_lane_baoundary2.csv"
         };
 
         // Load all paths

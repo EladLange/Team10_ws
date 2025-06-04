@@ -30,11 +30,11 @@ PSCAV pscav;
 // std::vector<Car> egos;
 
 // Global variables
-float time_horizon = 10.0f;
+float time_horizon = 11.0f;
 float max_acceleration = 4.0f;
 float time_step = 1.0f;
 
-const int num_obstacles = 9*3; // Number of obstacles
+const int num_obstacles = 1*3; // Number of obstacles
 
 
 bool road_init=true;
@@ -244,7 +244,7 @@ public:
 
     point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
     {
-        int lookahead_step = 10;
+        int lookahead_step = 11;
         point_msg point;
 
         // fallback if raceline is empty
@@ -278,16 +278,61 @@ public:
             }
         }
 
+        RCLCPP_INFO(this->get_logger(), "Closest index: %d", closest_index);
+
+
+        // if (closest_index >= 10 && closest_index < 100)
+        // {
+        //     lookahead_step = 17;
+        // }
+        // else if (closest_index >= 100 && closest_index < 180)
+        // {
+        //     lookahead_step = 15;
+        // }
+        // else if (closest_index >= 180 && closest_index < 300)
+        // {
+        //     lookahead_step = 13;
+        // }
+        // else if (closest_index >= 250 && closest_index < 350)
+        // {
+        //     lookahead_step = 15;
+        // }
+        // else if (closest_index >= 350 && closest_index < 450)
+        // {
+        //     lookahead_step = 10;
+        // }
+        // else if (closest_index >= 450 && closest_index < 650)
+        // {
+        //     lookahead_step = 15;
+        // }
+        // else if (closest_index >= 650 && closest_index < 750)
+        // {
+        //     lookahead_step = 10;
+        // }
+        // else if (closest_index >= 750 && closest_index < 800)
+        // {
+        //     lookahead_step = 17;
+        // }
+        // else if (closest_index >= 800 && closest_index < 900)
+        // {
+        //     lookahead_step = 10;
+        // }
+
+
         // Compute the lookahead distance
         int lookahead_index = closest_index + lookahead_step;
+        
+        RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
+        // print the raceline index
+       RCLCPP_INFO(this->get_logger(), "Raceline(%d) = %f, %f, %f", lookahead_index, raceline[lookahead_index].x, raceline[lookahead_index].y, raceline[lookahead_index].z);
 
-        // Clamp to raceline size
-        if (lookahead_index >= static_cast<int>(raceline.size()))
-        {
-            lookahead_index = static_cast<int>(raceline.size()) - 1;
-            // RCLCPP_INFO(get_logger(), "Lookahead index is out of bounds");
-        }
-        // RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
+        // // Clamp to raceline size
+        // if (lookahead_index >= static_cast<int>(raceline.size()))
+        // {
+        //     lookahead_index = static_cast<int>(raceline.size()) - 1;
+        //     // RCLCPP_INFO(get_logger(), "Lookahead index is out of bounds");
+        // }
+        // // RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
         return raceline[lookahead_index];
     }
 
@@ -451,20 +496,20 @@ private:
 
         //raceline
         std::vector<point_msg> raceline = buildRaceline();
-        visualizeRaceline(raceline, marker_array, this->now());
+        // visualizeRaceline(raceline, marker_array, this->now());
 
         // Obstacles
         int id = 0;
         for (const auto& car : obstacles_) {
             marker_array.markers.push_back(makeCarMarker(*car, id++));
-            setVelocityArrowMarker(marker_array, *car, this->now(), "map",id);
+            // setVelocityArrowMarker(marker_array, *car, this->now(), "map",id);
         }
 
 
         // Controlled car
         // marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
-        setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), "map" , 0);
-        setVelocityTextMarker(marker_array, *controlled_car_, this->now());
+        //setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), "map" , 0);
+        //setVelocityTextMarker(marker_array, *controlled_car_, this->now());
 
         // Road
         //rclcpp::Time now = this->now();
@@ -474,7 +519,7 @@ private:
         road_marker.ns="Road";
         road_marker.id=0;
         road_marker.type= vis_marker::MESH_RESOURCE;
-        road_marker.mesh_resource = "package://vo/meshes/track.STL";
+        road_marker.mesh_resource = "package://vo/meshes/track_wide.STL";
         road_marker.action = vis_marker::ADD;
         road_marker.scale.x=1.0;
         road_marker.scale.y=1.0;

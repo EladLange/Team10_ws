@@ -91,15 +91,16 @@ bool VelocityObstacle::checkCollision(const pose_msg& ego_pose, const twist_msg&
     //std::cout<<"condition: "<<condition<<std::endl;
 
     float relative_speed = sqrt(pow(v_relative.linear.x, 2) + pow(v_relative.linear.y, 2)); // calculate the magnitude of the relative velocity
+    float d_m = d - r_total; // calculate the distance between the two vehicles minus their radii
     float time_to_collision = d / relative_speed; //  calculate the current time to collision
 
     // Velocities are almost equal, treat as no collision
-    if (relative_speed < 1e-3) {
-        return false;
-    }
+    // if (relative_speed < 1e-3) {
+    //     return false;
+    // }
     
     // if the relative velocity is inside the cone and the time to collision is less than the time horizon
-    else if ((time_to_collision <= time_horizon) && (condition <= theta)) 
+    if ((time_to_collision <= time_horizon) && (condition <= theta)) 
     {
         return true;
     }
@@ -150,7 +151,7 @@ float VelocityObstacle::calculateCandidateCost(const pose_msg& ego_pose, const t
     float cost = 0.0f;
     // cost function constant
     float obstacle_avoidance_weight = 50.0f;
-    float goal_seeking_weight = 80.0f;
+    float goal_seeking_weight = 60.0f;
     float smoothness_weight = 50.0f;
     
     // ========= OBSTACLE AVOIDANCE COST =========
