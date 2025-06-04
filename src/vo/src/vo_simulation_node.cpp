@@ -34,7 +34,7 @@ float time_horizon = 11.0f;
 float max_acceleration = 4.0f;
 float time_step = 1.0f;
 
-const int num_obstacles = 1*3; // Number of obstacles
+const int num_obstacles = 9*3; // Number of obstacles
 
 
 bool road_init=true;
@@ -67,61 +67,53 @@ public:
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
-        // drone_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseArray>(
-        //     "drone_pose", 10,
-        //     [this](geometry_msgs::msg::PoseArray::SharedPtr msg) {
-        //         this->dronePoseCallback(msg);
-        //     }
-        // );
 
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(17),
             std::bind(&CarSimulationNode::update, this));
     }
 
-    // void dronePoseCallback(geometry_msgs::msg::PoseArray::SharedPtr msg) {
-    //     // Handle the incoming drone pose array message
-    //     // RCLCPP_INFO(this->get_logger(), "Received drone pose array with %zu drones", msg->poses.size());
-
-    //     // Update the drones with the received poses
-    //     for (size_t i = 0; i < msg->poses.size() && i < drones_.size(); ++i) {
-    //         drones_[i]->setPose(msg->poses[i]);
-    //         // RCLCPP_INFO(this->get_logger(), "Updated drone %zu pose: (%f, %f, %f)",
-    //                 //    i, msg->poses[i].position.x, msg->poses[i].position.y, msg->poses[i].position.z);
-    //     }
-    // }
 
     void initialize_cars()
     {
-        std::vector<point_msg> obs_xyz;
-        std::vector<point_msg> obs_s;
+        std::vector<std::vector<point_msg>> obs_xyz;
+        std::vector<std::vector<point_msg>> obs_s;
 
-        std::string filename ="/home/zvi/Desktop/Team10_ws/src/vo/src/track_points - Copy.csv";
-        std::ifstream file(filename);
-        if (!file.is_open()) {
-            std::cerr << "Error opening raceline file." << std::endl;
-        }
-        std::string line;   // Skip the first line (header)
-        std::getline(file , line);
-        while (std::getline(file, line)) {
-            std::istringstream iss(line);
-            point_msg point;
-            point_msg s_point;
-            std::string token;
-            // Read x, y, z, s values from the line
-            std::getline(iss, token, ',');
-            point.x = std::stod(token);
-            std::getline(iss, token, ',');
-            point.y = std::stod(token);
-            std::getline(iss, token, ',');
-            point.z =0.0; //std::stod(token);
-            std::getline(iss, token, ',');
-            s_point.x = std::stod(token);
-            obs_xyz.push_back(point);
-            obs_s.push_back(s_point);
-        }
+        std::vector<std::string> filenames ={
+            "/home/zvi/Desktop/Team10_ws/src/vo/src/lanes/clothoid_inner.csv",
+            "/home/zvi/Desktop/Team10_ws/src/vo/src/lanes/clothoid_center.csv",
+            "/home/zvi/Desktop/Team10_ws/src/vo/src/lanes/clothoid_outer.csv"
+        };
+
+        obs_xyz.resize(filenames.size());
+        obs_s.resize(filenames.size());
+
+        for (size_t i=0;i<filenames.size();++i){
+            std::ifstream file(filenames[i]);
+            if (!file.is_open()) {
+                std::cerr << "Error opening raceline file." << std::endl;
+            }
+            std::string line;   // Skip the first line (header)
+            std::getline(file , line);
+            while (std::getline(file, line)) {
+                std::istringstream iss(line);
+                point_msg point;
+                point_msg s_point;
+                std::string token;
+                // Read x, y, z, s values from the line
+                std::getline(iss, token, ',');
+                point.x = std::stod(token);
+                std::getline(iss, token, ',');
+                point.y = std::stod(token);
+                std::getline(iss, token, ',');
+                point.z =0.0; //std::stod(token);
+                std::getline(iss, token, ',');
+                s_point.x = std::stod(token);
+                obs_xyz[i].push_back(point);
+                obs_s[i].push_back(s_point);
+            }
         file.close();
-
+        }
         // create temp raceline for the obstacles
         // float di = 0.05f;
         // for (float i =0; i<300; i+=di)
@@ -147,8 +139,9 @@ public:
         controlled_car_ = std::make_shared<Car>("ego", true);
         controlled_car_->setPose(makePose(0.0, 0.0));  // Center of first lane
         controlled_car_->setVelocity(makeVel(0.0, 0.0));
-        controlled_car_->setRaceline(obs_xyz);
-        controlled_car_->setSValues(obs_s);
+        controlled_car_->setRaceline(obs_xyz[1]);
+        controlled_car_->setSValues(obs_s[1]);
+        
         
         for (int i=0; i < 3; ++i)
         {   
@@ -158,8 +151,8 @@ public:
                 auto obs = std::make_shared<Car>("obs_"+std::to_string((i+1)*(j+1)), false);
                 obs->setPose(makePose(0.0, 0.0));
                 obs->setVelocity(makeVel(0.0, 0.0));
-                obs->setRaceline(obs_xyz);
-                obs->setSValues(obs_s);
+                obs->setRaceline(obs_xyz[i]);
+                obs->setSValues(obs_s[i]);
                 obstacles_.push_back(obs);  
 
             }
@@ -174,77 +167,13 @@ public:
         // obs_0->setRaceline(obs_xyz);
         // obs_0->setSValues(obs_s);
         // obstacles_.push_back(obs_0);
-        // // Second obstacle
-        // auto obs_1 = std::make_shared<Car>("obs_1", false);
-        // obs_1->setPose(makePose(20.0, 0.0));
-        // obs_1->setVelocity(makeVel(10.0, 0.0));
-        // obs_1->setRaceline(obs_xyz);
-        // obs_1->setSValues(obs_s);
-        // obstacles_.push_back(obs_1);
-        // // Third obstacle
-        // auto obs_2 = std::make_shared<Car>("obs_2", false);
-        // obs_2->setPose(makePose(20.0, 0.0));
-        // obs_2->setVelocity(makeVel(10.0, 0.0));
-        // obs_2->setRaceline(obs_xyz);
-        // obs_2->setSValues(obs_s);
-        // obstacles_.push_back(obs_2);
-        // // Fourth obstacle
-        // auto obs_3 = std::make_shared<Car>("obs_3", false);
-        // obs_3->setPose(makePose(30.0, 0.0));
-        // obs_3->setVelocity(makeVel(10.0, 0.0));
-        // obs_3->setRaceline(obs_xyz);
-        // obs_3->setSValues(obs_s);
-        // obstacles_.push_back(obs_3);
-        // // Fifth obstacle
-        // auto obs_4 = std::make_shared<Car>("obs_4", false);
-        // obs_4->setPose(makePose(30.0, 0.0));
-        // obs_4->setVelocity(makeVel(10.0, 0.0));
-        // obs_4->setRaceline(obs_xyz);
-        // obs_4->setSValues(obs_s);
-        // obstacles_.push_back(obs_4);
-        // // Sixth obstacle
-        // auto obs_5 = std::make_shared<Car>("obs_5", false);
-        // obs_5->setPose(makePose(40.0, 0.0));
-        // obs_5->setVelocity(makeVel(10.0, 0.0));
-        // obs_5->setRaceline(obs_xyz);
-        // obs_5->setSValues(obs_s);
-        // obstacles_.push_back(obs_5);
-        // // Seventh obstacle
-        // auto obs_6 = std::make_shared<Car>("obs_6", false);
-        // obs_6->setPose(makePose(40.0, 0.0));
-        // obs_6->setVelocity(makeVel(10.0, 0.0));
-        // obs_6->setRaceline(obs_xyz);
-        // obs_6->setSValues(obs_s);
-        // obstacles_.push_back(obs_6);
-        // // Eighth obstacle
-        // auto obs_7 = std::make_shared<Car>("obs_7", false);
-        // obs_7->setPose(makePose(50.0, 0.0));
-        // obs_7->setVelocity(makeVel(10.0, 0.0));
-        // obs_7->setRaceline(obs_xyz);
-        // obs_7->setSValues(obs_s);
-        // obstacles_.push_back(obs_7);
-        // // Ninth obstacle
-        // auto obs_8 = std::make_shared<Car>("obs_8", false);
-        // obs_8->setPose(makePose(50.0, 0.0));
-        // obs_8->setVelocity(makeVel(10.0, 0.0));
-        // obs_8->setRaceline(obs_xyz);
-        // obs_8->setSValues(obs_s);
-        // obstacles_.push_back(obs_8);
-        
-        // //Eighth obstacle
-        // auto drone8 = std::make_shared<Car>("drone_8", false);
-        // drone8->setPose(makePose(80.0,0.0));
-        // drone8->setVelocity(makeVel(1.0, 0.0));
-        // obstacles_.push_back(drone8);
-        // drone8->setRaceline(obs_xyz);
-        // drone8->setSValues(obs_s);
 
     }
 
 
     point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
     {
-        int lookahead_step = 11;
+        int lookahead_step = 10;
         point_msg point;
 
         // fallback if raceline is empty
@@ -278,7 +207,7 @@ public:
             }
         }
 
-        RCLCPP_INFO(this->get_logger(), "Closest index: %d", closest_index);
+        // RCLCPP_INFO(this->get_logger(), "Closest index: %d", closest_index);
 
 
         // if (closest_index >= 10 && closest_index < 100)
@@ -322,9 +251,9 @@ public:
         // Compute the lookahead distance
         int lookahead_index = closest_index + lookahead_step;
         
-        RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
-        // print the raceline index
-       RCLCPP_INFO(this->get_logger(), "Raceline(%d) = %f, %f, %f", lookahead_index, raceline[lookahead_index].x, raceline[lookahead_index].y, raceline[lookahead_index].z);
+    //     RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
+    //     // print the raceline index
+    //    RCLCPP_INFO(this->get_logger(), "Raceline(%d) = %f, %f, %f", lookahead_index, raceline[lookahead_index].x, raceline[lookahead_index].y, raceline[lookahead_index].z);
 
         // // Clamp to raceline size
         // if (lookahead_index >= static_cast<int>(raceline.size()))
@@ -441,8 +370,8 @@ private:
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
 
-        twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
-        // twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obsVehicles, goal_point, r_total);
+        // twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
+        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obsVehicles, goal_point, r_total);
         // twist_msg new_ego_velocity = pscav.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         // twist_msg new_ego_velocity = makeVel(5.0,0.0);
         // Set the new velocity for the ego car
@@ -465,8 +394,8 @@ private:
 
 
         publishMarkers();
-        publishVOMarkers();
-        // publishNLVOMarkers();
+        // publishVOMarkers();
+        publishNLVOMarkers();
     }
 
     void publishPose(const Car& car) {
@@ -587,9 +516,9 @@ private:
             marker.color.g = 0.12;
             marker.color.b = 0.39;
         } else {
-            marker.color.r = 0.0;
-            marker.color.g = 0.0;
-            marker.color.b = 1.0;
+            marker.color.r = 0.25;
+            marker.color.g = 0.88;
+            marker.color.b = 0.82;
         }
         marker.color.a = 1.0;
 
@@ -638,6 +567,10 @@ private:
        auto ego_vel = controlled_car_->getVelocity();
        float r_total = calculateTotalRadius();
        for (const auto& obstacle : obsVehicles) {
+            if(nlvo.distance(ego_pose, obstacle.pose) > 50.0f)
+            {
+                continue; // Skip obstacles that are too far away
+            }
             float time_horizon = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, obstacle, r_total, nlvo.control_set) + 2.0f;
 
             int trajectory_index = nlvo.findTrajectoryIndex(obstacle);

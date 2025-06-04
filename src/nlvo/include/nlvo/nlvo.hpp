@@ -19,9 +19,9 @@ class NLVO
     // Global variables
     const float control_limit_x = 10.0f; // |u_x| <= control_limit_x
     const float control_limit_y = 10.0f; // |u_y| <= control_limit_y
-    const float dt = 0.017f; // time step
+    const float dt = 1.0f; // time step
     const float max_time = 10.0f; // maximum time horizon
-    const float max_acceleration = 15.0f; // maximum acceleration
+    const float max_acceleration = 1.0f; // maximum acceleration
     const float max_speed = 50.0f; // maximum speed
 
     // Create a set of control limits (bang-bang corners of control set)
@@ -53,6 +53,9 @@ class NLVO
     // Function to find the next goal point of the obstacle on his trajectory
     int findTrajectoryIndex(const Obstacle& obstacle);
 
+        // Function to calculate distance between two points
+    float distance (const pose_msg& s1, const pose_msg& s2);
+
     private:
 
     // Function to check if a candidate velocity is in the truncated NLVO
@@ -61,8 +64,6 @@ class NLVO
     // Function to normalize angle
     float normalizeAngle(float angle);
 
-    // Function to calculate distance between two points
-    float distance (const point_msg& s1, const point_msg& s2);
 
     // function to find the closest s value to the future s index
     int nextSIndex(const Obstacle &obstacle, float s);

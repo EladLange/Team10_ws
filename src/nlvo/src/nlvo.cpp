@@ -209,7 +209,7 @@ std::vector<twist_msg> NLVO::generateCandidateVelocities(const twist_msg& ego_ve
 
     // Number of angles & accelerations to generate
     // Number of candidate velocities = num_of_angles * num_of_accelerations
-    int num_of_angles = 10;
+    int num_of_angles = 7;
     int num_of_accelerations = 3;
     float angle_step = 2 * M_PI / num_of_angles;
     float acceleration_step = max_acceleration / num_of_accelerations;
@@ -373,10 +373,10 @@ int NLVO::findTrajectoryIndex(const Obstacle& obstacle)
     return closest_index;
 }
 
-float NLVO::distance(const point_msg& s1, const point_msg& s2)
+float NLVO::distance(const pose_msg& s1, const pose_msg& s2)
 {
-    float dx = s1.x - s2.x;
-    float dy = s1.y - s2.y;
+    float dx = s1.position.x - s2.position.x;
+    float dy = s1.position.y - s2.position.y;
     return std::sqrt(dx * dx + dy * dy);
 }
 

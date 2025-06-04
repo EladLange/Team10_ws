@@ -36,7 +36,7 @@
 using namespace std::chrono_literals;  // Allow writing 10ms, 1s etc. as time literals
 
 const int num_paths = 3;  // Number of paths to load
-const int num_obstacles = 11*num_paths;  // Number of obstacles (drones) to simulate
+const int num_obstacles = 9*num_paths;  // Number of obstacles (drones) to simulate
 const int drones_per_path = num_obstacles / num_paths; // number of drones per path
 
 
@@ -92,14 +92,14 @@ public:
             // Position each drone at the start of its path with some z-offset to avoid collisions
             for (int j=0; j<drones_per_path; ++j){
 
-                State initial_state("drone_" + std::to_string(i),
+                State initial_state("obst_" + std::to_string(i),
                                paths_[i].first[0]+20*j+20*i,  // x (staggered start positions)
                                paths_[i].second[0], // y (start at the same y position)
                                0.2,       // z (staggered heights)
                                0.0);                // yaw
             // Create the drone with its assigned path
                 auto drone = std::make_shared<Drone>(
-                    "drone_" + std::to_string(i),
+                    "obst_" + std::to_string(i),
                     vehicle_model_,
                     paths_[i].first,   // x coordinates
                     paths_[i].second,  // y coordinates
@@ -107,8 +107,8 @@ public:
                 );
         
                 drones_.push_back(drone);
-                RCLCPP_INFO(this->get_logger(), "Created drone %d at position (%f, %f, %f)",
-                        i, initial_state.x, initial_state.y, initial_state.z);
+                // RCLCPP_INFO(this->get_logger(), "Created drone %d at position (%f, %f, %f)",
+                //         i, initial_state.x, initial_state.y, initial_state.z);
             }
         }
 
