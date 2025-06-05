@@ -36,7 +36,7 @@
 using namespace std::chrono_literals;  // Allow writing 10ms, 1s etc. as time literals
 
 const int num_paths = 3;  // Number of paths to load
-const int num_obstacles = 9*num_paths;  // Number of obstacles (drones) to simulate
+const int num_obstacles = 1*num_paths;  // Number of obstacles (drones) to simulate
 const int drones_per_path = num_obstacles / num_paths; // number of drones per path
 
 

@@ -10,8 +10,8 @@ std::vector<point_msg> buildRaceline()
     // for (int i = 0; i < 300; ++i)
     // {
     //     point_msg point;
-    //     point.x =10.0 + i * 1.0;
-    //     point.y = 0.0;
+    //     point.x = i * 1.0;
+    //     point.y = 4.5;
     //     point.z = 0.3;
     //     raceline.push_back(point);
     // }

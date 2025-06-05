@@ -21,7 +21,7 @@ class NLVO
     const float control_limit_y = 10.0f; // |u_y| <= control_limit_y
     const float dt = 1.0f; // time step
     const float max_time = 10.0f; // maximum time horizon
-    const float max_acceleration = 1.0f; // maximum acceleration
+    const float max_acceleration = 4.0f; // maximum acceleration
     const float max_speed = 50.0f; // maximum speed
 
     // Create a set of control limits (bang-bang corners of control set)

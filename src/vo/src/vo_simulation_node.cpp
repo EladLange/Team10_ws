@@ -34,7 +34,7 @@ float time_horizon = 11.0f;
 float max_acceleration = 4.0f;
 float time_step = 1.0f;
 
-const int num_obstacles = 9*3; // Number of obstacles
+const int num_obstacles = 0*3; // Number of obstacles
 
 
 bool road_init=true;
@@ -173,7 +173,7 @@ public:
 
     point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
     {
-        int lookahead_step = 10;
+        int lookahead_step = 11;
         point_msg point;
 
         // fallback if raceline is empty
@@ -218,22 +218,22 @@ public:
         // {
         //     lookahead_step = 15;
         // }
-        // else if (closest_index >= 180 && closest_index < 300)
+        // if (closest_index >= 200 && closest_index < 300)
         // {
-        //     lookahead_step = 13;
+        //     lookahead_step = 5;
         // }
-        // else if (closest_index >= 250 && closest_index < 350)
+        // if (closest_index >= 250 && closest_index < 350)
         // {
-        //     lookahead_step = 15;
+        //     lookahead_step = 8;
         // }
-        // else if (closest_index >= 350 && closest_index < 450)
-        // {
-        //     lookahead_step = 10;
-        // }
-        // else if (closest_index >= 450 && closest_index < 650)
-        // {
-        //     lookahead_step = 15;
-        // }
+        if (closest_index >= 350 && closest_index < 370)
+        {
+            lookahead_step = 7;
+        }
+        else if (closest_index >= 370 && closest_index < 400)
+        {
+            lookahead_step = 5;
+        }
         // else if (closest_index >= 650 && closest_index < 750)
         // {
         //     lookahead_step = 10;
@@ -242,18 +242,18 @@ public:
         // {
         //     lookahead_step = 17;
         // }
-        // else if (closest_index >= 800 && closest_index < 900)
-        // {
-        //     lookahead_step = 10;
-        // }
+        else if (closest_index >= 800 && closest_index < 900)
+        {
+            lookahead_step = 6;
+        }
 
 
         // Compute the lookahead distance
         int lookahead_index = closest_index + lookahead_step;
         
-    //     RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
-    //     // print the raceline index
-    //    RCLCPP_INFO(this->get_logger(), "Raceline(%d) = %f, %f, %f", lookahead_index, raceline[lookahead_index].x, raceline[lookahead_index].y, raceline[lookahead_index].z);
+        RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
+        // print the raceline index
+       RCLCPP_INFO(this->get_logger(), "Raceline(%d) = %f, %f, %f", lookahead_index, raceline[lookahead_index].x, raceline[lookahead_index].y, raceline[lookahead_index].z);
 
         // // Clamp to raceline size
         // if (lookahead_index >= static_cast<int>(raceline.size()))
@@ -337,7 +337,7 @@ private:
     }
 
     void update() {
-        double dt = 0.017;  // 100 ms
+        double dt = 0.017;  
         obsVehicles.clear();
 
         // Update drones
@@ -370,8 +370,8 @@ private:
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
 
-        twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
-        // twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obsVehicles, goal_point, r_total);
+        // twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
+        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obsVehicles, goal_point, r_total);
         // twist_msg new_ego_velocity = pscav.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         // twist_msg new_ego_velocity = makeVel(5.0,0.0);
         // Set the new velocity for the ego car
@@ -394,8 +394,8 @@ private:
 
 
         publishMarkers();
-        publishVOMarkers();
-        // publishNLVOMarkers();
+        // publishVOMarkers();
+        publishNLVOMarkers();
     }
 
     void publishPose(const Car& car) {
@@ -437,7 +437,7 @@ private:
 
         // Controlled car
         // marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
-        //setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), "map" , 0);
+        // setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), "map" , 0);
         //setVelocityTextMarker(marker_array, *controlled_car_, this->now());
 
         // Road
@@ -567,7 +567,7 @@ private:
        auto ego_vel = controlled_car_->getVelocity();
        float r_total = calculateTotalRadius();
        for (const auto& obstacle : obsVehicles) {
-            if(nlvo.distance(ego_pose, obstacle.pose) > 50.0f)
+            if(nlvo.distance(ego_pose, obstacle.pose) > 25.0f)
             {
                 continue; // Skip obstacles that are too far away
             }
@@ -589,18 +589,18 @@ private:
                 marker_array.markers.push_back(disk_marker);
             }
 
-        setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), "ego", 0);
+        
        }
-
-        // for debugging: show the candidate velocities
-        std::vector<twist_msg> candidate_velocities = nlvo.generateCandidateVelocities(ego_vel);
-        for (const auto& candidate_velocity : candidate_velocities) {
-            vis_marker candidate_marker;
-            // Set the properties of the candidate marker
-            setCandidateMarker(candidate_marker, candidate_velocity);
-            candidate_marker.id = id++;
-            marker_array.markers.push_back(candidate_marker);
-        }
+       setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), "ego", 0);
+        // // for debugging: show the candidate velocities
+        // std::vector<twist_msg> candidate_velocities = nlvo.generateCandidateVelocities(ego_vel);
+        // for (const auto& candidate_velocity : candidate_velocities) {
+        //     vis_marker candidate_marker;
+        //     // Set the properties of the candidate marker
+        //     setCandidateMarker(candidate_marker, candidate_velocity);
+        //     candidate_marker.id = id++;
+        //     marker_array.markers.push_back(candidate_marker);
+        // }
 
     nlvo_marker_pub_->publish(marker_array);
     }

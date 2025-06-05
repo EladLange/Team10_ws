@@ -68,10 +68,6 @@ def generate_launch_description():
                    "-pose", spawn_pose_value]
     )
 
-    ego_controller= Node(
-        package="car_description",
-        executable="ego_controller"
-    )
 
     joint_state_pub= Node(
     package='controller_manager',
@@ -102,6 +98,11 @@ def generate_launch_description():
     parameters=[robot_controllers],
     output="both",
     )  
+
+    ego_controller= Node(
+        package="car_description",
+        executable="ego_controller"
+    )
 
     ackermann_steering_controller= Node(
         package="controller_manager",

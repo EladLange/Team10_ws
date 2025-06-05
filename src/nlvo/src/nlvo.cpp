@@ -209,7 +209,7 @@ std::vector<twist_msg> NLVO::generateCandidateVelocities(const twist_msg& ego_ve
 
     // Number of angles & accelerations to generate
     // Number of candidate velocities = num_of_angles * num_of_accelerations
-    int num_of_angles = 7;
+    int num_of_angles = 30;
     int num_of_accelerations = 3;
     float angle_step = 2 * M_PI / num_of_angles;
     float acceleration_step = max_acceleration / num_of_accelerations;
@@ -238,9 +238,9 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
 {
     float cost = 0.0f;
     // cost function constant
-    float obstacle_avoidance_weight = 30.0f;
+    float obstacle_avoidance_weight = 0.0f;
     float goal_seeking_weight = 200.0f;
-    float smoothness_weight = 20.0f;
+    float smoothness_weight = 40.0f;
     float time_step = 1.0f;
     
     // Obstacle avoidance 
