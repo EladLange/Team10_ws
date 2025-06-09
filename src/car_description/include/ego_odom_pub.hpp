@@ -33,6 +33,6 @@ private:
 
     geometry_msgs::msg::Twist ego_vel;
     geometry_msgs::msg::Twist last_vel;
-    geomtry_msgs::msg::Accel ego_accel;
+    geometry_msgs::msg::Accel ego_accel;
     geometry_msgs::msg::TransformStamped last_pose;
 };

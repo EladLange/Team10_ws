@@ -242,9 +242,9 @@ public:
         // Compute the lookahead distance
         int lookahead_index = closest_index + lookahead_step;
         
-        RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
+        // RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
         // print the raceline index
-       RCLCPP_INFO(this->get_logger(), "Raceline(%d) = %f, %f, %f", lookahead_index, raceline[lookahead_index].x, raceline[lookahead_index].y, raceline[lookahead_index].z);
+    //    RCLCPP_INFO(this->get_logger(), "Raceline(%d) = %f, %f, %f", lookahead_index, raceline[lookahead_index].x, raceline[lookahead_index].y, raceline[lookahead_index].z);
 
         // // Clamp to raceline size
         // if (lookahead_index >= static_cast<int>(raceline.size()))
@@ -348,7 +348,7 @@ private:
             obstacle.id=obstacles_[i]->getId(); 
             obstacle.pose =obstacles_[i]->getPose();
             obstacle.velocity =obstacles_[i]->getVelocity();
-            obstacle.acceleration =obstacles[i]->getAcceleration();
+            obstacle.acceleration =obstacles_[i]->getAcceleration();
             obstacle.raceline=obstacles_[i]->getRaceline(); 
             obstacle.s_values=obstacles_[i]->getSValues();
             obsVehicles.push_back(obstacle);

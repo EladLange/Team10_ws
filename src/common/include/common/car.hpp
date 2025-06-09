@@ -19,7 +19,7 @@ public:
     void setVelocity(const twist_msg& vel);
 
     //Set car acceleration manually
-    void setAcceleration(const accel_msg accel);
+    void setAcceleration(const accel_msg& accel);
 
     //Get car position manually
     const pose_msg& getPose() const;

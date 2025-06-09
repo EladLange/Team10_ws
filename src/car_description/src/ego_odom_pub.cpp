@@ -9,7 +9,7 @@ OdomPub::OdomPub(const std::string &name) : Node(name)
     ign_pose_sub_ = create_subscription<geometry_msgs::msg::PoseArray>("/world/empty/pose/info",10,std::bind(&OdomPub::msgCallback,this, _1));   
     odom_pub_ = create_publisher<geometry_msgs::msg::Pose>("/ego_pose",10);
     ego_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>("/ego_vel",10);
-    ego_vel_pub_ = create_publisher<geometry_msgs::msg::Accel>("/ego_accel",10);
+    ego_accel_pub_ = create_publisher<geometry_msgs::msg::Accel>("/ego_accel",10);
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
     static_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
     
@@ -41,19 +41,25 @@ void OdomPub::msgCallback(const geometry_msgs::msg::PoseArray & msg)
     dy=egoTransform.transform.translation.y - last_pose.transform.translation.y;
     rclcpp::Time current_time = egoTransform.header.stamp;
     rclcpp::Time last_time = last_pose.header.stamp;
-    double dt = (current_time - last_time).seconds();  // returns double in seconds
+    float dt = (current_time - last_time).seconds();  // returns double in seconds
     vx=dx/dt;
     vy=dy/dt;
     ego_vel.linear.x=vx;
     ego_vel.linear.y=vy;
 
-    dvx=ego_vel.linear.x-last_vel.linear.x;
-    dvy=ego_vel.linear.y-last_vel.linear.y;
+    dvx=vx-last_vel.linear.x;
+    dvy=vy-last_vel.linear.y;
 
     ax=dvx/dt;
     ay=dvy/dt;
     ego_accel.linear.x=ax;
     ego_accel.linear.y=ay;
+
+    RCLCPP_INFO(this->get_logger(), "current_vel: (%.3f, %.3f), last_vel: (%.3f, %.3f), dt: %.4f current_accel: (%.3f, %.3f)", 
+                ego_vel.linear.x, ego_vel.linear.y,
+                last_vel.linear.x, last_vel.linear.y,
+                dt,
+                ego_accel.linear.x, ego_accel.linear.y);
     
     last_vel=ego_vel;
     last_pose=egoTransform;
@@ -103,8 +109,6 @@ int main (int argc, char* argv[])
 {
 rclcpp::init(argc,argv);
 auto node=std::make_shared<OdomPub>("odom_pub");
-node.last_vel.linear.x=0;
-node.last_vel.linear.y=0;
 rclcpp::spin(node);
 rclcpp::shutdown();
 return 0;
