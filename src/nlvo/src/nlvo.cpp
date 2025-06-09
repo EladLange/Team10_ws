@@ -12,16 +12,16 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
 {
     std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
     // Find the minimum time horizon
-    float min_time_horizon = max_time;
+    float min_time_horizon = 0.0f;
     // std::cout<<"selectBestVelocity: " << std::endl;
     
     for (size_t i = 0; i < obstacles_.size(); i++)
     {
         float time_horizon = computeMinimumTimeHorizon(ego_pose, ego_vel, obstacles_[i], r_total, control_set);
-        min_time_horizon = std::min(min_time_horizon, time_horizon);
+        min_time_horizon = std::max(min_time_horizon, time_horizon);
     }
 
-    min_time_horizon += 2.0f;
+    min_time_horizon += 1.0f;
     // std::cout<<"    ego_vel: " << ego_vel.linear.x << ", " << ego_vel.linear.y << std::endl;
     //std::cout<<"    min_time_horizon: " << min_time_horizon << std::endl;
 
@@ -238,9 +238,9 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
 {
     float cost = 0.0f;
     // cost function constant
-    float obstacle_avoidance_weight = 0.0f;
-    float goal_seeking_weight = 200.0f;
-    float smoothness_weight = 40.0f;
+    float obstacle_avoidance_weight = 30.0f;
+    float goal_seeking_weight = 120.0f;
+    float smoothness_weight = 30.0f;
     float time_step = 1.0f;
     
     // Obstacle avoidance 
@@ -291,7 +291,7 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
 std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Obstacle& obstacle, int trajectory_index, float r_total, float time_horizon)
 {
     std::vector<VelDisk> disks;
-    float dt = 0.01f;
+    float dt = 0.05f;
     float t = 0.0f;
     int obstacle_s_index = trajectory_index;
     float obstacle_max_s_value = obstacle.s_values[obstacle.s_values.size()-1].x;
@@ -333,8 +333,6 @@ std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Obs
         // find the closest s index to the given s value
         obstacle_s_index = nextSIndex(obstacle, obstacle_future_s_value);
     }
-
-    
     return disks; 
 }
 

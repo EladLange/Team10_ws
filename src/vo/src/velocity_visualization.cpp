@@ -17,14 +17,14 @@ void setVelocityArrowMarker(vis_marker_arr& marker_array, const Car& car, rclcpp
     arrow_marker.id = car.isControlled() ? 100 : 200 + car_index; // Different ID for controlled and non-controlled cars
     arrow_marker.type = vis_marker::ARROW;
     arrow_marker.action = vis_marker::ADD;
-    arrow_marker.scale.x = 0.1; // Shaft diameter
-    arrow_marker.scale.y = 0.2; // Head diameter
-    arrow_marker.scale.z = 0.2; // Head length
+    arrow_marker.scale.x = 0.4; // Shaft diameter
+    arrow_marker.scale.y = 0.8; // Head diameter
+    arrow_marker.scale.z = 0.8; // Head length
 
-    // Green arrow for velocity
-    arrow_marker.color.r = 0.0;
+    // White arrow for velocity
+    arrow_marker.color.r = 1.0;
     arrow_marker.color.g = 1.0;
-    arrow_marker.color.b = 0.0;
+    arrow_marker.color.b = 1.0;
     arrow_marker.color.a = 1.0;
 
     geometry_msgs::msg::Point start_point, end_point;

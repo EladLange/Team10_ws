@@ -46,7 +46,8 @@ def generate_launch_description():
         os.path.join(
             get_package_share_directory("ros_gz_sim"), "launch"), "/gz_sim.launch.py"]),
         launch_arguments= [
-            ("gz_args", [" -v 4", " -r", " empty.sdf" ])
+            ("gz_args", [" -v 4", " -r", " --headless-rendering", " empty.sdf" ])
+            # ("gz_args", ["-r", "--headless-rendering", "empty.sdf"])
         ]      
     )
 
@@ -68,12 +69,6 @@ def generate_launch_description():
                    "-pose", spawn_pose_value]
     )
 
-    ekf_node =Node(
-        package="robot_localization",
-        executable="ekf_node",
-        name="ekf_filter_node",
-        parameters=[os.path.join(car_description_dir,"config","ekf.yaml")]
-    )
 
     ego_controller= Node(
         package="car_description",
@@ -135,7 +130,7 @@ def generate_launch_description():
         executable="rviz2",
         name="rviz2",
         output="screen",
-        arguments=["-d",os.path.join(car_description_dir, "RVIZ", "main_disp.rviz")]
+        arguments=["-d",os.path.join(car_description_dir, "RVIZ", "blabla.rviz")]
     )
 
     rviz_nlvo=  Node(
@@ -143,7 +138,7 @@ def generate_launch_description():
         executable="rviz2",
         name="rviz2",
         output="screen",
-        arguments=["-d",os.path.join(car_description_dir, "RVIZ", "vel_space.rviz")]
+        arguments=["-d",os.path.join(car_description_dir, "RVIZ", "velocity_space.rviz")]
     )
 
     rviz_ego_view=  Node(

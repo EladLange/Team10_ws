@@ -31,10 +31,12 @@ PSCAV pscav;
 
 // Global variables
 float time_horizon = 11.0f;
+// timr horizon for vo - 11
+
 float max_acceleration = 4.0f;
 float time_step = 1.0f;
 
-const int num_obstacles = 0*3; // Number of obstacles
+const int num_obstacles = 10*3; // Number of obstacles
 
 
 bool road_init=true;
@@ -154,7 +156,7 @@ public:
                 obs->setRaceline(obs_xyz[i]);
                 obs->setSValues(obs_s[i]);
                 obstacles_.push_back(obs);  
-
+                // RCLCPP_INFO(this->get_logger(), "Obstacle %s path: %d", obs->getId().c_str(), i);
             }
       
         }
@@ -173,7 +175,7 @@ public:
 
     point_msg findNextGoalPoint(const std::vector<point_msg>& raceline, const pose_msg& ego_pose)
     {
-        int lookahead_step = 11;
+        int lookahead_step = 11;//10
         point_msg point;
 
         // fallback if raceline is empty
@@ -210,42 +212,31 @@ public:
         // RCLCPP_INFO(this->get_logger(), "Closest index: %d", closest_index);
 
 
-        // if (closest_index >= 10 && closest_index < 100)
-        // {
-        //     lookahead_step = 17;
-        // }
-        // else if (closest_index >= 100 && closest_index < 180)
-        // {
-        //     lookahead_step = 15;
-        // }
-        // if (closest_index >= 200 && closest_index < 300)
+        // FOR NLVO ONLY
+        // if (closest_index >= 335 && closest_index < 385)
         // {
         //     lookahead_step = 5;
         // }
-        // if (closest_index >= 250 && closest_index < 350)
+        // else if (closest_index >= 385 && closest_index < 430)
         // {
         //     lookahead_step = 8;
         // }
-        if (closest_index >= 350 && closest_index < 370)
-        {
-            lookahead_step = 7;
-        }
-        else if (closest_index >= 370 && closest_index < 400)
-        {
-            lookahead_step = 5;
-        }
-        // else if (closest_index >= 650 && closest_index < 750)
+        // else if (closest_index >= 670 && closest_index < 760)
         // {
         //     lookahead_step = 10;
         // }
-        // else if (closest_index >= 750 && closest_index < 800)
+        // else if (closest_index >= 760 && closest_index < 800)
         // {
-        //     lookahead_step = 17;
+        //     lookahead_step = 10;
         // }
-        else if (closest_index >= 800 && closest_index < 900)
-        {
-            lookahead_step = 6;
-        }
+        // else if (closest_index >= 800 && closest_index < 855)
+        // {
+        //     lookahead_step = 5;
+        // }
+        // else if (closest_index >= 855 && closest_index < 885)
+        // {
+        //     lookahead_step = 8;
+        // }
 
 
         // Compute the lookahead distance
@@ -370,8 +361,8 @@ private:
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
 
-        // twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
-        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obsVehicles, goal_point, r_total);
+        twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
+        // twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obsVehicles, goal_point, r_total);
         // twist_msg new_ego_velocity = pscav.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         // twist_msg new_ego_velocity = makeVel(5.0,0.0);
         // Set the new velocity for the ego car
@@ -394,8 +385,8 @@ private:
 
 
         publishMarkers();
-        // publishVOMarkers();
-        publishNLVOMarkers();
+        publishVOMarkers();
+        // publishNLVOMarkers();
     }
 
     void publishPose(const Car& car) {
@@ -530,12 +521,18 @@ private:
         vis_marker_arr marker_array;
         vis_marker marker;
 
+        
+        
         int id = 0;  // Marker ID counter
         auto ego_pose = controlled_car_->getPose();
         auto ego_vel = controlled_car_->getVelocity();
         float r_total = calculateTotalRadius();
 
         for (const auto& obstacle : obstacles_) {
+            if (vo.distance(controlled_car_->getPose(), obstacle->getPose()) > 25.0f)
+            {
+                continue; // Skip obstacles that are too far away
+            }
 
             vis_marker cone_marker;
             // Set the properties of the cone marker
@@ -571,10 +568,10 @@ private:
             {
                 continue; // Skip obstacles that are too far away
             }
-            float time_horizon = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, obstacle, r_total, nlvo.control_set) + 2.0f;
+            float time_horizon_nlvo = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, obstacle, r_total, nlvo.control_set) + 2.0f; // Add a small buffer to the time horizon  
 
             int trajectory_index = nlvo.findTrajectoryIndex(obstacle);
-            std::vector<VelDisk> disks = nlvo.generateNLVODisks(ego_pose, obstacle, trajectory_index, r_total, time_horizon);  
+            std::vector<VelDisk> disks = nlvo.generateNLVODisks(ego_pose, obstacle, trajectory_index, r_total, time_horizon_nlvo);  
 
             // Visualize each disk
             for (auto &disk : disks)

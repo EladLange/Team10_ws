@@ -33,10 +33,10 @@
 #include <string>  // For string operations
 #include <array>  // For fixed-size arrays
 
-using namespace std::chrono_literals;  // Allow writing 10ms, 1s etc. as time literals
+using namespace std::chrono_literals;  // Al`low writing 10ms, 1s etc. as time literals
 
-const int num_paths = 3;  // Number of paths to load
-const int num_obstacles = 1*num_paths;  // Number of obstacles (drones) to simulate
+const int num_paths = 3; // 3;  // Number of paths to load
+const int num_obstacles = 10*num_paths;  // Number of obstacles (drones) to simulate
 const int drones_per_path = num_obstacles / num_paths; // number of drones per path
 
 
@@ -49,10 +49,12 @@ public:
         vehicle_model_ = std::make_shared<BicycleModel>(1.55);
 
         // Define paths to load
-        std::array<std::string, 3> path_files = {
-            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/clothoid_center_lane_baoundary0.csv",
-            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/clothoid_center_lane_baoundary1.csv",
-            "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/clothoid_center_lane_baoundary2.csv"
+        std::array<std::string, num_paths> path_files = { //std::array<std::string, 3> path_files = {
+            "/home/zvi/Desktop/Team10_ws/src/vo/src/lanes/clothoid_inner.csv",
+            "/home/zvi/Desktop/Team10_ws/src/vo/src/lanes/clothoid_center.csv",
+            "/home/zvi/Desktop/Team10_ws/src/vo/src/lanes/clothoid_outer.csv"
+            // "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/yasMarina_path_baoundary0.csv",
+            // "/home/zvi/Desktop/Team10_ws/src/purepursuit_new/src/drones_path/yasMarina_path_baoundary1.csv"
         };
 
         // Load all paths
@@ -86,15 +88,20 @@ public:
 
         // Create drones (one for each path or up to drones_per_path)
         // const int num_drones = std::min(static_cast<int>(paths_.size()), drones_per_path);
-
+        
         for (int i = 0; i < num_paths; ++i) {
             // Create initial state for the drone
             // Position each drone at the start of its path with some z-offset to avoid collisions
+            int start_index = 0; 
+            int invert_j=1;
             for (int j=0; j<drones_per_path; ++j){
-
+                if (j>=drones_per_path/2){
+                    start_index = 380; 
+                    invert_j=-1;
+                }
                 State initial_state("obst_" + std::to_string(i),
-                               paths_[i].first[0]+20*j+20*i,  // x (staggered start positions)
-                               paths_[i].second[0], // y (start at the same y position)
+                               paths_[i].first[i+start_index] + 25*j*invert_j ,//+ 25*i,  // x (staggered start positions)
+                               paths_[i].second[start_index], // y (start at the same y position)
                                0.2,       // z (staggered heights)
                                0.0);                // yaw
             // Create the drone with its assigned path
@@ -107,8 +114,7 @@ public:
                 );
         
                 drones_.push_back(drone);
-                // RCLCPP_INFO(this->get_logger(), "Created drone %d at position (%f, %f, %f)",
-                //         i, initial_state.x, initial_state.y, initial_state.z);
+                // RCLCPP_INFO(this->get_logger(), "Created drone %d path (%d)", j*i,  i);
             }
         }
 
@@ -197,8 +203,22 @@ private:
 
         // Update each drone and collect visualization data
         for (size_t i = 0; i < drones_.size(); ++i) {
+            
             // Update drone state using pure pursuit control
-            double new_velocity = 2.0 + 0.3*i; // velocity for each drone
+            // double new_velocity = 7 - 0.2*i; // velocity for each drone
+            double new_velocity = velocity; // Default velocity
+            if (i<drones_per_path){
+                new_velocity = 7.0;
+            }
+            else if( i<2*drones_per_path){
+                new_velocity = 5.0;
+            }
+            else if (i<3*drones_per_path){
+                new_velocity = 3.0;
+            }
+            else {
+                new_velocity = 3.0;
+            }      
             drones_[i]->update(dt, new_velocity); // Update drone state
 
             // Get current drone state
