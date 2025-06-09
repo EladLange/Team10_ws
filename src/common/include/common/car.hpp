@@ -18,11 +18,17 @@ public:
     //Set car velocity manually
     void setVelocity(const twist_msg& vel);
 
+    //Set car acceleration manually
+    void setAcceleration(const accel_msg accel);
+
     //Get car position manually
     const pose_msg& getPose() const;
 
     //Get car velocity manually
     const twist_msg& getVelocity() const;
+
+    //Set car acceleration manually
+    const accel_msg& getAcceleration() const;
 
     //Set the car orientation
     void setOrientation(const tf2::Quaternion& orientation);
@@ -54,6 +60,8 @@ private:
     pose_msg pose_;
     //Car linear & angular velocity
     twist_msg velocity_;
+    //car linear & angular acceleration
+    accel_msg acceleration_;
 
     //obstacles tangent speed
     float speed_;

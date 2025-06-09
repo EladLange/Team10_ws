@@ -15,6 +15,10 @@ Car::Car(const std::string& id, bool is_controlled)
 
     velocity_.linear.x = 0.0;
     velocity_.angular.z = 0.0;
+
+    acceleration_.linear.x=0.0;
+    acceleration_.linear.y=0.0;
+
 }
 
 void Car::setId(const std::string& string) {
@@ -27,6 +31,10 @@ void Car::setPose(const pose_msg& pose) {
 
 void Car::setVelocity(const twist_msg& vel) {
     velocity_ = vel;
+}
+
+void Car::setAcceleration(const twist_msg& accel) {
+    acceleration_ = accel;
 }
 
 void Car::setOrientation(const tf2::Quaternion& orientation) {
@@ -44,6 +52,10 @@ const twist_msg& Car::getVelocity() const {
     return velocity_;
 }
 
+const accel_msg& Car::getAcceleration() const {
+    return acceleration_;
+}
+
 std::string Car::getId() const {
     return id_;
 }
@@ -53,8 +65,8 @@ bool Car::isControlled() const {
 }
 
 void Car::update(double dt) {
-    pose_.position.x += velocity_.linear.x * dt;
-    pose_.position.y += velocity_.linear.y * dt;
+    pose_.position.x +=(acceleration_.x*dt*dt)/2 velocity_.linear.x * dt;
+    pose_.position.y +=(acceleration_.y*dt*dt)/2 velocity_.linear.y * dt;
     pose_.orientation.z+=velocity_.angular.z * dt;
 }
 

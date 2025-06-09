@@ -348,6 +348,7 @@ private:
             obstacle.id=obstacles_[i]->getId(); 
             obstacle.pose =obstacles_[i]->getPose();
             obstacle.velocity =obstacles_[i]->getVelocity();
+            obstacle.acceleration =obstacles[i]->getAcceleration();
             obstacle.raceline=obstacles_[i]->getRaceline(); 
             obstacle.s_values=obstacles_[i]->getSValues();
             obsVehicles.push_back(obstacle);
