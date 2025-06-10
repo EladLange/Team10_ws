@@ -213,38 +213,38 @@ public:
 
 
         // FOR NLVO ONLY
-        // if (closest_index >= 335 && closest_index < 385)
-        // {
-        //     lookahead_step = 5;
-        // }
-        // else if (closest_index >= 385 && closest_index < 430)
-        // {
-        //     lookahead_step = 8;
-        // }
-        // else if (closest_index >= 670 && closest_index < 760)
-        // {
-        //     lookahead_step = 10;
-        // }
-        // else if (closest_index >= 760 && closest_index < 800)
-        // {
-        //     lookahead_step = 10;
-        // }
-        // else if (closest_index >= 800 && closest_index < 855)
-        // {
-        //     lookahead_step = 5;
-        // }
-        // else if (closest_index >= 855 && closest_index < 885)
-        // {
-        //     lookahead_step = 8;
-        // }
+        if (closest_index >= 335 && closest_index < 385)
+        {
+            lookahead_step = 5;
+        }
+        else if (closest_index >= 385 && closest_index < 430)
+        {
+            lookahead_step = 8;
+        }
+        else if (closest_index >= 670 && closest_index < 760)
+        {
+            lookahead_step = 10;
+        }
+        else if (closest_index >= 760 && closest_index < 800)
+        {
+            lookahead_step = 10;
+        }
+        else if (closest_index >= 800 && closest_index < 855)
+        {
+            lookahead_step = 5;
+        }
+        else if (closest_index >= 855 && closest_index < 885)
+        {
+            lookahead_step = 8;
+        }
 
 
         // Compute the lookahead distance
         int lookahead_index = closest_index + lookahead_step;
         
-        RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
+        // RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
         // print the raceline index
-       RCLCPP_INFO(this->get_logger(), "Raceline(%d) = %f, %f, %f", lookahead_index, raceline[lookahead_index].x, raceline[lookahead_index].y, raceline[lookahead_index].z);
+    //    RCLCPP_INFO(this->get_logger(), "Raceline(%d) = %f, %f, %f", lookahead_index, raceline[lookahead_index].x, raceline[lookahead_index].y, raceline[lookahead_index].z);
 
         // // Clamp to raceline size
         // if (lookahead_index >= static_cast<int>(raceline.size()))
@@ -348,6 +348,7 @@ private:
             obstacle.id=obstacles_[i]->getId(); 
             obstacle.pose =obstacles_[i]->getPose();
             obstacle.velocity =obstacles_[i]->getVelocity();
+            obstacle.acceleration =obstacles_[i]->getAcceleration();
             obstacle.raceline=obstacles_[i]->getRaceline(); 
             obstacle.s_values=obstacles_[i]->getSValues();
             obsVehicles.push_back(obstacle);
@@ -361,8 +362,8 @@ private:
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
 
-        twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
-        // twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obsVehicles, goal_point, r_total);
+        // twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
+        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obsVehicles, goal_point, r_total);
         // twist_msg new_ego_velocity = pscav.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
         // twist_msg new_ego_velocity = makeVel(5.0,0.0);
         // Set the new velocity for the ego car
@@ -385,8 +386,8 @@ private:
 
 
         publishMarkers();
-        publishVOMarkers();
-        // publishNLVOMarkers();
+        // publishVOMarkers();
+        publishNLVOMarkers();
     }
 
     void publishPose(const Car& car) {
@@ -568,7 +569,7 @@ private:
             {
                 continue; // Skip obstacles that are too far away
             }
-            float time_horizon_nlvo = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, obstacle, r_total, nlvo.control_set) + 2.0f; // Add a small buffer to the time horizon  
+            float time_horizon_nlvo = nlvo.computeMinimumTimeHorizon(ego_pose, ego_vel, obstacle, r_total, nlvo.control_set) + 1.0f; // Add a small buffer to the time horizon  
 
             int trajectory_index = nlvo.findTrajectoryIndex(obstacle);
             std::vector<VelDisk> disks = nlvo.generateNLVODisks(ego_pose, obstacle, trajectory_index, r_total, time_horizon_nlvo);  

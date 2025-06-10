@@ -76,50 +76,6 @@ twist_msg NLVO::selectBestVelocity(const pose_msg &ego_pose, const twist_msg &eg
 
 float NLVO::computeMinimumTimeHorizon(const pose_msg &ego_pose, const twist_msg &ego_vel, const Obstacle& obstacle, float r_total, std::vector<std::pair<double, double>> control_set)
 {
-    // Old time horizon - delete if the new one is
-    /*
-    float min_collision_time = max_time;
-    float r_total_squared = r_total * r_total;
-    float first_collision_time_for_control;
-
-    // For every control in the set
-    for (const auto &control : control_set)
-    {
-        
-        first_collision_time_for_control = max_time;
-        
-        // Calculate the initial relative velocity
-        twist_msg relative_velocity;
-        relative_velocity.linear.x = ego_vel.linear.x - obstacle_vel.linear.x;
-        relative_velocity.linear.y = ego_vel.linear.y - obstacle_vel.linear.y;
-
-        // Calculate the initial relative position
-        pose_msg relative_pose;
-        relative_pose.position.x = ego_pose.position.x - obstacle_pose.position.x;
-        relative_pose.position.y = ego_pose.position.y - obstacle_pose.position.y;
-
-        // Check for collision at different time steps
-        for (float t = dt; t < max_time; t += dt)
-        {
-            // Relative position at time t
-            pose_msg future_relative_pose;
-            future_relative_pose.position.x = relative_pose.position.x + relative_velocity.linear.x * t + 0.5 * control.first * t * t;
-            future_relative_pose.position.y = relative_pose.position.y + relative_velocity.linear.y * t + 0.5 * control.second * t * t;
-
-            double future_relative_pose_length_squared = pow(future_relative_pose.position.x, 2) + pow(future_relative_pose.position.y, 2);
-
-            if (future_relative_pose_length_squared <= r_total_squared) // Collision detected
-            {
-                first_collision_time_for_control = t;
-                break; // Found the first collision time for this control
-            }
-        }
-
-        // Update the minimum collision time
-        min_collision_time = std::min(min_collision_time, first_collision_time_for_control);
-    }
-    return min_collision_time;
-    */
 
     float min_collision_time = max_time;
     
@@ -325,8 +281,9 @@ std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Obs
         
         // Center of the NLVO disk in velocity space
         VelDisk disk;
-        disk.cx = relative_pose.position.x / t;
-        disk.cy = relative_pose.position.y / t;
+        disk.cx = relative_pose.position.x / t +obstacle.velocity.linear.x;
+        disk.cy = relative_pose.position.y / t + obstacle.velocity.linear.y;
+
         disk.radius = r_total / t;
         disks.push_back(disk);
 

@@ -39,6 +39,8 @@ struct Obstacle
     pose_msg pose;
 
     twist_msg velocity;
+    
+    accel_msg acceleration;
 
     std::vector<point_msg> raceline;
 
