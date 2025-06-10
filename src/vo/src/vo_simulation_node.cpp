@@ -31,7 +31,7 @@ PSCAV pscav;
 
 // Global variables
 float time_horizon = 11.0f;
-// timr horizon for vo - 11
+// time horizon for vo - 11
 
 float max_acceleration = 4.0f;
 float time_step = 1.0f;
