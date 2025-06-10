@@ -1,5 +1,5 @@
 #include "nlvo/nlvo_visualization.hpp"
-#include "nlvo/nlvo_visualization.hpp"
+
 
 // Make nlvo static to avoid multiple definition errors
 static NLVO nlvo;

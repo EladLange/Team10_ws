@@ -10,6 +10,8 @@
 #include "global_variables.hpp"
 #include "nlvo/nlvo.hpp"
 #include "nlvo/nlvo_visualization.hpp"
+#include "nao/nao.hpp"
+#include "nao/nao_visualization.hpp"
 #include "pscav/pscav.hpp"
 #include "common/settings.hpp"
 
@@ -25,6 +27,7 @@
 
 VelocityObstacle vo;
 NLVO nlvo;
+NAO nao;
 PSCAV pscav;
 // std::vector<Car> obsVehicles; 
 // std::vector<Car> egos;
@@ -36,7 +39,7 @@ float time_horizon = 11.0f;
 float max_acceleration = 4.0f;
 float time_step = 1.0f;
 
-const int num_obstacles = 10*3; // Number of obstacles
+const int num_obstacles = 0*3; // Number of obstacles
 
 
 bool road_init=true;
@@ -59,10 +62,12 @@ public:
         vo_marker_pub_ = this ->create_publisher<vis_marker_arr>("vo_marker_array", 10);
         cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("vel_cmd", 10);
         nlvo_marker_pub_ = this->create_publisher<vis_marker_arr>("nlvo_marker_array", 10);
+        nao_marker_pub_ = this->create_publisher<vis_marker_arr>("nao_marker_array", 10);
     
         // subscribers
-        ego_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&CarSimulationNode::egoVelCallback,this, _1));
-        ego_pos_sub_ = this->create_subscription<geometry_msgs::msg::Pose>("/ego_pose",10,std::bind(&CarSimulationNode::egoPosCallback,this, _1));
+        // ego_accel_sub_ = this->create_subscription<geometry_msgs::msg::Accel>("/ego_accel",10,std::bind(&CarSimulationNode::egoAccelCallback,this, _1));
+        // ego_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>("/ego_vel",10,std::bind(&CarSimulationNode::egoVelCallback,this, _1));
+        // ego_pos_sub_ = this->create_subscription<geometry_msgs::msg::Pose>("/ego_pose",10,std::bind(&CarSimulationNode::egoPosCallback,this, _1));
         obstacles_pos_sub_ = this->create_subscription<geometry_msgs::msg::PoseArray>("/obstacles_poses",10,std::bind(&CarSimulationNode::obstaclePosCallback,this, _1));
         obstacles_vel_sub_ = this->create_subscription<geometry_msgs::msg::PoseArray>("/obstacles_vels",10,std::bind(&CarSimulationNode::obstacleVelCallback,this, _1));
 
@@ -116,31 +121,12 @@ public:
             }
         file.close();
         }
-        // create temp raceline for the obstacles
-        // float di = 0.05f;
-        // for (float i =0; i<300; i+=di)
-        // {
-        //     point_msg point;
-        //     point_msg s_point;
-        //     point.x = 10.0f + i;
-        //     point.y = 0.0f;
-        //     point.z = 0.5f;
-        //     s_point.x = point.x;
-        //     obs_xyz.push_back(point);
-        //     obs_s.push_back(s_point);
-        // }
-
-        // print the raceline
-        // for (int i = 0; i < obs_xyz.size(); ++i)
-        // {
-        //     std::cout<<"obs_xyz: "<<obs_xyz[i].x<<", "<<obs_xyz[i].y<<", "<<obs_xyz[i].z<<std::endl;
-        //     std::cout<<"obs_s: "<<obs_s[i].x<<std::endl;
-        // }
-
+       
         // Initialize cars
         controlled_car_ = std::make_shared<Car>("ego", true);
         controlled_car_->setPose(makePose(0.0, 0.0));  // Center of first lane
         controlled_car_->setVelocity(makeVel(0.0, 0.0));
+        controlled_car_->setAcceleration(makeAccel(0.0, 0.0));
         controlled_car_->setRaceline(obs_xyz[1]);
         controlled_car_->setSValues(obs_s[1]);
         
@@ -213,46 +199,35 @@ public:
 
 
         // FOR NLVO ONLY
-        if (closest_index >= 335 && closest_index < 385)
-        {
-            lookahead_step = 5;
-        }
-        else if (closest_index >= 385 && closest_index < 430)
-        {
-            lookahead_step = 8;
-        }
-        else if (closest_index >= 670 && closest_index < 760)
-        {
-            lookahead_step = 10;
-        }
-        else if (closest_index >= 760 && closest_index < 800)
-        {
-            lookahead_step = 10;
-        }
-        else if (closest_index >= 800 && closest_index < 855)
-        {
-            lookahead_step = 5;
-        }
-        else if (closest_index >= 855 && closest_index < 885)
-        {
-            lookahead_step = 8;
-        }
+        // if (closest_index >= 335 && closest_index < 385)
+        // {
+        //     lookahead_step = 5;
+        // }
+        // else if (closest_index >= 385 && closest_index < 430)
+        // {
+        //     lookahead_step = 8;
+        // }
+        // else if (closest_index >= 670 && closest_index < 760)
+        // {
+        //     lookahead_step = 10;
+        // }
+        // else if (closest_index >= 760 && closest_index < 800)
+        // {
+        //     lookahead_step = 10;
+        // }
+        // else if (closest_index >= 800 && closest_index < 855)
+        // {
+        //     lookahead_step = 5;
+        // }
+        // else if (closest_index >= 855 && closest_index < 885)
+        // {
+        //     lookahead_step = 8;
+        // }
 
 
         // Compute the lookahead distance
         int lookahead_index = closest_index + lookahead_step;
         
-        // RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
-        // print the raceline index
-    //    RCLCPP_INFO(this->get_logger(), "Raceline(%d) = %f, %f, %f", lookahead_index, raceline[lookahead_index].x, raceline[lookahead_index].y, raceline[lookahead_index].z);
-
-        // // Clamp to raceline size
-        // if (lookahead_index >= static_cast<int>(raceline.size()))
-        // {
-        //     lookahead_index = static_cast<int>(raceline.size()) - 1;
-        //     // RCLCPP_INFO(get_logger(), "Lookahead index is out of bounds");
-        // }
-        // // RCLCPP_INFO(this->get_logger(), "Lookahead index: %d", lookahead_index);
         return raceline[lookahead_index];
     }
 
@@ -263,6 +238,7 @@ private:
     std::vector<Obstacle> obsVehicles; 
     // std::vector<std::shared_ptr<Car>> drones_;
     std::vector<std::shared_ptr<Car>> obstacles_;
+   
 
     
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
@@ -273,11 +249,13 @@ private:
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<vis_marker_arr>::SharedPtr vo_marker_pub_;
     rclcpp::Publisher<vis_marker_arr>::SharedPtr nlvo_marker_pub_;
+    rclcpp::Publisher<vis_marker_arr>::SharedPtr nao_marker_pub_;
 
     rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr drone_pose_sub_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
 
     // ROS subscribers
+    rclcpp::Subscription<geometry_msgs::msg::Accel>::SharedPtr ego_accel_sub_;
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr ego_vel_sub_;
     rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr ego_pos_sub_;
     rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr obstacles_pos_sub_;
@@ -298,6 +276,20 @@ private:
         vel.linear.y = y;
         vel.linear.z = 0.0;
         return vel;
+    }
+
+    accel_msg makeAccel(double x, double y) {
+        accel_msg accel;
+        accel.linear.x = x;
+        accel.linear.y = y;
+        accel.linear.z = 0.0;
+        return accel;
+    }
+
+    void egoAccelCallback(const geometry_msgs::msg::Accel msg)
+    {
+        controlled_car_->setAcceleration(msg);
+        // RCLCPP_INFO(this->get_logger(), "Ego car acceleration set to: (%f, %f)", msg.linear.x, msg.linear.y);
     }
 
     void egoVelCallback(const shared_ptr msg)
@@ -357,37 +349,43 @@ private:
         // Get ego car's current pose and velocity
         auto ego_pose = controlled_car_->getPose();
         auto ego_vel = controlled_car_->getVelocity();
+        auto ego_accel = controlled_car_->getAcceleration();
 
         std::vector<point_msg> raceline = buildRaceline();
         point_msg goal_point = findNextGoalPoint(raceline, ego_pose);
         float r_total = calculateTotalRadius();
 
         // twist_msg new_ego_velocity = vo.selectBestVelocity(ego_pose, ego_vel, obstacles_, goal_point, r_total);
-        twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obsVehicles, goal_point, r_total);
+        // twist_msg new_ego_velocity = nlvo.selectBestVelocity(ego_pose, ego_vel, obsVehicles, goal_point, r_total);
+        twist_msg new_ego_velocity = nao.selectBestVelocity(ego_accel, ego_vel, ego_pose, obsVehicles, goal_point, r_total);
         // twist_msg new_ego_velocity = pscav.selectBestVelocity(ego_pose, ego_vel, obstacle_poses, obstacle_velocities, goal_point, r_total);
-        // twist_msg new_ego_velocity = makeVel(5.0,0.0);
+        
         // Set the new velocity for the ego car
         // controlled_car_->setVelocity(new_ego_velocity);
         // Publish the new velocity
         // RCLCPP_INFO(this->get_logger(), "New ego car velocity set to: (%f, %f)", new_ego_velocity.linear.x, new_ego_velocity.linear.y);
-        cmd_vel_pub_->publish(new_ego_velocity);
+        // cmd_vel_pub_->publish(new_ego_velocity);
+
+        // set desired acceleration  from NAO
+        controlled_car_->setAcceleration(nao.getBestAccel());
 
         // Update ego car's orientation based on the new velocity
-        // double yaw = std::atan2(new_ego_velocity.linear.y, new_ego_velocity.linear.x);
-        // tf2::Quaternion q;
-        // q.setRPY(0, 0, yaw);
-        // controlled_car_->setOrientation(q);
+        double yaw = std::atan2(new_ego_velocity.linear.y, new_ego_velocity.linear.x);
+        tf2::Quaternion q;
+        q.setRPY(0, 0, yaw);
+        controlled_car_->setOrientation(q);
         //RCLCPP_INFO(this->get_logger(), "Ego car orientation set to: %f", yaw);
 
         // Update ego car's position based on the new velocity
-        // controlled_car_->update(dt);
-        // publishPose(*controlled_car_);
-        // publishTF(*controlled_car_, "map", controlled_car_->getId());
+        controlled_car_->update(dt);
+        publishPose(*controlled_car_);
+        publishTF(*controlled_car_, "map", controlled_car_->getId());
 
 
         publishMarkers();
         // publishVOMarkers();
-        publishNLVOMarkers();
+        // publishNLVOMarkers();
+        publishNAOMarkers();
     }
 
     void publishPose(const Car& car) {
@@ -428,9 +426,9 @@ private:
 
 
         // Controlled car
-        // marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
+        marker_array.markers.push_back(makeCarMarker(*controlled_car_, id));
         // setVelocityArrowMarker(marker_array, *controlled_car_, this->now(), "map" , 0);
-        //setVelocityTextMarker(marker_array, *controlled_car_, this->now());
+        // setVelocityTextMarker(marker_array, *controlled_car_, this->now());
 
         // Road
         //rclcpp::Time now = this->now();
@@ -526,7 +524,7 @@ private:
         
         int id = 0;  // Marker ID counter
         auto ego_pose = controlled_car_->getPose();
-        auto ego_vel = controlled_car_->getVelocity();
+        // auto ego_vel = controlled_car_->getVelocity();
         float r_total = calculateTotalRadius();
 
         for (const auto& obstacle : obstacles_) {
@@ -578,8 +576,8 @@ private:
             for (auto &disk : disks)
             {
                 // Shift NLVO disk centers to base_link frame (ego-relative velocity space)
-                disk.cx = disk.cx - ego_vel.linear.x;
-                disk.cy = disk.cy - ego_vel.linear.y;
+                disk.cx = disk.cx;// - ego_vel.linear.x;  elad 10/06/2025
+                disk.cy = disk.cy;// - ego_vel.linear.y;
                 
                 // Visualize
                 vis_marker disk_marker;
@@ -602,6 +600,54 @@ private:
 
     nlvo_marker_pub_->publish(marker_array);
     }
+
+     void publishNAOMarkers()
+    {
+       vis_marker_arr marker_array;
+
+       int id = 0;  // Marker ID counter
+       auto ego_pose = controlled_car_->getPose();
+       auto ego_vel = controlled_car_->getVelocity();
+       auto ego_accel = controlled_car_->getAcceleration();
+       float r_total = calculateTotalRadius();
+       for (const auto& obstacle : obsVehicles) {
+            if(nlvo.distance(ego_pose, obstacle.pose) > 25.0f)
+            {
+                continue; // Skip obstacles that are too far away
+            }
+            
+            int trajectory_index = nao.findTrajectoryIndex(obstacle);
+            std::vector<AccDisk> disks = nao.generateNAODisks(obstacle, ego_vel, ego_pose, trajectory_index, r_total);  
+
+            // Visualize each disk
+            for (auto &disk : disks)
+            {
+                // Shift NLVO disk centers to base_link frame (ego-relative velocity space)
+                disk.cx = disk.cx;
+                disk.cy = disk.cy;
+                
+                // Visualize
+                vis_marker disk_marker;
+                setNAOMarker(disk_marker, disk, id++);
+                marker_array.markers.push_back(disk_marker);
+            }
+
+        
+       }
+       setVelocityArrowNAOMarker(marker_array, *controlled_car_, this->now(), "ego", 0);
+        // for debugging: show the candidate velocities
+        std::vector<accel_msg> candidate_accels = nao.generateCandidateAccel(ego_accel);
+        for (const auto& candidate_accel : candidate_accels) {
+            vis_marker candidate_marker;
+            // Set the properties of the candidate marker
+            setCandidateNAOMarker(candidate_marker, candidate_accel);
+            candidate_marker.id = id++;
+            marker_array.markers.push_back(candidate_marker);
+        }
+
+    nao_marker_pub_->publish(marker_array);
+    }
+
 };
 
 

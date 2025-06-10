@@ -67,6 +67,8 @@ bool Car::isControlled() const {
 void Car::update(double dt) {
     pose_.position.x +=(acceleration_.linear.x*dt*dt)/2 + velocity_.linear.x * dt;
     pose_.position.y +=(acceleration_.linear.y*dt*dt)/2 + velocity_.linear.y * dt;
+    velocity_.linear.x += acceleration_.linear.x * dt;
+    velocity_.linear.y += acceleration_.linear.y * dt;
     pose_.orientation.z+=velocity_.angular.z * dt;
 }
 

@@ -17,7 +17,7 @@ def generate_launch_description():
         executable="rviz2",
         name="rviz2",
         output="screen",
-        arguments=["-d",os.path.join(car_description_dir, "RVIZ", "basic_sim.rviz")]
+        arguments=["-d",os.path.join(car_description_dir, "RVIZ", "mini_display.rviz")]
     )
 
     rviz_nlvo=  Node(
@@ -25,7 +25,7 @@ def generate_launch_description():
         executable="rviz2",
         name="rviz2",
         output="screen",
-        arguments=["-d",os.path.join(car_description_dir, "RVIZ", "nlvo_viz.rviz")]
+        arguments=["-d",os.path.join(car_description_dir, "RVIZ", "velocity_space.rviz")]
     )
 
     vo_node= Node(
@@ -41,6 +41,6 @@ def generate_launch_description():
     return LaunchDescription([
     rviz_node,
     rviz_nlvo,
-    #vo_node#,
+    # vo_node#,
     # pure_pursuit_node
     ])

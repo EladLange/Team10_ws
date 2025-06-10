@@ -55,11 +55,11 @@ void OdomPub::msgCallback(const geometry_msgs::msg::PoseArray & msg)
     ego_accel.linear.x=ax;
     ego_accel.linear.y=ay;
 
-    RCLCPP_INFO(this->get_logger(), "current_vel: (%.3f, %.3f), last_vel: (%.3f, %.3f), dt: %.4f current_accel: (%.3f, %.3f)", 
-                ego_vel.linear.x, ego_vel.linear.y,
-                last_vel.linear.x, last_vel.linear.y,
-                dt,
-                ego_accel.linear.x, ego_accel.linear.y);
+    // RCLCPP_INFO(this->get_logger(), "current_vel: (%.3f, %.3f), last_vel: (%.3f, %.3f), dt: %.4f current_accel: (%.3f, %.3f)", 
+    //             ego_vel.linear.x, ego_vel.linear.y,
+    //             last_vel.linear.x, last_vel.linear.y,
+    //             dt,
+    //             ego_accel.linear.x, ego_accel.linear.y);
     
     last_vel=ego_vel;
     last_pose=egoTransform;

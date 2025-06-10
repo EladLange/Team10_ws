@@ -194,7 +194,7 @@ float NLVO::calculateCandidateCost(const pose_msg& ego_pose, const twist_msg& eg
 {
     float cost = 0.0f;
     // cost function constant
-    float obstacle_avoidance_weight = 30.0f;
+    float obstacle_avoidance_weight = 0.0f;
     float goal_seeking_weight = 120.0f;
     float smoothness_weight = 30.0f;
     float time_step = 1.0f;
@@ -261,7 +261,7 @@ std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Obs
         // std::cout<<"    t: " << t << std::endl;
         // std::cout<<"        S obs: " << obstacle.s_values[obstacle_s_index].x << std::endl;
         disk_count++;
-        float obstacle_future_s_value = obstacle.s_values[obstacle_s_index].x + speed * dt;
+        float obstacle_future_s_value =  obstacle.s_values[obstacle_s_index].x + speed * dt;
         // float obstacle_future_s_value = obstacle.s_values[trajectory_index].x + speed * t;
         
         // find the wanted s value
@@ -281,8 +281,8 @@ std::vector<VelDisk> NLVO::generateNLVODisks(const pose_msg& ego_pose, const Obs
         
         // Center of the NLVO disk in velocity space
         VelDisk disk;
-        disk.cx = relative_pose.position.x / t +obstacle.velocity.linear.x;
-        disk.cy = relative_pose.position.y / t + obstacle.velocity.linear.y;
+        disk.cx = relative_pose.position.x / t;
+        disk.cy = relative_pose.position.y / t;
 
         disk.radius = r_total / t;
         disks.push_back(disk);

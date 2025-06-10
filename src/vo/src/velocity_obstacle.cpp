@@ -91,7 +91,7 @@ bool VelocityObstacle::checkCollision(const pose_msg& ego_pose, const twist_msg&
     //std::cout<<"condition: "<<condition<<std::endl;
 
     float relative_speed = sqrt(pow(v_relative.linear.x, 2) + pow(v_relative.linear.y, 2)); // calculate the magnitude of the relative velocity
-    float d_m = d - r_total; // calculate the distance between the two vehicles minus their radii
+    // float d_m = d - r_total; // calculate the distance between the two vehicles minus their radii
     float time_to_collision = d / relative_speed; //  calculate the current time to collision
 
     // Velocities are almost equal, treat as no collision

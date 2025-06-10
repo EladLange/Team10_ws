@@ -19,6 +19,7 @@ find_package(nlvo REQUIRED)
 find_package(common REQUIRED)
 # find_package(car_description REQUIRED)
 find_package(pscav REQUIRED)
+find_package(nao REQUIRED)
 
 
 # Include directories for headers
@@ -48,6 +49,7 @@ ament_target_dependencies(
   nlvo
   common
   pscav
+  nao
 )
 
 # Install executable and other files
@@ -59,5 +61,6 @@ install(
   DIRECTORY meshes
   DESTINATION share/${PROJECT_NAME}
 )
+
 
 ament_package()
